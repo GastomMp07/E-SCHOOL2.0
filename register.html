@@ -10,7 +10,7 @@
         body {
             margin: 0; padding: 0;
             font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
         }
@@ -33,16 +33,17 @@
         }
         .register-btn {
             width: 100%; padding: 12px;
-            background-color: #cc0000; color: white;
+            background-color: #0c5568; color: white;
             border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; margin-top: 10px;
         }
+        .register-btn:hover { background-color: #0a3d52; }
     </style>
 </head>
 <body>
 
     <div class="register-container animate__animated animate__fadeInDown">
-        <img src="images/logo.png" alt="Logo" style="max-width: 100px; margin-bottom: 10px;">
+        <img src="images/logo_small.png" alt="Logo" style="max-width: 80px; margin-bottom: 10px;">
         <h2>Inscription à E-SCHOOL</h2>
         <p style="color: #666; font-size: 14px;">Créez votre compte sécurisé</p>
 
@@ -62,7 +63,7 @@
             </div>
             
             <div class="form-group" id="admin-code-group" style="display: none;">
-                <label id="label-code" style="color: #cc0000; font-weight: bold;">Code d'Autorisation</label>
+            <label id="label-code" style="color: #0c5568; font-weight: bold;">Code d'Autorisation</label>
                 <input type="password" id="reg-admin-code" placeholder="Entrez le code secret">
             </div>
             
@@ -91,7 +92,7 @@
         </form>
 
         <div style="margin-top: 20px; font-size: 13px;">
-            Vous avez déjà un compte ? <a href="login.html" style="color: #cc0000; font-weight: bold;">Se connecter</a>
+            Vous avez déjà un compte ? <a href="login.html" style="color: #0c5568; font-weight: bold;">Se connecter</a>
         </div>
     </div>
 

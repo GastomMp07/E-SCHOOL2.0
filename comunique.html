@@ -12,7 +12,7 @@
     <style>
         /* Styles déplacés dans le head pour une meilleure conformité HTML */
         body {
-            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
             display: flex;
             justify-content: center; /* Centre horizontalement */
             align-items: center;     /* Centre verticalement */
@@ -23,7 +23,7 @@
     align-items: center; 
     justify-content: space-between; /* Pousse les groupes aux extrémités */
     padding: 0 20px; 
-    background: #cc0000 ; 
+    background: #0d3b4f; 
     color: white; 
     height: 60px; 
     position: fixed; 
@@ -51,7 +51,7 @@
         /* SIDEBAR (CORRIGÉE) */
         .sidebar { 
             position: fixed; top: 0; left: -280px; /* Cachée par défaut */
-            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            width: 260px; height: 100%; background: #0a3d52; color: white; 
             transition: all 0.4s ease; z-index: 10001; 
             display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
         }
@@ -60,7 +60,7 @@
 
         .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
-        .sidebar a:hover { background: #cc0000 ; padding-left: 35px; }
+        .sidebar a:hover { background: #0d3b4f; padding-left: 35px; }
 
         .logout-btn { 
             background: #ef4444; color: white; border: none; 
@@ -83,7 +83,7 @@
             <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
         </div>
     
-        <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+        <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
     </div>
     
         <div id="sidebar" class="sidebar">
@@ -209,7 +209,7 @@ onAuthStateChanged(auth, async (user) => {
         return;
     }
 
-    const couleurs = ["#cc0000", "#b46601", "#1e3a8a"];
+    const couleurs = ["#0c5568", "#0c7489", "#0d3b4f"];
     
     messagesVisibles.forEach((item, i) => {
         const card = document.createElement("div");
@@ -225,7 +225,7 @@ onAuthStateChanged(auth, async (user) => {
         `;
 
         // Badge de cible (ex: "7em A" ou "Public")
-        const badgeColor = item.destinataire === "tous" ? "#28a745" : "#cc0000";
+        const badgeColor = item.destinataire === "tous" ? "#28a745" : "#0c5568";
         const badgeText = item.destinataire === "tous" ? "PUBLIC" : `CLASSE : ${item.destinataire}`;
 
         card.innerHTML = `

@@ -11,7 +11,7 @@
             box-sizing: border-box;
         }
         body {
-            background: linear-gradient(135deg, #000000 0%, #cc0000 100%) no-repeat;
+            background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%) no-repeat;
             background-attachment: fixed;
             min-height: 100vh;
             margin: 0;
@@ -43,13 +43,13 @@
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 3px solid #cc0000;
+            border-bottom: 3px solid #0c5568;
             padding-bottom: 15px;
             margin-bottom: 20px;
             gap: 15px;
         }
 
-        .ecole-infos h3 { margin: 0; color: #cc0000; font-size: 1.4em; }
+        .ecole-infos h3 { margin: 0; color: #0c5568; font-size: 1.4em; }
         .ecole-infos p { margin: 5px 0; font-weight: bold; }
 
         .eleve-details {
@@ -82,7 +82,7 @@
             left: 0;
             background: #f9f9f9; /* Obligatoire pour cacher ce qui passe dessous */
             z-index: 1;
-            border-right: 2px solid #cc0000 !important;
+            border-right: 2px solid #0c5568 !important;
             text-align: left !important;
             font-weight: bold;
             min-width: 120px;
@@ -120,7 +120,7 @@
             display: inline-block;
             margin-top: 10px;
             padding: 10px 25px;
-            background: #cc0000;
+            background: #0d3b4f;
             color: white;
             font-weight: bold;
             border-radius: 50px;
@@ -163,7 +163,7 @@
         <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
     </div>
 
-    <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+    <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
 </div>
 
     <div id="sidebar" class="sidebar">
@@ -332,7 +332,7 @@
                     <div class="bulletin-header">
                         <img src="images/image copy.png" style="height:60px;">
                         <div class="ecole-infos">
-                            <h3>CS MAXEL</h3>
+                            <h3>E-SCHOOL</h3>
                             <p>Année Scolaire 2025-2026</p>
                             <h4>BILAN ANNUEL ÉVOLUTIF</h4>
                         </div>
@@ -365,7 +365,7 @@
                             <p style="margin: 5px 0; font-size: 1.1em; color: #1e3a8a;"><strong>PLACE : ${maPlace > 0 ? maPlace + (maPlace === 1 ? 'ère' : 'ème') : '-'} sur ${totalEleves}</strong></p>
                             <p style="margin: 5px 0;">Points cumulés : <strong>${grandTotalObtenu} / ${grandTotalMaxPossible}</strong></p>
                             <!-- En bas se trouve l'endroit où j'ai coder le pourcentage -->
-                            <p style="margin: 5px 0; font-size: 1.3em; color: #cc0000;">Pourcentage Actuel : <strong>${pourcentageActuel}%</strong></p>
+                            <p style="margin: 5px 0; font-size: 1.3em; color: #0c5568;">Pourcentage Actuel : <strong>${pourcentageActuel}%</strong></p>
                         </div>
                         <div style="font-style: italic; color: #666; font-size: 0.8em;">Document généré pour supervision direction</div>
                     </div>

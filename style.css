@@ -5,9 +5,9 @@
 }
 
 body {
-    /* Police par défaut fluide et dégradé de fond sombre/rouge pour la charte graphique */
+    /* Police par défaut fluide et dégradé de fond teal pour la charte graphique */
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+    background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
     width: 100%;
     height: 100vh;
     
@@ -42,7 +42,7 @@ body {
 /* --- 2. STYLE DES PAGES DE CONNEXION / INSCRIPTION --- */
 /* Pour centrer le formulaire au milieu de l'écran */
 .auth-page {
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -62,23 +62,23 @@ input, select {
 
 button:hover {
     /* Effet visuel au passage de la souris sur les boutons */
-    background-color: #cc0000;
+    background-color: #0c7489;
 }
 
 .register-btn {
     /* Couleur spécifique pour le bouton d'inscription */
-    background-color: #cc0000;
+    background-color: #0c5568;
 }
 
 .register-btn:hover {
-    background-color: #b30000; /* Version plus sombre du rouge au survol */
+    background-color: #0a3d52; /* Version plus sombre du teal au survol */
 }
 
 /* --- 3. STYLE DU TABLEAU DE BORD (ACCUEIL & AUTRES) --- */
   body { 
     margin: 0; 
     font-family: 'Segoe UI', Arial, sans-serif; 
-    background: #f4f7fe; 
+    background: #eaf6f8; 
     overflow-x: hidden; /* Empêche le défilement horizontal parasite */
     display: block; /* Force l'affichage normal pour annuler le centrage du login */
     height: auto; 
@@ -90,7 +90,7 @@ button:hover {
     align-items: center; 
     justify-content: space-between; /* Pousse les groupes aux extrémités */
     padding: 0 20px; 
-    background: #cc0000 ; 
+    background: #0d3b4f ; 
     color: white; 
     height: 60px; 
     position: fixed; 
@@ -118,7 +118,7 @@ button:hover {
         /* SIDEBAR (CORRIGÉE) */
         .sidebar { 
             position: fixed; top: 0; left: -280px; /* Cachée par défaut */
-            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            width: 260px; height: 100%; background: #0a3d52 ; color: white; 
             transition: all 0.4s ease; z-index: 10001; 
             display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
         }
@@ -127,10 +127,10 @@ button:hover {
 
         .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
-        .sidebar a:hover { background: #cc0000 ; padding-left: 35px; }
+        .sidebar a:hover { background: #0c7489 ; padding-left: 35px; }
 
         .logout-btn { 
-            background: #ef4444; color: white; border: none; 
+            background: #0c5568; color: white; border: none; 
             padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
             cursor: pointer; font-weight: bold; 
             width: calc(100% - 40px); /* Soustrait les 20px de marge de chaque côté */
@@ -170,7 +170,7 @@ button:hover {
         }
         .circle { 
             position: fixed; bottom: -100px; right: -100px; 
-            width: 300px; height: 300px; background: #1e3a8a; 
+            width: 300px; height: 300px; background: #0d3b4f; 
             border-radius: 50%; z-index: -1; opacity: 0.1; 
             display: none;
         }.content {
@@ -183,11 +183,11 @@ button:hover {
 
 .content h1 {
     font-size: 42px;
-    color: #1e3a8a;
+    color: #0d3b4f;
 }
 
 .jeno {
-    color: #cc0000; /* Changé en rouge pour correspondre à votre charte graphique */
+    color: #0c7489; /* Teal pour correspondre à la nouvelle charte graphique */
     font-weight: bold;
     font-size: 1.2em;
 }
@@ -199,7 +199,7 @@ button:hover {
     right: 0;
     width: 100%;
     height: 100%;
-    background: #1e3a8a;
+    background: #0d3b4f;
     clip-path: circle(500px at right 800px);
     z-index: -1;
 }
@@ -223,7 +223,7 @@ button:hover {
 }
 
 .logout-btn {
-    background: #ef4444;
+    background: #0c5568;
     color: white;
     border: none;
     padding: 12px;
@@ -247,7 +247,7 @@ th, td {
 
 th {
     color:#000000;
-    background: #f8fafc;
+    background: #eaf6f8;
 }
 
 /* Espacement entre les cartes de données */
@@ -261,7 +261,7 @@ th {
     /* Espacement augmenté pour éviter que les cards ne se collent */
     margin-bottom: 80px; 
     
-    border: 1px solid #f0f0f0;
+    border: 1px solid #cce8ef;
     transition: transform 0.2s ease-in-out; /* Optionnel : petit effet au survol */
 }
 
@@ -269,8 +269,8 @@ th {
 .data-card h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: #cc0000;
-    border-bottom: 2px solid #f4f7fe;
+    color: #0c5568;
+    border-bottom: 2px solid #eaf6f8;
     padding-bottom: 10px;
 }
 

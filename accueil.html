@@ -10,68 +10,60 @@
         body { 
             margin: 0; 
             font-family: 'Segoe UI', Arial, sans-serif; 
-            background: #f4f7fe; 
+            background: #eaf6f8; 
             overflow-x: hidden; 
             display: flex; flex-direction: column; min-height: 100vh; 
         }
 
-        /* HEADER RÉAJUSTÉ */
-    .header { 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; /* Pousse les groupes aux extrémités */
-    padding: 0 20px; 
-    background: #cc0000 ; 
-    color: white; 
-    height: 60px; 
-    position: fixed; 
-    width: 100%; 
-    top: 0; 
-    left: 0; 
-    z-index: 10000; 
-    box-sizing: border-box; /* Évite que le padding dépasse de l'écran */
-}
-
-/* Groupe de gauche (Menu + Titre) */
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
-}
-
-/* Logo à droite */
-.header-logo {
-    height: 56px; /* Ajuste la taille selon ton image */
-    width: auto;
-}
+        /* HEADER */
+        .header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            padding: 0 20px; 
+            background: #0d3b4f; 
+            color: white; 
+            height: 60px; 
+            position: fixed; 
+            width: 100%; 
+            top: 0; 
+            left: 0; 
+            z-index: 10000; 
+            box-sizing: border-box;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-logo {
+            height: 50px;
+            width: auto;
+        }
         .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
 
-        /* SIDEBAR (CORRIGÉE) */
+        /* SIDEBAR */
         .sidebar { 
-            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
-            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            position: fixed; top: 0; left: -280px;
+            width: 260px; height: 100%; background: #0a3d52; color: white; 
             transition: all 0.4s ease; z-index: 10001; 
             display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            
         }
-        /* Classe qui fait apparaître le menu */
         .sidebar.active { left: 0; }
-
         .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);}
         .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
         .sidebar a:hover {
-            background: #cc0000 ;
-            padding-left: 18px;
-            padding: 15px;border-radius: 16px;
+            background: #0c7489;
+            padding-left: 35px;
         }
-
         .logout-btn { 
-            background: #cc0000; color: white; border: none; 
+            background: #0c5568; color: white; border: none; 
             padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
-            cursor: pointer; font-weight: bold; 
+            cursor: pointer; font-weight: bold;
+            width: calc(100% - 40px);
         }
 
-        /* OVERLAY (Le fond noir quand le menu est ouvert) */
+        /* OVERLAY */
         .overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
@@ -81,17 +73,206 @@
 
         /* CONTENU PRINCIPAL */
         .main-content { 
-            margin-top: 80px; padding: 20px; text-align: center; 
+            margin-top: 80px; padding: 20px 20px 40px;
             display: flex; flex-direction: column; align-items: center; 
             flex: 1;
         }
-        .welcome-card { 
-            background: white; padding: 30px; border-radius: 20px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 640px; width: 90%; 
+
+        /* HERO BANNER */
+        .hero-banner {
+            background: linear-gradient(135deg, #0d3b4f 0%, #0c7489 100%);
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 780px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 12px 40px rgba(13,59,79,0.25);
+            margin-bottom: 35px;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-banner::before {
+            content: '';
+            position: absolute;
+            top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .hero-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -80px; left: -40px;
+            width: 250px; height: 250px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+        .hero-logo {
+            width: 130px;
+            height: auto;
+            margin-bottom: 16px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-banner h1 {
+            font-size: 2.2em;
+            margin: 0 0 8px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-banner h1 span {
+            color: #27bcd5;
+        }
+        .hero-banner p {
+            font-size: 1.1em;
+            opacity: 0.85;
+            margin: 0 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-tagline {
+            display: inline-block;
+            background: rgba(255,255,255,0.12);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 20px;
+            padding: 6px 18px;
+            font-size: 0.9em;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* FEATURE CARDS */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            width: 90%;
+            max-width: 780px;
+            margin-bottom: 30px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(13,59,79,0.09);
+            border: 1px solid #cce8ef;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(13,59,79,0.16);
+        }
+        .feature-icon {
+            font-size: 2.4em;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .feature-card h3 {
+            margin: 0 0 8px;
+            color: #0d3b4f;
+            font-size: 1em;
+        }
+        .feature-card p {
+            margin: 0;
+            font-size: 0.85em;
+            color: #667;
+            line-height: 1.5;
+        }
+
+        /* STATS BAND */
+        .stats-band {
+            background: white;
+            border-radius: 16px;
+            padding: 22px 30px;
+            width: 90%;
+            max-width: 780px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(13,59,79,0.09);
+            border: 1px solid #cce8ef;
+            margin-bottom: 30px;
+        }
+        .stat-item {
             text-align: center;
         }
+        .stat-item .stat-number {
+            display: block;
+            font-size: 2em;
+            font-weight: bold;
+            color: #0c5568;
+        }
+        .stat-item .stat-label {
+            font-size: 0.8em;
+            color: #667;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* GUIDE RAPIDE */
+        .guide-card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 30px;
+            width: 90%;
+            max-width: 780px;
+            box-shadow: 0 4px 20px rgba(13,59,79,0.09);
+            border: 1px solid #cce8ef;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .guide-card h2 {
+            color: #0d3b4f;
+            margin: 0 0 18px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .guide-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .guide-step-num {
+            background: #0d3b4f;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9em;
+            flex-shrink: 0;
+        }
+        .guide-step-text {
+            padding-top: 4px;
+            font-size: 0.95em;
+            color: #334;
+        }
+        .guide-step-text strong {
+            color: #0c5568;
+        }
+
+        /* CLASSES */
+        .Img {
+            display: block;
+            width: 75%;
+            max-width: 190px;
+            height: auto;
+            margin: 28px auto 0;
+            border-radius: 15px;
+            object-fit: contain;
+        }
         .jeno {
-            color: #bc2417;
+            color: #0c7489;
             font-weight: bolder;
             font-size: 26px;
             font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
@@ -106,23 +287,7 @@
             font-size: 20px;
             font-family:Arial, Helvetica, sans-serif
         }
-
-        /* IMAGE ET CERCLE DÉCO — logo centré et plus grand */
-        .Img {
-            display: block;
-            width: 75%;
-            max-width: 190px; /* Taille agrandie pour plus d'impact */
-            height: auto;
-            margin: 28px auto 0;
-            border-radius: 15px;
-            object-fit: contain;
-        }
-        .circle { 
-            position: fixed; bottom: -100px; right: -100px; 
-            width: 300px; height: 300px; background: #1e3a8a; 
-            border-radius: 50%; z-index: -1; opacity: 0.1; 
-            display: none;
-        }
+        .circle { display: none; }
 
         footer{
             display: flex;
@@ -131,6 +296,8 @@
             text-align: center;
             padding: 20px;
             width: 100%;
+            color: #445;
+            font-size: 0.85em;
         }
     </style>
 </head>
@@ -141,8 +308,7 @@
         <div class="menu-btn" onclick="toggleMenu()">☰</div>
         <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
     </div>
-
-    <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+    <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo" style="height:50px;">
 </div>
 
     <div id="sidebar" class="sidebar">
@@ -170,12 +336,62 @@
     <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
 
     <div class="main-content">
-        <div class="welcome-card animate__animated animate__fadeIn">
-            <h1>Bienvenue</h1>
-            <p><span class="benny">Heureux de vous voir au seins du </span><span class="jeno"><br>E-SCHOOL</span> </p>
-            <img src="images/logo.png" alt="logo.png" class="Img">
-            <p><span class="manas">Utilisez le menu (☰) en haut à gauche pour naviguer.</span></p>
+
+        <!-- HERO BANNER -->
+        <div class="hero-banner">
+            <img src="images/logo_small.png" alt="E-SCHOOL" class="hero-logo">
+            <h1>Bienvenue sur <span>E-SCHOOL</span></h1>
+            <p>La plateforme de gestion scolaire intelligente de votre établissement</p>
+            <span class="hero-tagline">✨ Gestion Scolaire Intelligente</span>
         </div>
+
+        <!-- FEATURES GRID -->
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">📚</span>
+                <h3>Notes & Résultats</h3>
+                <p>Consultez vos résultats scolaires et suivez votre progression en temps réel.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">📢</span>
+                <h3>Communiqués</h3>
+                <p>Restez informé des dernières annonces et communications de l'école.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🗓️</span>
+                <h3>Horaires</h3>
+                <p>Consultez les horaires de cours et l'emploi du temps de votre classe.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">✅</span>
+                <h3>Présences</h3>
+                <p>Suivez votre taux de présence et vérifiez votre statut de présence du jour.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">👤</span>
+                <h3>Mon Profil</h3>
+                <p>Gérez votre compte, votre photo de profil et vos informations personnelles.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">⚙️</span>
+                <h3>Administration</h3>
+                <p>Outils de supervision et gestion réservés à la direction de l'établissement.</p>
+            </div>
+        </div>
+
+        <!-- GUIDE RAPIDE -->
+        <div class="guide-card">
+            <h2>📖 Comment utiliser E-SCHOOL ?</h2>
+            <div class="guide-step">
+                <div class="guide-step-num">1</div>
+                <div class="guide-step-text">Appuyez sur le bouton <strong>☰ (menu)</strong> en haut à gauche pour ouvrir le panneau de navigation.</div>
+            </div>
+            <div class="guide-step">
+                <div class="guide-step-num">2</div>
+                <div class="guide-step-text">Choisissez la section qui vous intéresse : <strong>Mes Cotes</strong>, <strong>Horaire</strong>, <strong>Communiqués</strong> ou <strong>Mon Profil</strong>.</div>
+            </div>
+        </div>
+
     </div>
 
     <div class="circle"></div>   
