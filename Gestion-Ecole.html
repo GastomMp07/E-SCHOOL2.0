@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            background-attachment: fixed;
+            font-family: 'Segoe UI', sans-serif;
+            color: #333;
+        }
+
+        .main-content {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px 10px; margin-top: 80px; width: 100%;
+        }
+
+        .data-card, .welcome-card {
+            background: white; padding: 20px; border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            margin-bottom: 25px; width: 95%; max-width: 600px;
+        }
+
+        /* Formulaire d'inscription */
+        .admin-form input, .admin-form select {
+            width: 100%; padding: 10px; margin: 8px 0;
+            border: 1px solid #ddd; border-radius: 8px;
+        }
+        .btn-inscrire {
+            background: #28a745; color: white; border: none;
+            padding: 12px; width: 100%; border-radius: 8px;
+            font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+
+        .prof-card {
+            background: #f8f9fa; border-radius: 12px; padding: 15px;
+            margin-bottom: 15px; border-left: 5px solid #2b0101;
+        }
+
+        .prof-name { font-weight: bold; text-transform: uppercase; color: #2b0101; display: block; margin-bottom: 10px; border-bottom: 1px solid #ddd; }
+        .prof-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        /* Switch Paiement */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #28a745; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .paiement-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+
+        /* Style pour les boutons de classes */
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.class-folder {
+    background: #f8f9fa;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 20px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    color: #cc0000;
+}
+
+.class-folder:hover {
+    background: #cc0000;
+    color: white;
+    border-color: #cc0000;
+    transform: translateY(-3px);
+}
+
+.back-btn {
+    background: #666;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
+
+.back-btn:hover { background: #333; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+    <div class="header-left">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+    </div>
+
+    <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+</div>
+
+    <div id="sidebar" class="sidebar">
+    <h2>Menu</h2>
+    <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+</div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div id="sidebar" class="sidebar">
+        <h2>Panel Admin</h2>
+        <a href="accueil.html">Retour Accueil</a>
+        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    </div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div class="data-card">
+            <h3>🆕 Inscrire un nouvel élève</h3>
+            <form id="form-inscription-admin" class="admin-form">
+                <input type="text" id="new-nom" placeholder="Nom complet de l'élève" required>
+                <input type="email" id="new-email" placeholder="Email (identifiant)" required>
+                <input type="password" id="new-pass" placeholder="Mot de passe provisoire" required>
+                <select id="new-classe" required>
+                    <option value="">Sélectionner la classe</option>
+                    <option value="7em A">7em A</option>
+                    <option value="7em B">7em B</option>
+                    <option value="8em A">8em A</option>
+                    <option value="8em B">8em B</option>
+                    <option value="1erè SCIENCES">1erè SCIENCES</option>
+                    <option value="1erè COMMERCIAL">1erè COMMERCIAL</option>
+                    <option value="1erè LITTERAIRE">1erè LITTERAIRE</option>
+                    <option value="1erè PEDAGOGIE">1erè PEDAGOGIE</option>
+                    <option value="1erè ELECTRONIQUE">1erè ELECTRONIQUE</option>
+                    <option value="1erè ELECTRICITE">1erè ELECTRICITE</option>
+                    <option value="2emè SCIENCES">2emè SCIENCES</option>
+                    <option value="2emè COMMERCIAL">2emè COMMERCIAL</option>
+                    <option value="2emè LITTERAIRE">2emè LITTERAIRE</option>
+                    <option value="2emè PEDAGOGIE">2emè PEDAGOGIE</option>
+                    <option value="2emè ELECTRONIQUE">2emè ELECTRONIQUE</option>
+                    <option value="2emè ELECTRICITE">2emè ELECTRICITE</option>
+                    <option value="3emè SCIENCES">3emè SCIENCES</option>
+                    <option value="3emè COMMERCIAL">3emè COMMERCIAL</option>
+                    <option value="3emè LITTERAIRE">3emè LITTERAIRE</option>
+                    <option value="3emè PEDAGOGIE">3emè PEDAGOGIE</option>
+                    <option value="3emè ELECTRONIQUE">3emè ELECTRONIQUE</option>
+                    <option value="3emè ELECTRICITE">3emè ELECTRICITE</option>
+                    <option value="4emè SCIENCES">4emè SCIENCES</option>
+                    <option value="4emè COMMERCIAL">4emè COMMERCIAL</option>
+                    <option value="4emè LITTERAIRE">4emè LITTERAIRE</option>
+                    <option value="4emè PEDAGOGIE">4emè PEDAGOGIE</option>
+                    <option value="4emè ELECTRONIQUE">4emè ELECTRONIQUE</option>
+                    <option value="4emè ELECTRICITE">4emè ELECTRICITE</option>
+                </select>
+                <button type="submit" class="btn-inscrire">Ajouter l'élève</button>
+            </form>
+        </div>
+
+        <div class="data-card">
+    <h3>📅 Ajouter un créneau d'horaire</h3>
+    <form id="form-horaire" class="admin-form">
+        <select id="h-jour" required>
+            <option value="Lundi">Lundi</option>
+            <option value="Mardi">Mardi</option>
+            <option value="Mercredi">Mercredi</option>
+            <option value="Jeudi">Jeudi</option>
+            <option value="Vendredi">Vendredi</option>
+            <option value="Samedi">Samedi</option>
+        </select>
+        <input type="text" id="h-heure" placeholder="Ex: 08h00 - 09h30" required>
+        <select id="h-classe" required>
+            <option value="">Sélectionner la classe</option>
+                    <option value="7em A">7em A</option>
+                    <option value="7em B">7em B</option>
+                    <option value="8em A">8em A</option>
+                    <option value="8em B">8em B</option>
+                    <option value="1erè SCIENCES">1erè SCIENCES</option>
+                    <option value="1erè COMMERCIAL">1erè COMMERCIAL</option>
+                    <option value="1erè LITTERAIRE">1erè LITTERAIRE</option>
+                    <option value="1erè PEDAGOGIE">1erè PEDAGOGIE</option>
+                    <option value="1erè ELECTRONIQUE">1erè ELECTRONIQUE</option>
+                    <option value="2erè SCIENCES">2erè SCIENCES</option>
+                    <option value="2erè COMMERCIAL">2erè COMMERCIAL</option>
+                    <option value="2erè LITTERAIRE">2erè LITTERAIRE</option>
+                    <option value="2erè PEDAGOGIE">2erè PEDAGOGIE</option>
+                    <option value="2erè ELECTRONIQUE">2erè ELECTRONIQUE</option>
+                    <option value="3erè SCIENCES">3erè SCIENCES</option>
+                    <option value="3erè COMMERCIAL">3erè COMMERCIAL</option>
+                    <option value="3erè LITTERAIRE">3erè LITTERAIRE</option>
+                    <option value="3erè PEDAGOGIE">3erè PEDAGOGIE</option>
+                    <option value="3erè ELECTRONIQUE">3erè ELECTRONIQUE</option>
+                    <option value="4erè SCIENCES">4erè SCIENCES</option>
+                    <option value="4erè COMMERCIAL">4erè COMMERCIAL</option>
+                    <option value="4erè LITTERAIRE">4erè LITTERAIRE</option>
+                    <option value="4erè PEDAGOGIE">4erè PEDAGOGIE</option>
+                    <option value="4erè ELECTRONIQUE">4erè ELECTRONIQUE</option>
+            </select>
+        <input type="text" id="h-matiere" placeholder="Nom de la matière" required>
+        <input type="text" id="h-prof" placeholder="Nom complet du Professeur" required>
+        <button type="submit" class="btn-inscrire">Enregistrer l'horaire</button>
+    </form>
+</div>
+
+        <div class="data-card">
+            <h3>👥 Liste des élèves & Accès</h3>
+            <div id="liste-paiements-eleves"><p>Chargement...</p></div>
+        </div>
+
+        <div class="data-card">
+            <h3>⭐ Évaluation Enseignants</h3>
+            <div id="stats-profs-list"><p>Chargement...</p></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { db, auth } from "./auth.js";
+        import { collection, getDocs, doc, setDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword as createSecondaryUser, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // --- 1. FONCTION D'INSCRIPTION SÉCURISÉE (SANS DÉCONNEXION) ---
+        // Configuration secondaire pour créer des comptes sans déconnecter l'admin
+        // Remplace par tes propres clés API que tu trouveras dans auth.js ou ta console Firebase
+        const secondaryConfig = {
+            apiKey: "AIzaSyD-zylLBSzTL0xyUZP75G8QEjblauNw4Nk",
+            authDomain: "e-school-8a0c8.firebaseapp.com",
+            projectId: "e-school-8a0c8",
+            storageBucket: "e-school-8a0c8.firebasestorage.app",
+            messagingSenderId: "313905413411",
+            appId: "1:313905413411:web:bec2f4e79394bc5fce6096"
+        };
+
+        // Initialisation de l'app secondaire
+        const secondaryApp = initializeApp(secondaryConfig, "Secondary");
+        const secondaryAuth = getAuth(secondaryApp);
+
+        const formIns = document.getElementById('form-inscription-admin');
+
+        formIns.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nom = document.getElementById('new-nom').value;
+            const email = document.getElementById('new-email').value;
+            const pass = document.getElementById('new-pass').value;
+            const classe = document.getElementById('new-classe').value;
+
+            try {
+                // 1. Créer l'utilisateur sur l'instance secondaire
+                const { user } = await createSecondaryUser(secondaryAuth, email, pass);
+                
+                // 2. Enregistrer les données dans Firestore (utilise l'instance 'db' normale)
+                await setDoc(doc(db, "users", user.uid), {
+                    nom: nom,
+                    email: email,
+                    role: "eleve",
+                    classe: [classe],
+                    statutPaiement: true,
+                    createdAt: new Date()
+                });
+
+                // 3. Déconnecter l'utilisateur créé de l'instance SECONDAIRE immédiatement
+                // Cela n'affecte pas l'admin sur l'instance principale
+                await signOut(secondaryAuth);
+
+                alert("✅ Élève inscrit avec succès ! L'admin reste connecté.");
+                formIns.reset();
+                chargerGestionPaiements(); 
+                
+            } catch (err) {
+                console.error(err);
+                alert("Erreur d'inscription : " + err.message);
+            }
+        });
+
+                // --- 2. GESTION DES ELEVES PAR CLASSE ---
+
+        // On définit les classes dans l'ordre croissant
+        const listeClasses = [
+            "7emè A",
+            "7emè B",
+            "8emè A", 
+            "8emè B", 
+            "1erè SCIENCES",
+            "1erè COMMERCIAL", 
+            "1erè LITTERAIRE",
+            "1erè PEDAGOGIE",
+            "1emè ELECTRONIQUE",
+            "1erè ELECTRICITE",
+            "2emè SCIENCES",
+            "2emè COMMERCIAL",
+            "2emè LITTERAIRE",
+            "2emè PEDAGOGIE",
+            "2emè ELECTRONIQUE",
+            "2emè ELECTRICITE",
+            "3emè SCIENCES",
+            "3emè COMMERCIAL",
+            "3emè LITTERAIRE",
+            "3emè PEDAGOGIE",
+            "3emè ELECTRONIQUE",
+            "3emè ELECTRICITE",
+            "4emè SCIENCES",
+            "4emè COMMERCIAL",
+            "4emè LITTERAIRE",
+            "4emè PEDAGOGIE",
+            "4emè ELECTRONIQUE",
+            "4emè ELECTRICITE"
+        ]
+
+        async function chargerGestionPaiements() {
+            const container = document.getElementById('liste-paiements-eleves');
+            afficherDossiersClasses(container);
+        }
+
+        // Affiche les "dossiers" de chaque classe
+        function afficherDossiersClasses(container) {
+            container.innerHTML = `<h4>Sélectionnez une classe :</h4><div class="classes-grid"></div>`;
+            const grid = container.querySelector('.classes-grid');
+
+            listeClasses.forEach(classe => {
+                const div = document.createElement('div');
+                div.className = "class-folder";
+                div.innerHTML = `📁<br>${classe}`;
+                div.onclick = () => chargerElevesDeLaClasse(classe);
+                grid.appendChild(div);
+            });
+        }
+
+        document.getElementById('form-horaire').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const horaireData = {
+                jour: document.getElementById('h-jour').value,
+                heure: document.getElementById('h-heure').value,
+                classe: document.getElementById('h-classe').value,
+                matiere: document.getElementById('h-matiere').value,
+                professeur: document.getElementById('h-prof').value,
+                createdAt: new Date()
+            };
+
+            try {
+                await addDoc(collection(db, "horaires"), horaireData);
+                alert("Horaire ajouté !");
+                e.target.reset();
+            } catch (err) {
+                alert("Erreur : " + err.message);
+            }
+        });
+
+        // Affiche les élèves de la classe sélectionnée
+        async function chargerElevesDeLaClasse(nomClasse) {
+            const container = document.getElementById('liste-paiements-eleves');
+            container.innerHTML = `
+                <button class="back-btn" onclick="chargerGestionPaiements()">⬅ Retour aux classes</button>
+                <h4>Élèves de : ${nomClasse}</h4>
+                <div id="sub-liste-eleves">Chargement des élèves...</div>
+            `;
+
+            const subContainer = document.getElementById('sub-liste-eleves');
+            
+            try {
+                const querySnapshot = await getDocs(collection(db, "users"));
+                let elevesTrouves = 0;
+                subContainer.innerHTML = "";
+
+                querySnapshot.forEach((userDoc) => {
+                    const data = userDoc.data();
+                    
+                    // On vérifie si c'est un élève ET si sa classe correspond
+                    // On gère le fait que 'classe' puisse être une String ou un Tableau
+                    const classeEleve = Array.isArray(data.classe) ? data.classe[0] : data.classe;
+
+                    if (data.role === "eleve" && classeEleve === nomClasse) {
+                        elevesTrouves++;
+                        const div = document.createElement('div');
+                        div.className = "paiement-row";
+                        div.innerHTML = `
+                            <div style="flex: 1;">
+                                <strong>${data.nom}</strong><br>
+                                <small>${data.email}</small>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <button onclick="window.location.href='Resultatfinal.html?uid=${userDoc.id}&classe=${encodeURIComponent(nomClasse)}'" 
+                                        style="background: #1e3a8a; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.8em;">
+                                    📄 Bilan
+                                </button>
+                                <label class="switch">
+                                    <input type="checkbox" ${data.statutPaiement ? 'checked' : ''} id="check-${userDoc.id}">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>`;
+                        subContainer.appendChild(div);
+
+                        // Event listener pour le switch
+                        div.querySelector('input').addEventListener('change', async (e) => {
+                            await updateDoc(doc(db, "users", userDoc.id), { statutPaiement: e.target.checked });
+                        });
+                    }
+                });
+
+                if (elevesTrouves === 0) {
+                    subContainer.innerHTML = "<p>Aucun élève inscrit dans cette classe.</p>";
+                }
+
+            } catch (err) {
+                console.error(err);
+                subContainer.innerHTML = "Erreur lors du chargement.";
+            }
+        }
+
+        // On rend la fonction accessible globalement pour le bouton "Retour"
+        window.chargerGestionPaiements = chargerGestionPaiements;
+                // --- LANCEMENT DES FONCTIONS ---
+        // On s'assure que tout est appelé quand la page charge
+        async function initialiserDashboard() {
+            try {
+                await chargerGestionPaiements();
+                await chargerStatistiquesProfs(); // <-- C'était manquant ici !
+                await calculerPresences();       // <-- C'était manquant ici !
+            } catch (err) {
+                console.error("Erreur lors du chargement des données :", err);
+            }
+        }
+
+        initialiserDashboard();
+
+        async function chargerStatistiquesProfs() {
+            try {
+                const snap = await getDocs(collection(db, "evaluations_profs"));
+                const stats = {};
+                
+                console.log("Docs trouvés dans evaluations_profs:", snap.size);
+
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    // On vérifie que le nom du prof existe
+                    if (d.profNom) {
+                        if (!stats[d.profNom]) stats[d.profNom] = { m: 0, d: 0, c: 0 };
+                        
+                        // On utilise parseFloat pour transformer le texte en nombre
+                        stats[d.profNom].m += parseFloat(d.maitrise || 0);
+                        stats[d.profNom].d += parseFloat(d.disponibilite || 0);
+                        stats[d.profNom].c++;
+                    }
+                });
+
+                const container = document.getElementById('stats-profs-list');
+                if (Object.keys(stats).length === 0) {
+                    container.innerHTML = "<p>Aucune évaluation enregistrée pour le moment.</p>";
+                    return;
+                }
+
+                container.innerHTML = "";
+                for (const [nom, d] of Object.entries(stats)) {
+                    const moyenneMaitrise = (d.m / d.c).toFixed(1);
+                    const moyenneDispo = (d.d / d.c).toFixed(1);
+
+                    container.innerHTML += `
+                        <div class="prof-card">
+                            <span class="prof-name">${nom}</span>
+                            <div class="prof-stats-grid">
+                                <div class="stat-item">
+                                    <span class="stat-label">🎓 Maîtrise</span>
+                                    <span class="stat-value">${moyenneMaitrise}/5</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">🤝 Disponibilité</span>
+                                    <span class="stat-value">${moyenneDispo}/5</span>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.75em; color: #999; margin-top: 10px;">
+                                Basé sur ${d.c} évaluation(s)
+                            </div>
+                        </div>`;
+                }
+            } catch (error) {
+                console.error("Erreur stats profs:", error);
+                document.getElementById('stats-profs-list').innerHTML = "Erreur de chargement.";
+            }
+        }
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            if (
+                e.key === 'F12' || 
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                (e.ctrlKey && e.key === 'u') ||
+                (e.ctrlKey && e.key === 's')
+            ) {
+                e.preventDefault();
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                return false;
+            }
+        });
+
+                // --- INITIALISATION ---
+                chargerGestionPaiements();
+                // ... (vos autres fonctions chargerStatistiquesProfs etc restent ici)
+    </script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

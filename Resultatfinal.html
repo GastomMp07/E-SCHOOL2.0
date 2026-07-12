@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilan Annuel - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%) no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Conteneur principal adapté aux écrans */
+        .main-content {
+            padding: 80px 15px 40px; /* Espace pour le header */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Style Papier Bulletin */
+        .bulletin-papier {
+            background: white;
+            padding: 20px;
+            width: 100%;
+            max-width: 900px; /* Largeur max sur PC */
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            color: #333;
+            overflow-x: auto; /* Scroll horizontal sur petit mobile si tableau trop large */
+            margin: 0 auto;
+        }
+
+        .bulletin-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #cc0000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .ecole-infos h3 { margin: 0; color: #cc0000; font-size: 1.4em; }
+        .ecole-infos p { margin: 5px 0; font-weight: bold; }
+
+        .eleve-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Tableau Responsive */
+        .table-bulletin {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px; /* Force une largeur minimale pour éviter le chevauchement des chiffres */
+        }
+
+        .table-bulletin th, .table-bulletin td {
+            border: 1px solid #ccc;
+            padding: 10px 5px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        .table-bulletin th { background: #f2f2f2; font-weight: bold; }
+        .matiere-nom {
+            position: sticky;
+            left: 0;
+            background: #f9f9f9; /* Obligatoire pour cacher ce qui passe dessous */
+            z-index: 1;
+            border-right: 2px solid #cc0000 !important;
+            text-align: left !important;
+            font-weight: bold;
+            min-width: 120px;
+            padding-left: 10px !important;
+        }
+
+        /* On s'assure que le header aussi reste fixé si besoin */
+        .table-bulletin thead th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 2;
+            background: #f2f2f2;
+        }
+        .bold { font-weight: bold; background: #fff0f0; }
+
+        /* Footer et Pourcentage */
+        .bulletin-footer {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-stats {
+            flex: 1;
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .mention {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 25px;
+            background: #cc0000;
+            color: white;
+            font-weight: bold;
+            border-radius: 50px;
+            font-size: 1.1em;
+        }
+
+        div[style*="overflow-x: auto"] {
+            -webkit-overflow-scrolling: touch; /* Rend le défilement fluide sur iPhone */
+            border-radius: 8px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            .bulletin-header { flex-direction: column; text-align: center; }
+            .bulletin-papier { padding: 15px; }
+            .header-logo { height: 50px; }
+            .ecole-infos h3 { font-size: 1.1em; }
+            .bulletin-footer { flex-direction: column; text-align: center; }
+            .footer-stats { text-align: center; }
+        }
+
+        @media screen and (max-width: 600px) {
+            .table-bulletin th, .table-bulletin td {
+                padding: 4px 2px; /* Espacement réduit */
+                font-size: 0.75em; /* Texte plus petit */
+            }
+
+            .matiere-nom {
+                min-width: 80px; /* Empêche le nom de la matière d'être trop écrasé */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+    <div class="header-left">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+    </div>
+
+    <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+</div>
+
+    <div id="sidebar" class="sidebar">
+    <h2>Menu</h2>
+    <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+</div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+
+    <div class="main-content">
+        <div id="liste-notes">
+            <p style="color: white; text-align: center;">Chargement de votre bilan annuel...</p>
+        </div>
+    </div>
+
+<script type="module">
+    import { auth, db } from "./auth.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    function normNom(s) {
+        return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+    }
+
+    async function lireProfilFusionne(uid) {
+        const snapUsers = await getDoc(doc(db, "users", uid));
+        const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
+        const u = snapUsers.exists() ? snapUsers.data() : {};
+        const v = snapUtils.exists() ? snapUtils.data() : {};
+        return { 
+            ok: snapUsers.exists() || snapUtils.exists(), 
+            maClasse: u.classe || v.classe || "Non définie", 
+            monNomBrut: u.nom || v.nom || "Utilisateur"
+        };
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUid = urlParams.get('uid');
+    const targetClasse = urlParams.get('classe');
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "login.html"; return; }
+        const container = document.getElementById('liste-notes');
+
+        try {
+            // Vérification du rôle admin pour accéder à cette page
+            const snapAdmin = await getDoc(doc(db, "users", user.uid));
+            const roleData = snapAdmin.exists() ? snapAdmin.data().role : "";
+            const role = String(roleData).toLowerCase();
+            const isAdmin = role === "admin" || role.includes("direction");
+
+            if (!isAdmin) {
+                container.innerHTML = "<p style='color: white; text-align: center;'>Accès restreint à la direction.</p>";
+                return;
+            }
+
+            if (!targetUid || !targetClasse) {
+                container.innerHTML = "<p style='color: white; text-align: center;'>Veuillez sélectionner un élève via le panel de gestion.</p>";
+                return;
+            }
+
+            const profil = await lireProfilFusionne(targetUid);
+            const monNomCible = normNom(profil.monNomBrut);
+            const maClasse = targetClasse;
+
+            // 1. Récupérer les notes
+            const q = query(collection(db, "notes"), where("classe", "==", maClasse));
+            const querySnapshot = await getDocs(q);
+            
+            const toutesNotes = [];
+            const totauxTousEleves = {}; // Pour calculer le classement de la classe
+
+            querySnapshot.forEach(snap => {
+                const data = snap.data();
+                const nomEnBase = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
+                
+                // On cumule les points de chaque élève de la classe pour établir le rang
+                if (nomEnBase) {
+                    totauxTousEleves[nomEnBase] = (totauxTousEleves[nomEnBase] || 0) + (parseFloat(data.note) || 0);
+                }
+
+                if (nomEnBase === monNomCible && monNomCible !== "") {
+                    toutesNotes.push(data);
+                }
+            });
+
+            // Calcul du rang/place au sein de la classe
+            const listeClassement = Object.entries(totauxTousEleves).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+            const maPlace = listeClassement.indexOf(monNomCible) + 1;
+            const totalEleves = listeClassement.length;
+
+            // 2. Préparer le regroupement (Même si vide)
+            const bulletinComplet = {};
+            
+            // On peut ajouter ici des matières par défaut si on veut que le tableau ait des lignes d'office
+            // Sinon, on remplit avec les notes trouvées
+            toutesNotes.forEach(n => {
+                const matNom = n.matiere || "Sans nom";
+                if (!bulletinComplet[matNom]) {
+                    bulletinComplet[matNom] = {
+                        "1ère Période": "-", "2ème Période": "-", "Examen 1er Semestre": "-",
+                        "3ème Période": "-", "4ème Période": "-", "Examen 2ème Semestre": "-",
+                        max: parseFloat(n.max || 20) 
+                    };
+                }
+                bulletinComplet[matNom][n.periode] = parseFloat(n.note);
+            });
+
+            // 3. Générer les lignes (Rows)
+            let grandTotalObtenu = 0;
+            let grandTotalMaxPossible = 0;
+            let rowsHtml = "";
+
+            if (Object.keys(bulletinComplet).length === 0) {
+                rowsHtml = `<tr><td colspan="9" style="text-align:center; padding:30px; color:gray;">Aucune note n'a encore été saisie pour votre profil.</td></tr>`;
+            } else {
+                for (const [matiere, scores] of Object.entries(bulletinComplet)) {
+                    const p1 = scores["1ère Période"] === "-" ? 0 : scores["1ère Période"];
+                    const p2 = scores["2ème Période"] === "-" ? 0 : scores["2ème Période"];
+                    const e1 = scores["Examen 1er Semestre"] === "-" ? 0 : scores["Examen 1er Semestre"];
+                    
+                    const totalS1 = p1 + p2 + e1;
+                    
+                    // Calcul cumulatif
+                    ["1ère Période", "2ème Période", "Examen 1er Semestre", "3ème Période", "4ème Période", "Examen 2ème Semestre"].forEach(per => {
+                        if (scores[per] !== "-") {
+                            grandTotalObtenu += scores[per];
+                            grandTotalMaxPossible += scores.max;
+                        }
+                    });
+
+                    rowsHtml += `
+                        <tr>
+                            <td class="matiere-nom">${matiere}</td>
+                            <td>${scores["1ère Période"]}</td><td>${scores["2ème Période"]}</td><td>${scores["Examen 1er Semestre"]}</td>
+                            <td class="bold">${totalS1}</td>
+                            <td>${scores["3ème Période"]}</td><td>${scores["4ème Période"]}</td><td>${scores["Examen 2ème Semestre"]}</td>
+                            <td class="bold">-</td>
+                        </tr>`;
+                }
+            }
+
+            const pourcentageActuel = grandTotalMaxPossible > 0 ? ((grandTotalObtenu / grandTotalMaxPossible) * 100).toFixed(1) : 0;
+
+            // 4. Affichage final du tableau (TOUJOURS EXÉCUTÉ)
+            container.innerHTML = `
+                <div class="bulletin-papier animate__animated animate__fadeIn">
+                    <div class="bulletin-header">
+                        <img src="images/image copy.png" style="height:60px;">
+                        <div class="ecole-infos">
+                            <h3>CS MAXEL</h3>
+                            <p>Année Scolaire 2025-2026</p>
+                            <h4>BILAN ANNUEL ÉVOLUTIF</h4>
+                        </div>
+                    </div>
+
+                    <div class="eleve-details">
+                        <div><strong>ÉLÈVE :</strong> ${profil.monNomBrut.toUpperCase()}</div>
+                        <div><strong>CLASSE :</strong> ${maClasse}</div>
+                    </div>
+
+                    <div style="overflow-x: auto;">
+                        <table class="table-bulletin">
+                            <thead>
+                                <tr>
+                                    <th rowspan="2">MATIÈRES</th>
+                                    <th colspan="4">1er SEMESTRE</th>
+                                    <th colspan="4">2ème SEMESTRE</th>
+                                </tr>
+                                <tr>
+                                    <th>P1</th><th>P2</th><th>Ex1</th><th>Total</th>
+                                    <th>P3</th><th>P4</th><th>Ex2</th><th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+
+                    <div class="bulletin-footer">
+                        <div class="footer-stats">
+                            <p style="margin: 5px 0; font-size: 1.1em; color: #1e3a8a;"><strong>PLACE : ${maPlace > 0 ? maPlace + (maPlace === 1 ? 'ère' : 'ème') : '-'} sur ${totalEleves}</strong></p>
+                            <p style="margin: 5px 0;">Points cumulés : <strong>${grandTotalObtenu} / ${grandTotalMaxPossible}</strong></p>
+                            <!-- En bas se trouve l'endroit où j'ai coder le pourcentage -->
+                            <p style="margin: 5px 0; font-size: 1.3em; color: #cc0000;">Pourcentage Actuel : <strong>${pourcentageActuel}%</strong></p>
+                        </div>
+                        <div style="font-style: italic; color: #666; font-size: 0.8em;">Document généré pour supervision direction</div>
+                    </div>
+                </div>`;
+
+        } catch (error) {
+            console.error("Erreur:", error);
+            container.innerHTML = "<p style='color:white; text-align:center;'>Erreur de chargement des données.</p>";
+        }
+    });
+    // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+</script>
+<script>
+        // FONCTION POUR OUVRIR / FERMER LE MENU
+        function toggleMenu() {
+            document.getElementById("sidebar").classList.toggle("active");
+            document.getElementById("overlay").classList.toggle("active");
+        }
+    </script>
+    
+    <script type="module" src="app.js"></script>
+</body>
+</html>

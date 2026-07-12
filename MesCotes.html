@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Cotes - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%) no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: block;
+        }
+        .welcome-card {
+            max-width: 1000px; 
+            width: 95%;
+            margin: 100px auto 40px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+        }
+        .tabs-container {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #eee;
+        }
+        .tab-btn {
+            padding: 10px 18px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 25px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-weight: bold;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            background: #cc0000;
+            color: white;
+            box-shadow: 0 4px 10px rgba(204, 0, 0, 0.3);
+        }
+        /* Style spécial pour les boutons de synthèse */
+        .tab-btn.btn-synthese {
+            background: #333;
+            color: #fff;
+        }
+        .lock-message { text-align: center; padding: 40px 20px; }
+        .btn-action {
+            display: inline-block;
+            background: #cc0000; color: white;
+            padding: 12px 25px; border-radius: 30px;
+            text-decoration: none; font-weight: bold; margin-top: 20px;
+        }
+        .lock-icon { font-size: 50px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+    <div class="header-left">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+    </div>
+
+    <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+</div>
+
+    <div id="sidebar" class="sidebar">
+    <h2>Menu</h2>
+    <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+</div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>    
+
+    <div class="main-content">
+        <div class="welcome-card">
+            <h2>📊 Mes Bulletins & Résultats</h2>
+
+            <div id="content-area">
+                <div class="tabs-container" id="tabs-section" style="display: none;">
+                    <button class="tab-btn active" onclick="changerPeriode('1ère Période', this)">1ère Période</button>
+                    <button class="tab-btn" onclick="changerPeriode('2ème Période', this)">2ème Période</button>
+                    <button class="tab-btn" onclick="changerPeriode('Examen 1er Semestre', this)">Examen 1er Sem</button>
+                    
+                    <button class="tab-btn btn-synthese" onclick="changerPeriode('SYNTHESE_S1', this)">📊 Total S1</button>
+                    
+                    <button class="tab-btn" onclick="changerPeriode('3ème Période', this)">3ème Période</button>
+                    <button class="tab-btn" onclick="changerPeriode('4ème Période', this)">4ème Période</button>
+                    <button class="tab-btn" onclick="changerPeriode('Examen 2ème Semestre', this)">Examen 2ème Sem</button>
+                    
+                    <button class="tab-btn btn-synthese" onclick="changerPeriode('SYNTHESE_S2', this)">📊 Total S2</button>
+                </div>
+
+                <div id="liste-notes">Chargement de vos notes...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+    import { auth, db } from "./auth.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    let toutesMesNotes = [];
+    let periodeSelectionnee = "1ère Période";
+
+    function normNom(s) {
+        return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+    }
+
+    function premiereValeurUtile(...candidats) {
+        for (const x of candidats) {
+            if (x == null) continue;
+            const s = String(x).trim();
+            if (s !== "") return s;
+        }
+        return "";
+    }
+
+    window.changerPeriode = (periode, btn) => {
+        periodeSelectionnee = periode;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        afficherNotesFiltrees();
+    };
+
+    async function obtenirNbCoursAttendus(maClasse) {
+        try {
+            const q = query(collection(db, "horaires"), where("classe", "==", maClasse));
+            const snap = await getDocs(q);
+            const matieresUniques = new Set();
+            snap.forEach(doc => {
+                const cours = doc.data().matiere;
+                if (cours) matieresUniques.add(cours.trim());
+            });
+            return matieresUniques.size;
+        } catch (e) { return 0; }
+    }
+
+    async function afficherNotesFiltrees() {
+        const container = document.getElementById('liste-notes');
+        const user = auth.currentUser;
+        if (!user) return;
+
+        const profil = await lireProfilFusionne(user.uid);
+        
+        // --- LOGIQUE DE FILTRAGE PAR PÉRIODE OU SEMESTRE ---
+        let notesAffichees = [];
+        let titreBulletin = periodeSelectionnee;
+        let labelMax = "MAX";
+
+        if (periodeSelectionnee === "SYNTHESE_S1") {
+            const periodesS1 = ["1ère Période", "2ème Période", "Examen 1er Semestre"];
+            notesAffichees = toutesMesNotes.filter(n => periodesS1.includes(n.periode));
+            titreBulletin = "SYNTHÈSE DU PREMIER SEMESTRE";
+            labelMax = "MAX S1";
+        } else if (periodeSelectionnee === "SYNTHESE_S2") {
+            const periodesS2 = ["3ème Période", "4ème Période", "Examen 2ème Semestre"];
+            notesAffichees = toutesMesNotes.filter(n => periodesS2.includes(n.periode));
+            titreBulletin = "SYNTHÈSE DU SECOND SEMESTRE";
+            labelMax = "MAX S2";
+        } else {
+            notesAffichees = toutesMesNotes.filter(n => n.periode === periodeSelectionnee);
+            titreBulletin = "BULLETIN : " + periodeSelectionnee.toUpperCase();
+        }
+
+        if (notesAffichees.length === 0) {
+            container.innerHTML = "<p style='text-align:center; padding:20px;'>Aucune note trouvée pour cette sélection.</p>";
+            return;
+        }
+
+        // --- CALCUL DU RANG (PLACE) ---
+        // Pour les synthèses, on calcule sur le total des périodes concernées
+        const totauxEleves = {};
+        const qClasse = query(collection(db, "notes"), where("classe", "==", profil.maClasse));
+        const snapClasse = await getDocs(qClasse);
+        
+        snapClasse.forEach(doc => {
+            const d = doc.data();
+            const nom = normNom(d.nomEleveNorm || d.nomEleve);
+            
+            let match = false;
+            if (periodeSelectionnee === "SYNTHESE_S1") match = ["1ère Période", "2ème Période", "Examen 1er Semestre"].includes(d.periode);
+            else if (periodeSelectionnee === "SYNTHESE_S2") match = ["3ème Période", "4ème Période", "Examen 2ème Semestre"].includes(d.periode);
+            else match = (d.periode === periodeSelectionnee);
+
+            if (match) {
+                totauxEleves[nom] = (totauxEleves[nom] || 0) + (parseFloat(d.note) || 0);
+            }
+        });
+
+        const classements = Object.entries(totauxEleves).sort((a, b) => b[1] - a[1]).map(entry => entry[0]);
+        const maPlace = classements.indexOf(profil.monNomNorm) + 1;
+
+        // --- REGROUPEMENT PAR MATIÈRE (Utile pour les synthèses) ---
+        const matieresRegroupees = {};
+        notesAffichees.forEach(n => {
+            if (!matieresRegroupees[n.matiere]) {
+                matieresRegroupees[n.matiere] = { obtenu: 0, max: 0 };
+            }
+            matieresRegroupees[n.matiere].obtenu += parseFloat(n.note) || 0;
+            matieresRegroupees[n.matiere].max += parseFloat(n.max || 20);
+        });
+
+        // --- GÉNÉRATION HTML ---
+        let totalObtenu = 0;
+        let totalMaxGeneral = 0;
+
+        let html = `
+            <div class="bulletin-final animate__animated animate__fadeIn" style="background:white; padding:20px; border-radius:10px; border:2px solid #cc0000; color:#333;">
+                
+                <div style="text-align:center; border-bottom:2px solid #eee; padding-bottom:15px; margin-bottom:20px;">
+                    <img src="images/logo.png" alt="Logo" style="height:60px; margin-bottom:10px;">
+                    <h2 style="margin:0; color:#000;">CS MAXEL</h2>
+                    <p style="margin:5px 0; font-weight:bold;">Année Scolaire 2025-2026</p>
+                    <h3 style="margin:10px 0; color:#cc0000; text-decoration:underline;">${titreBulletin}</h3>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-weight:bold; font-size:0.9em;">
+                    <span>NOM : ${profil.monNomNorm.toUpperCase()}</span>
+                    <span>CLASSE : ${profil.maClasse}</span>
+                </div>
+
+                <table style="width:100%; border-collapse:collapse; font-size:0.9em;">
+                    <thead>
+                        <tr style="background:#f4f4f4;">
+                            <th style="padding:10px; border:1px solid #ddd; text-align:left;">BRANCHE</th>
+                            <th style="padding:10px; border:1px solid #ddd; text-align:center;">OBTENU</th>
+                            <th style="padding:10px; border:1px solid #ddd; text-align:center;">${labelMax}</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        for (const [nomMatiere, data] of Object.entries(matieresRegroupees)) {
+            totalObtenu += data.obtenu;
+            totalMaxGeneral += data.max;
+
+            html += `
+                <tr>
+                    <td style="padding:8px; border:1px solid #ddd; font-weight:bold;">${nomMatiere.toUpperCase()}</td>
+                    <td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; ${data.obtenu < (data.max/2) ? 'color:red;' : ''}">${data.obtenu}</td>
+                    <td style="padding:8px; border:1px solid #ddd; text-align:center; color:#666;">/ ${data.max}</td>
+                </tr>`;
+        }
+
+        const pct = totalMaxGeneral > 0 ? ((totalObtenu / totalMaxGeneral) * 100).toFixed(1) : 0;
+
+        html += `
+                    </tbody>
+                </table>
+
+                <div style="margin-top:20px; padding:15px; background:#f9f9f9; border-radius:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid #ddd;">
+                    <div>
+                        <div style="font-size:1.1em; color: BLACK; font-weight:bold;">PLACE : ${maPlace > 0 ? maPlace : '-'} /${classements.length}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <p style="margin:2px 0;"><strong>TOTAL :</strong> ${totalObtenu} / ${totalMaxGeneral}</p>
+                        <p style="margin:2px 0; font-size:1.3em; color:black;"><strong>POURC :</strong> ${pct}%</p>
+                    </div>
+                </div>
+            </div>`;
+        
+        container.innerHTML = html;
+    }
+
+    async function verifierEvaluations(uid, maClasse) {
+        const qMatieres = query(collection(db, "notes"), where("classe", "==", maClasse));
+        const snapMat = await getDocs(qMatieres);
+        const matieresDistinctes = new Set();
+        snapMat.forEach(d => matieresDistinctes.add(d.data().matiere));
+        if (matieresDistinctes.size === 0) return true;
+        const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", uid));
+        const snapEval = await getDocs(qEvals);
+        return snapEval.size >= matieresDistinctes.size;
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) { window.location.href = "login.html"; return; }
+        const container = document.getElementById('liste-notes');
+        const tabs = document.getElementById('tabs-section');
+
+        try {
+            const profil = await lireProfilFusionne(user.uid);
+            if (!profil.ok || !profil.maClasse) {
+                container.innerHTML = "Profil incomplet.";
+                return;
+            }
+
+            const evaluationsTerminees = await verifierEvaluations(user.uid, profil.maClasse);
+            if (!evaluationsTerminees) {
+                container.innerHTML = `<div class="lock-message"><div class="lock-icon">🔒</div><h3>Accès restreint</h3><p>Évaluez vos professeurs pour voir vos points.</p><a href="CoterE.html" class="btn-action">Évaluer</a></div>`;
+                return;
+            }
+
+            tabs.style.display = "flex";
+            const q = query(collection(db, "notes"), where("classe", "==", profil.maClasse));
+            const querySnapshot = await getDocs(q);
+
+            toutesMesNotes = [];
+            querySnapshot.forEach((snap) => {
+                const data = snap.data();
+                if (normNom(data.nomEleveNorm || data.nomEleve) === profil.monNomNorm) {
+                    toutesMesNotes.push(data);
+                }
+            });
+
+            await afficherNotesFiltrees();
+        } catch (error) {
+            container.innerHTML = "Erreur de chargement.";
+        }
+    });
+
+    async function lireProfilFusionne(uid) {
+        try {
+            const snapUsers = await getDoc(doc(db, "users", uid));
+            const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
+            const u = snapUsers.exists() ? snapUsers.data() : {};
+            const v = snapUtils.exists() ? snapUtils.data() : {};
+            return { 
+                ok: snapUsers.exists() || snapUtils.exists(), 
+                maClasse: premiereValeurUtile(u.classe, v.classe), 
+                monNomNorm: normNom(premiereValeurUtile(u.nom, v.nom)) 
+            };
+        } catch (e) { return { ok: false }; }
+    }
+    // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+
+</script>
+ <script>
+        // FONCTION POUR OUVRIR / FERMER LE MENU
+        function toggleMenu() {
+            document.getElementById("sidebar").classList.toggle("active");
+            document.getElementById("overlay").classList.toggle("active");
+        }
+    </script>
+    
+    <script type="module" src="app.js"></script>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

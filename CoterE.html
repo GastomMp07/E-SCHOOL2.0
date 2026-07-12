@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Évaluation - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <style>
+        /* Styles déplacés dans le head pour une meilleure conformité HTML */
+        body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%) no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: block; /* Désactive le flex qui cassait le menu */
+        }
+        .welcome-card {
+            margin-top: 120px; /* Espace suffisant pour ne pas être sous le header */
+            margin-bottom: 40px;
+        }
+        .header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; /* Pousse les groupes aux extrémités */
+    padding: 0 20px; 
+    background: #cc0000 ; 
+    color: white; 
+    height: 60px; 
+    position: fixed; 
+    width: 100%; 
+    top: 0; 
+    left: 0; 
+    z-index: 10000; 
+    box-sizing: border-box; /* Évite que le padding dépasse de l'écran */
+}
+
+/* Groupe de gauche (Menu + Titre) */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
+}
+
+/* Logo à droite */
+.header-logo {
+    height: 56px; /* Ajuste la taille selon ton image */
+    width: auto;
+}
+        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+
+        /* SIDEBAR (CORRIGÉE) */
+        .sidebar { 
+            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
+            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            transition: all 0.4s ease; z-index: 10001; 
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+        }
+        /* Classe qui fait apparaître le menu */
+        .sidebar.active { left: 0; }
+
+        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+        .sidebar a:hover { background: #cc0000 ; padding-left: 35px; }
+
+        .logout-btn { 
+            background: #ef4444; color: white; border: none; 
+            padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; 
+            width: calc(100% - 40px);
+        }
+
+        /* OVERLAY (Le fond noir quand le menu est ouvert) */
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
+            transition: 0.3s; z-index: 9999; 
+        }
+        .overlay.active { visibility: visible; opacity: 1; }
+    </style>
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+        </div>
+    
+        <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+    </div>
+    
+        <div id="sidebar" class="sidebar">
+        <h2>Menu</h2>
+       <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    </div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div class="welcome-card animate__animated animate__fadeIn">
+            <h2>Évaluation des Enseignants</h2>
+            <p>Sélectionnez un enseignant pour lui attribuer une note de performance.</p>
+            
+            <div class="data-card" style="text-align: left;">
+                <form id="form-evaluation">
+                    <label>Enseignant à évaluer :</label>
+                    <select id="prof-select" required style="width: 100%; padding: 10px; margin-bottom: 20px;">
+                        <option value="">Chargement des enseignants...</option>
+                    </select>
+            
+                    <label>Maîtrise du sujet (1 à 5) :</label>
+                    <input type="range" id="note-maitrise" min="1" max="5" value="3" style="width: 100%; margin-bottom: 20px;">
+                    
+                    <label>Disponibilité et écoute (1 à 5) :</label>
+                    <input type="range" id="note-dispo" min="1" max="5" value="3" style="width: 100%; margin-bottom: 20px;">
+            
+                    <button type="submit" class="register-btn" style="background: #cc0000; width: 100%; border: none; padding: 12px; color: white; cursor: pointer; border-radius: 6px;">
+                        Envoyer l'évaluation
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+    <script type="module">
+        import { auth, db } from "./auth.js";
+        import { collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const profSelect = document.getElementById('prof-select');
+        const formEval = document.getElementById('form-evaluation');
+
+        // 1. Charger dynamiquement tous les enseignants de l'école
+        async function chargerEnseignants() {
+            try {
+                const q = query(collection(db, "users"), where("role", "==", "enseignant"));
+                const querySnapshot = await getDocs(q);
+                
+                profSelect.innerHTML = '<option value="">-- Choisissez un enseignant --</option>';
+                
+                querySnapshot.forEach((doc) => {
+                    const prof = doc.data();
+                    profSelect.innerHTML += `<option value="${doc.id}">${prof.nom}</option>`;
+                });
+            } catch (error) {
+                console.error("Erreur lors du chargement des profs:", error);
+            }
+        }
+
+        // 2. Envoyer l'évaluation
+        formEval.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+
+            if (!user) {
+                alert("Vous devez être connecté.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "evaluations_profs"), {
+                    profId: profSelect.value,
+                    profNom: profSelect.options[profSelect.selectedIndex].text,
+                    eleveId: user.uid,
+                    maitrise: document.getElementById('note-maitrise').value,
+                    disponibilite: document.getElementById('note-dispo').value,
+                    date: new Date()
+                });
+
+                alert("Merci ! Votre évaluation a été enregistrée.");
+                formEval.reset();
+            } catch (error) {
+                alert("Erreur : " + error.message);
+            }
+        });
+
+        // Lancer le chargement au démarrage
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                chargerEnseignants();
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+    </script>
+
+</body>
+</html>

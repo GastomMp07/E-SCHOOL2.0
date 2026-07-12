@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faire l'Appel - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%) no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: block;
+        }
+        /* On élargit la carte spécifiquement pour le tableau des notes */
+        .welcome-card {
+            max-width: 850px; 
+            width: 80%;
+            margin-bottom: 30px;
+        }
+        /* Suppression du reste du CSS local car il est déjà dans style.css */
+        .note-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            text-align: left;
+            border-left: 5px solid #cc0000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .note-matiere {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #cc0000;
+            display: block;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .note-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-label { color: #666; font-size: 0.85em; }
+        .stat-value { font-weight: bold; color: #333; font-size: 0.95em; 
+        }
+        .register-btn{
+            background: #cc0000;
+            color: white;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+        </div>
+    
+        <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+    </div>
+    
+        <div id="sidebar" class="sidebar">
+        <h2>Menu</h2>
+       <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+    
+        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    </div>
+        <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div class="welcome-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">📝 Registre de Présence</h2>
+                <select id="select-classe-appel" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 14px;">
+                    <option value="">-- Choisir la classe --</option>
+                </select>
+            </div>
+            <div class="data-card">
+                <table style="width: 100%; text-align: left;">
+                    <thead>
+                        <tr>
+                            <th>Nom de l'élève</th>
+                            <th>Présent</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liste-appel">
+                        </tbody>
+                </table>
+                <button onclick="enregistrerAppel()" class="register-btn" style="margin-top:20px;">Valider l'appel du jour</button>
+            </div>
+        </div>
+    </div>
+    <!-- Inclusion du script principal pour gérer le menu et les rôles -->
+    <script type="module" src="app.js"></script>
+
+    <script type="module">
+        import { db, auth } from "./auth.js";
+        import { collection, query, where, getDocs, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        
+        let maClasse = "";
+        const selectClasse = document.getElementById('select-classe-appel');
+        const tbody = document.getElementById('liste-appel');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // 1. Récupérer le profil pour connaître les classes autorisées
+                const snapProf = await getDoc(doc(db, "users", user.uid));
+                if (!snapProf.exists()) return;
+                
+                const dataProf = snapProf.data();
+                let listeClasses = [];
+
+                // Si admin, on propose toutes les classes, sinon les classes du prof
+                if (dataProf.classe === "Toutes") {
+                     listeClasses = [
+                       "7emè A",
+                        "7emè B",
+                        "8emè A", 
+                        "8emè B", 
+                        "1erè SCIENCES",
+                        "1erè COMMERCIAL", 
+                        "1erè LITTERAIRE",
+                        "1erè PEDAGOGIE",
+                        "1emè ELECTRONIQUE",
+                        "1erè ELECTRICITE",
+                        "2emè SCIENCES",
+                        "2emè COMMERCIAL",
+                        "2emè LITTERAIRE",
+                        "2emè PEDAGOGIE",
+                        "2emè ELECTRONIQUE",
+                        "2emè ELECTRICITE",
+                        "3emè SCIENCES",
+                        "3emè COMMERCIAL",
+                        "3emè LITTERAIRE",
+                        "3emè PEDAGOGIE",
+                        "3emè ELECTRONIQUE",
+                        "3emè ELECTRICITE",
+                        "4emè SCIENCES",
+                        "4emè COMMERCIAL",
+                        "4emè LITTERAIRE",
+                        "4emè PEDAGOGIE",
+                        "4emè ELECTRONIQUE",
+                        "4emè ELECTRICITE"
+                    ];
+
+                } else if (Array.isArray(dataProf.classe)) {
+                    listeClasses = dataProf.classe;
+                } else {
+                    listeClasses = [dataProf.classe];
+                }
+
+                // 2. Remplir le menu déroulant
+                selectClasse.innerHTML = '<option value="">-- Sélectionner une classe --</option>';
+                listeClasses.forEach(cl => {
+                    const opt = document.createElement('option');
+                    opt.value = cl;
+                    opt.textContent = cl;
+                    selectClasse.appendChild(opt);
+                });
+
+                // Sélectionner la première classe par défaut
+                if (listeClasses.length > 0) {
+                    selectClasse.value = listeClasses[0];
+                    maClasse = listeClasses[0];
+                    chargerEleves(maClasse);
+                }
+            }
+        });
+
+        selectClasse.addEventListener('change', (e) => {
+            maClasse = e.target.value;
+            if (maClasse) chargerEleves(maClasse);
+        });
+
+        async function chargerEleves(classeCible) {
+            tbody.innerHTML = "<tr><td colspan='2'>Chargement des élèves...</td></tr>";
+            
+            // CRUCIAL : On utilise "array-contains" car le champ 'classe' de l'élève est un tableau
+            const qEleves = query(collection(db, "users"), 
+                where("role", "==", "eleve"), 
+                where("classe", "array-contains", classeCible)
+            );
+            
+            const snapEleves = await getDocs(qEleves);
+            tbody.innerHTML = "";
+            
+            if (snapEleves.empty) {
+                tbody.innerHTML = "<tr><td colspan='2'>Aucun élève trouvé pour cette classe.</td></tr>";
+                return;
+            }
+
+            snapEleves.forEach(docEleve => {
+                const eleve = docEleve.data();
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${eleve.nom}</td>
+                        <td><input type="checkbox" class="presence-check" data-nom="${eleve.nom}" checked></td>
+                    </tr>`;
+            });
+        }
+
+        window.enregistrerAppel = async () => {
+            const checks = document.querySelectorAll('.presence-check');
+            const maintenant = new Date();
+            // Format local pour l'affichage (ex: 18/04/2026)
+            const dateJour = maintenant.toLocaleDateString('fr-FR'); 
+
+        try {
+            for (let check of checks) {
+                await addDoc(collection(db, "presences"), {
+                    nomEleve: check.dataset.nom,
+                    classe: maClasse,
+                    statut: check.checked ? "Présent" : "Absent",
+                    date: dateJour, 
+                    timestamp: maintenant // Gardé pour le tri
+                });
+            }
+            alert("✅ Appel enregistré pour le " + dateJour);
+        } catch (e) {
+            alert("Erreur lors de l'enregistrement");
+        }
+    };
+    // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horaire Dynamique - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+</head>
+<body>
+
+    <style>
+        /* Styles déplacés dans le head pour une meilleure conformité HTML */
+        body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            display: flex;
+            justify-content: center; /* Centre horizontalement */
+            align-items: center;     /* Centre verticalement */
+
+        }
+        .header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; /* Pousse les groupes aux extrémités */
+    padding: 0 20px; 
+    background: #cc0000 ; 
+    color: white; 
+    height: 60px; 
+    position: fixed; 
+    width: 100%; 
+    top: 0; 
+    left: 0; 
+    z-index: 10000; 
+    box-sizing: border-box; /* Évite que le padding dépasse de l'écran */
+}
+
+/* Groupe de gauche (Menu + Titre) */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
+}
+
+/* Logo à droite */
+.header-logo {
+    height: 56px; /* Ajuste la taille selon ton image */
+    width: auto;
+}
+        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+
+        /* SIDEBAR (CORRIGÉE) */
+        .sidebar { 
+            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
+            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            transition: all 0.4s ease; z-index: 10001; 
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+        }
+        /* Classe qui fait apparaître le menu */
+        .sidebar.active { left: 0; }
+
+        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+        .sidebar a:hover { background: #cc0000 ; padding-left: 35px; }
+
+        .logout-btn { 
+            background: #ef4444; color: white; border: none; 
+            padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; 
+            width: calc(100% - 40px);
+        }
+
+        /* OVERLAY (Le fond noir quand le menu est ouvert) */
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
+            transition: 0.3s; z-index: 9999; 
+        }
+        .overlay.active { visibility: visible; opacity: 1; }
+    </style>
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+        </div>
+    
+        <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+    </div>
+    
+        <div id="sidebar" class="sidebar">
+        <h2>Menu</h2>
+     <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    </div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div class="welcome-card animate__animated animate__fadeIn">
+            <h2>📅 HORAIRE DE COURS</h2>
+            <p id="classe-display">Chargement de votre emploi du temps...</p>
+            
+            <div id="horaire-container" class="data-card">
+                </div>
+        </div>
+    </div>
+
+   <script type="module">
+    import { auth, db } from "./auth.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        const container = document.getElementById('horaire-container');
+        const displayLabel = document.getElementById('classe-display');
+
+        try {
+            // 1. Récupérer les infos de l'utilisateur (Rôle et Classe/Nom)
+            let userSnap = await getDoc(doc(db, "users", user.uid));
+            
+            if (userSnap.exists()) {
+                const userData = userSnap.data();
+                const role = userData.role; // "eleve", "professeur" ou "admin"
+                let q;
+
+                // 2. Définir la requête selon le rôle
+                if (role === "enseignant" || role === "professeur") {
+                    displayLabel.innerText = "Planning Enseignant : " + userData.nom;
+                    // Le prof voit les cours où son NOM est enregistré
+                    q = query(collection(db, "horaires"), where("professeur", "==", userData.nom));
+                } else {
+                    // L'élève (ou autre) voit l'horaire de sa CLASSE
+                    const maClasse = Array.isArray(userData.classe) ? userData.classe[0] : userData.classe;
+                    displayLabel.innerText = "Emploi du temps - Classe : " + maClasse;
+                    q = query(collection(db, "horaires"), where("classe", "==", maClasse));
+                }
+
+                const querySnapshot = await getDocs(q);
+                container.innerHTML = ""; 
+
+                if (querySnapshot.empty) {
+                    container.innerHTML = "<p style='text-align:center; padding:20px;'>Aucun cours programmé pour le moment.</p>";
+                    return;
+                }
+
+                // 3. Organiser par jour
+                const joursOrder = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+                const planning = {};
+
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (!planning[data.jour]) planning[data.jour] = [];
+                    planning[data.jour].push(data);
+                });
+
+                // 4. Affichage dynamique
+                joursOrder.forEach(jour => {
+                    if (planning[jour]) {
+                        // Trier par heure (alphabétique fonctionne souvent pour 08h, 10h...)
+                        planning[jour].sort((a, b) => a.heure.localeCompare(b.heure));
+
+                        let jourHTML = `<h3 style="color: #cc0000; margin-top: 25px; border-bottom: 2px solid #cc0000; padding-bottom: 5px;">${jour}</h3>`;
+                        
+                        planning[jour].forEach(cours => {
+                            // On adapte le sous-titre : l'élève voit le prof, le prof voit la classe
+                            const detailInfo = (role === "professeur") 
+                                ? `🏫 Classe : ${cours.classe}` 
+                                : `👨‍🏫 Enseignant : ${cours.professeur}`;
+
+                            jourHTML += `
+                                <div class="animate__animated animate__fadeInLeft" style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #cc0000;">
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <strong style="font-size: 1.1em; color: #333;">${cours.matiere}</strong>
+                                        <span style="color: #cc0000; font-weight: bold;">${cours.heure}</span>
+                                    </div>
+                                    <div style="margin-top: 5px; color: #666; font-size: 0.9em;">
+                                        ${detailInfo}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        container.innerHTML += jourHTML;
+                    }
+                });
+
+            } else {
+                alert("Profil introuvable.");
+            }
+        } catch (error) {
+            console.error("Erreur Firestore :", error);
+            container.innerHTML = "<p>Erreur de chargement des données.</p>";
+        }
+    });
+    // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+
+</script>
+ <script type="module" src="app.js"></script>
+
+</body>
+</html>

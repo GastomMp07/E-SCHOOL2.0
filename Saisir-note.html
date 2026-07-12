@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saisie des Notes - Espace Titulaire</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            margin: 0;
+            display: block;
+        }
+        .welcome-card {
+            max-width: 600px;
+            width: 90%;
+            margin: 120px auto 40px;
+        }
+        select, input {
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            font-weight: bold;
+            color: #333;
+            margin-top: 10px;
+            display: block;
+        }
+        .flex-row {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+            <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+        </div>
+        <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+    </div>
+    
+    <div id="sidebar" class="sidebar">
+        <h2>Menu</h2>
+  <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    </div>
+
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div class="welcome-card">
+            <div class="data-card" style="background: white; padding: 25px; border-radius: 15px;">
+                <h2 style="margin-top: 0; color: #cc0000;">Saisie des Notes</h2>
+                
+                <form id="form-saisie-notes" style="display: flex; flex-direction: column; gap: 15px;">
+                    
+                    <div>
+                        <label>Classe :</label>
+                        <select id="select-classe-saisie" required>
+                            <option value="">-- Sélectionner la classe --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Matière / Cours :</label>
+                        <select id="select-matiere-saisie" required>
+                            <option value="">-- Sélectionner le cours --</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Période scolaire :</label>
+                        <select id="note-periode" required>
+                            <option value="1ère Période">1ère Période</option>
+                            <option value="2ème Période">2ème Période</option>
+                            <option value="Examen 1er Semestre">Examen 1er Semestre</option>
+                            <option value="3ème Période">3ème Période</option>
+                            <option value="4ème Période">4ème Période</option>
+                            <option value="Examen 2ème Semestre">Examen 2ème Semestre</option>
+                        </select>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+
+                    <div>
+                        <label>Nom de l'élève :</label>
+                        <input type="text" id="nom-eleve" placeholder="Ex: Mpiana Kasongo" required>
+                    </div>
+
+                    <div class="flex-row">
+                        <div style="flex: 2;">
+                            <label>Note obtenue :</label>
+                            <input type="number" id="note-valeur" min="0" step="0.5" placeholder="Ex: 15" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Sur (Total) :</label>
+                            <input type="number" id="note-max" min="1" placeholder="Ex: 50" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" style="background: #cc0000; color: white; border: none; padding: 15px; cursor: pointer; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">
+                        💾 Enregistrer la note
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div><script type="module">
+        import { db, auth } from "./auth.js";
+        import { collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        let classeDuProf = "";
+
+        // Fonction technique pour harmoniser les noms (crucial pour ton exposé)
+        function normNom(s) {
+            return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+        }
+
+        // --- CHARGEMENT DES DONNÉES DU PROF ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // On cherche dans les deux collections possibles
+                let snap = await getDoc(doc(db, "users", user.uid));
+                if (!snap.exists()) {
+                    snap = await getDoc(doc(db, "utilisateurs", user.uid));
+                }
+
+                if (snap.exists()) {
+                    const userData = snap.data();
+                    const classeSelect = document.getElementById('select-classe-saisie');
+                    const matiereSelect = document.getElementById('select-matiere-saisie');
+
+                    // On vide les sélections avant de remplir (évite les doublons)
+                    classeSelect.innerHTML = '<option value="">-- Sélectionner la classe --</option>';
+                    matiereSelect.innerHTML = '<option value="">-- Sélectionner le cours --</option>';
+
+                    if (Array.isArray(userData.classe)) {
+                        userData.classe.forEach(cl => {
+                            classeSelect.innerHTML += `<option value="${cl}">${cl}</option>`;
+                        });
+                    }
+                    if (Array.isArray(userData.matieres)) {
+                        userData.matieres.forEach(mat => {
+                            const nomNettoye = mat.trim(); // Enlever les espaces inutiles
+                            if(nomNettoye) matiereSelect.innerHTML += `<option value="${nomNettoye}">${nomNettoye}</option>`;
+                        });
+                    }
+                }
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // --- ENREGISTREMENT ---
+        const form = document.getElementById('form-saisie-notes');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const noteObtenue = parseFloat(document.getElementById('note-valeur').value);
+            const noteMaximale = parseFloat(document.getElementById('note-max').value);
+
+            if (noteObtenue > noteMaximale) {
+                alert("❌ La note ne peut pas être supérieure au total.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "notes"), {
+                    classe: document.getElementById('select-classe-saisie').value,
+                    matiere: document.getElementById('select-matiere-saisie').value,
+                    periode: document.getElementById('note-periode').value,
+                    nomEleve: document.getElementById('nom-eleve').value,
+                    nomEleveNorm: normNom(document.getElementById('nom-eleve').value),
+                    note: noteObtenue,
+                    max: noteMaximale,
+                    dateSaisie: new Date(),
+                    profId: auth.currentUser.uid
+                });
+
+                alert("✅ Note enregistrée !");
+                document.getElementById('nom-eleve').value = "";
+                document.getElementById('note-valeur').value = "";
+                document.getElementById('nom-eleve').focus();
+            } catch (error) {
+                alert("Erreur lors de l'enregistrement.");
+            }
+        });
+
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+    </script>
+
+    <script type="module" src="app.js"></script>
+
+</body>
+</html>

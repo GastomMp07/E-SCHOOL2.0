@@ -1,0 +1,284 @@
+/* --- 1. BASES ET POLICES --- */
+* {
+    /* Définit le modèle de boîte : le padding et les bordures sont inclus dans la largeur/hauteur totale */
+    box-sizing: border-box; 
+}
+
+body {
+    /* Police par défaut fluide et dégradé de fond sombre/rouge pour la charte graphique */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+    width: 100%;
+    height: 100vh;
+    
+    /* CES 4 LIGNES FONT LE CENTRAGE */
+    display: flex;
+    justify-content: center; /* Centre horizontalement */
+    align-items: center;     /* Centre verticalement */
+    min-height: 100vh;       /* Prend toute la hauteur de l'écran */
+    
+    margin: 0;
+}
+
+.container {
+    /* Conteneur principal flexible limitant la largeur sur les grands écrans */
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.card {
+    /* Design des cartes blanches avec ombre portée (effet de profondeur) */
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+    width: 100%; /* Pour que la carte utilise la largeur du container */
+}
+
+/* --- 2. STYLE DES PAGES DE CONNEXION / INSCRIPTION --- */
+/* Pour centrer le formulaire au milieu de l'écran */
+.auth-page {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+input, select {
+    /* Style uniforme pour tous les champs de saisie et listes déroulantes */
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+button:hover {
+    /* Effet visuel au passage de la souris sur les boutons */
+    background-color: #cc0000;
+}
+
+.register-btn {
+    /* Couleur spécifique pour le bouton d'inscription */
+    background-color: #cc0000;
+}
+
+.register-btn:hover {
+    background-color: #b30000; /* Version plus sombre du rouge au survol */
+}
+
+/* --- 3. STYLE DU TABLEAU DE BORD (ACCUEIL & AUTRES) --- */
+  body { 
+    margin: 0; 
+    font-family: 'Segoe UI', Arial, sans-serif; 
+    background: #f4f7fe; 
+    overflow-x: hidden; /* Empêche le défilement horizontal parasite */
+    display: block; /* Force l'affichage normal pour annuler le centrage du login */
+    height: auto; 
+  }
+
+        /* HEADER RÉAJUSTÉ */
+    .header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; /* Pousse les groupes aux extrémités */
+    padding: 0 20px; 
+    background: #cc0000 ; 
+    color: white; 
+    height: 60px; 
+    position: fixed; 
+    width: 100%; 
+    top: 0; 
+    left: 0; 
+    z-index: 10000; 
+    box-sizing: border-box; /* Évite que le padding dépasse de l'écran */
+}
+
+/* Groupe de gauche (Menu + Titre) */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
+}
+
+/* Logo de l'école positionné à droite dans le header */
+.header-logo {
+    height: 56px; /* Ajuste la taille selon ton image */
+    width: auto;
+}
+        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+
+        /* SIDEBAR (CORRIGÉE) */
+        .sidebar { 
+            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
+            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            transition: all 0.4s ease; z-index: 10001; 
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+        }
+        /* Classe qui fait apparaître le menu */
+        .sidebar.active { left: 0; }
+
+        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+        .sidebar a:hover { background: #cc0000 ; padding-left: 35px; }
+
+        .logout-btn { 
+            background: #ef4444; color: white; border: none; 
+            padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; 
+            width: calc(100% - 40px); /* Soustrait les 20px de marge de chaque côté */
+        }
+
+        /* OVERLAY (Le fond noir quand le menu est ouvert) */
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
+            transition: 0.3s; z-index: 9999; 
+        }
+        .overlay.active { visibility: visible; opacity: 1; }
+
+        /* CONTENU PRINCIPAL */
+        .main-content { 
+            margin-top: 120px; 
+            padding: 20px; 
+            text-align: center; 
+            display: flex; flex-direction: column; align-items: center; 
+            width: 100%;
+        }
+        .welcome-card { 
+            background: white; padding: 30px; border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 640px; width: 90%; 
+            text-align: center;
+        }
+
+        /* IMAGE ET CERCLE DÉCO — logo centré et plus grand */
+        .Img {
+            display: block;
+            width: min(100%, 420px);
+            max-width: 100%;
+            height: auto;
+            margin: 28px auto 0;
+            border-radius: 15px;
+            object-fit: contain;
+        }
+        .circle { 
+            position: fixed; bottom: -100px; right: -100px; 
+            width: 300px; height: 300px; background: #1e3a8a; 
+            border-radius: 50%; z-index: -1; opacity: 0.1; 
+            display: none;
+        }.content {
+    margin-top: 80px;
+    margin-top: 120px;
+    padding: 40px;
+    position: relative;
+    z-index: 1;
+}
+
+.content h1 {
+    font-size: 42px;
+    color: #1e3a8a;
+}
+
+.jeno {
+    color: #cc0000; /* Changé en rouge pour correspondre à votre charte graphique */
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+/* Éléments de décoration */
+.circle {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background: #1e3a8a;
+    clip-path: circle(500px at right 800px);
+    z-index: -1;
+}
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.3s;
+    z-index: 998;
+}
+
+.overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.logout-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 12px;
+    margin: auto 20px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    width: calc(100% - 40px); /* Soustrait les 20px de marge de chaque côté */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+th {
+    color:#000000;
+    background: #f8fafc;
+}
+
+/* Espacement entre les cartes de données */
+.data-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow-x: auto; /* Permet au tableau de défiler sur mobile sans pousser la carte */
+    
+    /* Espacement augmenté pour éviter que les cards ne se collent */
+    margin-bottom: 80px; 
+    
+    border: 1px solid #f0f0f0;
+    transition: transform 0.2s ease-in-out; /* Optionnel : petit effet au survol */
+}
+
+/* On peut aussi espacer les titres à l'intérieur */
+.data-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #cc0000;
+    border-bottom: 2px solid #f4f7fe;
+    padding-bottom: 10px;
+}
+
+footer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+}

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-SCHOOL - Inscription</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+        .register-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            margin: 20px 0;
+        }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input, select {
+            width: 100%; padding: 10px;
+            border: 2px solid #e2e8f0; border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .register-btn {
+            width: 100%; padding: 12px;
+            background-color: #cc0000; color: white;
+            border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="register-container animate__animated animate__fadeInDown">
+        <img src="images/logo.png" alt="Logo" style="max-width: 100px; margin-bottom: 10px;">
+        <h2>Inscription à E-SCHOOL</h2>
+        <p style="color: #666; font-size: 14px;">Créez votre compte sécurisé</p>
+
+        <form id="register-form">
+            <div class="form-group">
+                <label>Nom complet</label>
+                <input type="text" id="reg-nom" placeholder="Ex: Mpiana Kasongo" required>
+            </div>
+
+            <div class="form-group">
+                <label>Vous êtes :</label>
+                <select id="reg-role" required>
+                    <option value="eleve">Élève</option>
+                    <option value="enseignant">Enseignant Titulaire</option>
+                    <option value="admin">Direction / Administration</option>
+                </select>
+            </div>
+            
+            <div class="form-group" id="admin-code-group" style="display: none;">
+                <label id="label-code" style="color: #cc0000; font-weight: bold;">Code d'Autorisation</label>
+                <input type="password" id="reg-admin-code" placeholder="Entrez le code secret">
+            </div>
+            
+            <div class="form-group" id="group-classe">
+                <label id="label-classe">Classe :</label>
+                <div id="classe-checkbox-container" style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto; background: #fff;">
+                </div>
+            </div>
+
+            <div class="form-group" id="group-matiere" style="display:none;">
+                <label>Matières enseignées</label>
+                <input type="text" id="reg-matiere" placeholder="Ex: Math, Physique">
+            </div>
+
+            <div class="form-group">
+                <label>Email scolaire</label>
+                <input type="email" id="reg-email" placeholder="ex: nom@gmail.com" required>
+            </div>
+
+            <div class="form-group">
+                <label>Mot de passe</label>
+                <input type="password" id="reg-password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="register-btn">S'inscrire</button>
+        </form>
+
+        <div style="margin-top: 20px; font-size: 13px;">
+            Vous avez déjà un compte ? <a href="login.html" style="color: #cc0000; font-weight: bold;">Se connecter</a>
+        </div>
+    </div>
+
+<script type="module">
+    import { auth, db } from "./auth.js";
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // CODES SECRETS
+    const CODES = {
+        enseignant: "1234",
+        admin: "0000" // Le code spécifique pour la direction
+    };
+
+    const regRole = document.getElementById("reg-role");
+    const groupCode = document.getElementById("admin-code-group");
+    const groupMatiere = document.getElementById("group-matiere");
+    const groupClasse = document.getElementById("group-classe");
+    const containerClasses = document.getElementById('classe-checkbox-container');
+    const labelCode = document.getElementById("label-code");
+
+    const listeClasses = [
+        "7emè A",
+        "7emè B",
+        "8emè A", 
+        "8emè B", 
+        "1erè SCIENCES",
+        "1erè COMMERCIAL", 
+        "1erè LITTERAIRE",
+        "1erè PEDAGOGIE",
+        "1emè ELECTRONIQUE",
+        "1erè ELECTRICITE",
+        "2emè SCIENCES",
+        "2emè COMMERCIAL",
+        "2emè LITTERAIRE",
+        "2emè PEDAGOGIE",
+        "2emè ELECTRONIQUE",
+        "2emè ELECTRICITE",
+        "3emè SCIENCES",
+        "3emè COMMERCIAL",
+        "3emè LITTERAIRE",
+        "3emè PEDAGOGIE",
+        "3emè ELECTRONIQUE",
+        "3emè ELECTRICITE",
+        "4emè SCIENCES",
+        "4emè COMMERCIAL",
+        "4emè LITTERAIRE",
+        "4emè PEDAGOGIE",
+        "4emè ELECTRONIQUE",
+        "4emè ELECTRICITE"
+    ];
+
+    // Génération des classes
+    listeClasses.forEach(cl => {
+        containerClasses.innerHTML += `
+            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                <input type="checkbox" class="classe-check" value="${cl}" id="check-${cl}" style="width: 18px; height: 18px; margin-right: 10px;">
+                <label for="check-${cl}" style="margin: 0; font-weight: normal; color: #333;">${cl}</label>
+            </div>`;
+    });
+
+    const allCheckboxes = document.querySelectorAll('.classe-check');
+
+    // Gestion du rôle
+    regRole.addEventListener("change", () => {
+        const val = regRole.value;
+        
+        // Affichage du champ code pour prof et admin
+        groupCode.style.display = (val === "enseignant" || val === "admin") ? "block" : "none";
+        // Matières seulement pour prof
+        groupMatiere.style.display = (val === "enseignant") ? "block" : "none";
+        // Cacher les classes pour l'admin (il supervise tout)
+        groupClasse.style.display = (val === "admin") ? "none" : "block";
+
+        labelCode.innerText = val === "admin" ? "Code Direction Secret" : "Code Autorisation Enseignant";
+        
+        allCheckboxes.forEach(cb => cb.checked = false);
+    });
+
+    // Limitation élève (1 seule classe)
+    allCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            if (regRole.value === "eleve" && cb.checked) {
+                allCheckboxes.forEach(other => { if (other !== cb) other.checked = false; });
+            }
+        });
+    });
+
+    const regForm = document.getElementById("register-form");
+    regForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const role = regRole.value;
+        const email = document.getElementById("reg-email").value;
+        const pass = document.getElementById("reg-password").value;
+        const nom = document.getElementById("reg-nom").value;
+        
+        // Vérification des codes de sécurité
+        if (role === "enseignant" || role === "admin") {
+            const codeSaisi = document.getElementById("reg-admin-code").value;
+            if (codeSaisi !== CODES[role]) {
+                alert(`❌ Code incorrect pour le rôle ${role} !`);
+                return;
+            }
+        }
+
+        const checkboxes = document.querySelectorAll('.classe-check:checked');
+        const classesChoisies = Array.from(checkboxes).map(cb => cb.value);
+
+        if (role !== "admin" && classesChoisies.length === 0) {
+            alert("Veuillez choisir au moins une classe.");
+            return;
+        }
+
+        try { 
+            const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+            
+            const profil = {
+                nom: nom,
+                role: role,
+                email: email,
+                classe: role === "admin" ? "Toutes" : classesChoisies,
+                matieres: role === "enseignant" ? document.getElementById("reg-matiere").value.split(',').map(m => m.trim()) : [],
+                createdAt: new Date()
+            };
+
+            await setDoc(doc(db, "users", user.uid), profil);
+            alert("Compte " + role.toUpperCase() + " créé !");
+            window.location.href = "accueil.html";
+
+        } catch (error) {
+            alert("Erreur : " + error.message);
+        }
+    });
+    // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+
+</script>
+</body>
+</html>

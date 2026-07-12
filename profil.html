@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Profil - E-SCHOOL</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            background-attachment: fixed;
+            color: #333;
+        }
+        .profile-card {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+            margin: 80px auto 20px auto;
+        }
+        .profile-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #cc0000;
+            margin-bottom: 15px;
+            background: #eee;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+        .paid { background: #d4edda; color: #155724; }
+        .unpaid { background: #f8d7da; color: #721c24; }
+        
+        .info-row {
+            text-align: left;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        /* Nouveau style pour la présence */
+        .presence-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            border-radius: 12px;
+            text-align: left;
+        }
+        .ratio-highlight {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #cc0000;
+            display: block;
+        }
+        .today-badge {
+            font-size: 0.8em;
+            padding: 4px 10px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            margin-top: 5px;
+            display: inline-block;
+        }
+        
+        .upload-btn {
+            background: #2b0101;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-top: 10px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="profile-card">
+        <img id="display-pic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="profile-img">
+        <br>
+        <label class="upload-btn">
+            📷 Changer la photo
+            <input type="file" id="upload-input" accept="image/*" style="display:none;">
+        </label>
+
+        <h2 id="prof-nom">Chargement...</h2>
+        <p id="prof-email" style="color: #666;"></p>
+
+        <div id="badge-container" style="display:none;">
+            <div id="status-badge" class="status-badge">Vérification...</div>
+        </div>
+
+        <div class="info-row">
+            <strong>Rôle :</strong> <span id="prof-role">...</span><br>
+            <span id="row-classe" style="display:none;"><strong>Classe :</strong> <span id="prof-classe">...</span></span>
+        </div>
+
+        <div id="presence-section" class="presence-box" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <strong>📊 Présences</strong><br>
+                    <small id="date-aujourdhui" style="color:#666;"></small>
+                </div>
+                <div style="text-align: right;">
+                    <span id="ratio-text" class="ratio-highlight">0 / 0</span>
+                    <small style="color:#666;">jours présents</small>
+                </div>
+            </div>
+            <div id="badge-aujourdhui" class="today-badge" style="background: #999;">
+                Attente de l'appel...
+            </div>
+        </div>
+
+        <button onclick="window.location.href='accueil.html'" style="margin-top:25px; width:100%; padding:12px; background:#cc0000; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Retour à l'accueil</button>
+    </div>
+
+    <script type="module">
+        import { auth, db } from "./auth.js";
+        import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            let snap = await getDoc(doc(db, "users", user.uid));
+            if (!snap.exists()) {
+                snap = await getDoc(doc(db, "utilisateurs", user.uid));
+            }
+
+            if (snap.exists()) {
+                const data = snap.data();
+                document.getElementById('prof-nom').innerText = data.nom || "Utilisateur";
+                document.getElementById('prof-email').innerText = user.email;
+                document.getElementById('prof-role').innerText = data.role;
+                if(data.photoURL) document.getElementById('display-pic').src = data.photoURL;
+
+                if (data.role.toLowerCase().includes("eleve")) {
+                    document.getElementById('badge-container').style.display = "block";
+                    document.getElementById('presence-section').style.display = "block";
+                    document.getElementById('row-classe').style.display = "inline";
+                    document.getElementById('prof-classe').innerText = data.classe || "Non définie";
+
+                    // Statut Paiement
+                    const badgePaiement = document.getElementById('status-badge');
+                    if (data.statutPaiement === true) {
+                        badgePaiement.innerText = "✅ Frais Scolaires en règle";
+                        badgePaiement.className = "status-badge paid";
+                    } else {
+                        badgePaiement.innerText = "⚠️ Paiement en retard";
+                        badgePaiement.className = "status-badge unpaid";
+                    }
+
+                    // --- CALCUL PRÉSENCE (MÊME LOGIQUE QUE SUPERVISION) ---
+                    const q = query(collection(db, "presences"), where("nomEleve", "==", data.nom));
+                    const presSnap = await getDocs(q);
+                    
+                    let nbPresents = 0;
+                    let nbTotalJours = 0;
+                    const dateAujourdhui = new Date().toLocaleDateString('fr-FR');
+                    let statutDuJour = "Non fait";
+
+                    presSnap.forEach(d => {
+                        const p = d.data();
+                        nbTotalJours++;
+                        if(p.statut === "Présent") nbPresents++;
+                        
+                        if(p.date === dateAujourdhui) {
+                            statutDuJour = p.statut;
+                        }
+                    });
+
+                    // Affichage du ratio
+                    document.getElementById('ratio-text').innerText = `${nbPresents} / ${nbTotalJours}`;
+                    document.getElementById('date-aujourdhui').innerText = "Aujourd'hui : " + dateAujourdhui;
+
+                    // Affichage du badge du jour
+                    const badgeJour = document.getElementById('badge-aujourdhui');
+                    if(statutDuJour === "Présent") {
+                        badgeJour.innerText = "✅ Présent aujourd'hui";
+                        badgeJour.style.background = "#28a745";
+                    } else if(statutDuJour === "Absent") {
+                        badgeJour.innerText = "❌ Absent aujourd'hui";
+                        badgeJour.style.background = "#cc0000";
+                    } else {
+                        badgeJour.innerText = "⏳ Appel non encore validé";
+                        badgeJour.style.background = "#999";
+                    }
+                }
+            }
+        });
+
+        // Gestion de la photo
+        document.getElementById('upload-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 800000) {
+                    alert("L'image est trop lourde ! (Max 800 Ko)");
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const base64String = event.target.result;
+                    const user = auth.currentUser;
+                    if (user) {
+                        try {
+                            const updateData = { photoURL: base64String };
+                            await updateDoc(doc(db, "users", user.uid), updateData).catch(() => {});
+                            await updateDoc(doc(db, "utilisateurs", user.uid), updateData).catch(() => {});
+                            document.getElementById('display-pic').src = base64String;
+                            alert("Photo mise à jour !");
+                        } catch (error) { alert("Erreur d'enregistrement."); }
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+    </script>
+</body>
+</html>

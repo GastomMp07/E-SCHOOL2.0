@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>E-SCHOOL - Accueil</title>
+    <style>
+        /* RESET */
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: #f4f7fe; 
+            overflow-x: hidden; 
+            display: flex; flex-direction: column; min-height: 100vh; 
+        }
+
+        /* HEADER RÉAJUSTÉ */
+    .header { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; /* Pousse les groupes aux extrémités */
+    padding: 0 20px; 
+    background: #cc0000 ; 
+    color: white; 
+    height: 60px; 
+    position: fixed; 
+    width: 100%; 
+    top: 0; 
+    left: 0; 
+    z-index: 10000; 
+    box-sizing: border-box; /* Évite que le padding dépasse de l'écran */
+}
+
+/* Groupe de gauche (Menu + Titre) */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
+}
+
+/* Logo à droite */
+.header-logo {
+    height: 56px; /* Ajuste la taille selon ton image */
+    width: auto;
+}
+        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+
+        /* SIDEBAR (CORRIGÉE) */
+        .sidebar { 
+            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
+            width: 260px; height: 100%; background: #b46601 ; color: white; 
+            transition: all 0.4s ease; z-index: 10001; 
+            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+            
+        }
+        /* Classe qui fait apparaître le menu */
+        .sidebar.active { left: 0; }
+
+        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);}
+        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+        .sidebar a:hover {
+            background: #cc0000 ;
+            padding-left: 18px;
+            padding: 15px;border-radius: 16px;
+        }
+
+        .logout-btn { 
+            background: #cc0000; color: white; border: none; 
+            padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
+            cursor: pointer; font-weight: bold; 
+        }
+
+        /* OVERLAY (Le fond noir quand le menu est ouvert) */
+        .overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
+            transition: 0.3s; z-index: 9999; 
+        }
+        .overlay.active { visibility: visible; opacity: 1; }
+
+        /* CONTENU PRINCIPAL */
+        .main-content { 
+            margin-top: 80px; padding: 20px; text-align: center; 
+            display: flex; flex-direction: column; align-items: center; 
+            flex: 1;
+        }
+        .welcome-card { 
+            background: white; padding: 30px; border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 640px; width: 90%; 
+            text-align: center;
+        }
+        .jeno {
+            color: #bc2417;
+            font-weight: bolder;
+            font-size: 26px;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
+        .benny{
+            font-weight: bold;
+            font-size: 20px;
+            font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+        }
+        .manas{
+            font-weight:bold;
+            font-size: 20px;
+            font-family:Arial, Helvetica, sans-serif
+        }
+
+        /* IMAGE ET CERCLE DÉCO — logo centré et plus grand */
+        .Img {
+            display: block;
+            width: 75%;
+            max-width: 190px; /* Taille agrandie pour plus d'impact */
+            height: auto;
+            margin: 28px auto 0;
+            border-radius: 15px;
+            object-fit: contain;
+        }
+        .circle { 
+            position: fixed; bottom: -100px; right: -100px; 
+            width: 300px; height: 300px; background: #1e3a8a; 
+            border-radius: 50%; z-index: -1; opacity: 0.1; 
+            display: none;
+        }
+
+        footer{
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+    <div class="header-left">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
+    </div>
+
+    <img src="images/image_copy.png" alt="logo.png" class="header-logo">
+</div>
+
+    <div id="sidebar" class="sidebar">
+    <h2>Menu</h2>
+    <a href="accueil.html">Accueil</a>
+    
+    <a href="comunique.html">Communiqués</a>
+    <a href="horaire.html">Horaire</a>
+    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+
+    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+
+    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+    
+    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+    
+    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+
+    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+
+    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
+
+    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+</div>
+    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+
+    <div class="main-content">
+        <div class="welcome-card animate__animated animate__fadeIn">
+            <h1>Bienvenue</h1>
+            <p><span class="benny">Heureux de vous voir au seins du </span><span class="jeno"><br>E-SCHOOL</span> </p>
+            <img src="images/logo.png" alt="logo.png" class="Img">
+            <p><span class="manas">Utilisez le menu (☰) en haut à gauche pour naviguer.</span></p>
+        </div>
+    </div>
+
+    <div class="circle"></div>   
+    
+    <footer>
+        <p>&copy; 2026 Arrowdev. Tout droit résèrver</p>
+    </footer>
+    <script>
+        // FONCTION POUR OUVRIR / FERMER LE MENU
+        function toggleMenu() {
+            document.getElementById("sidebar").classList.toggle("active");
+            document.getElementById("overlay").classList.toggle("active");
+        }
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+    </script>
+    
+    <script type="module" src="app.js"></script>
+
+</body>
+</html>

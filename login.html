@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - E-SCHOOL</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <style>
+        /* Styles spécifiques pour centrer le formulaire proprement */
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #cc0000 100%);
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+        .register-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
+        input, select {
+            width: 100%; padding: 10px;
+            border: 2px solid #e2e8f0; border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .login-btn {
+            width: 100%; padding: 12px;
+            background-color: #cc0000; color: white;
+            border: none; border-radius: 8px;
+            font-weight: bold; cursor: pointer; margin-top: 10px;
+        }
+        .login-btn:hover {
+            background-color: #b30000;
+        }
+    </style>
+    <div class="container"> 
+        <div class="card animate__animated animate__fadeInDown">
+            <h2 style="color: #cc0000 1e3a8a; margin-bottom: 20px;">Connexion</h2>
+            
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email de l'école" required>
+                <input type="password" id="login-password" placeholder="Mot de passe" required>
+                <button class="login-btn">
+                    Se connecter
+                </button>
+            </form>
+            
+            <p style="margin-top: 20px; font-size: 0.9em; color: #666;">
+                Pas encore de compte ? <a href="register.html" style="color: #cc0000 ; text-decoration: none; font-weight: bold;">S'inscrire ici</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+// Bloquer le clic droit
+document.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's')
+    ) {
+        e.preventDefault();
+        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+        return false;
+    }
+});
+    </script>
+    <script type="module" src="auth.js"></script>
+    
+</body>
+</html>
