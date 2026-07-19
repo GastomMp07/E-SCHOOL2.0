@@ -7,7 +7,6 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Définit la police de caractères principale de la page */
     background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
     /* Applique un dégradé de couleur en diagonale comme fond d'écran */
     width: 100%;
@@ -26,35 +25,26 @@ body {
     /* S'assure que la hauteur minimale est de 100% de la hauteur de l'écran */
     
     margin: 0;
-    /* Supprime les marges extérieures par défaut du navigateur */
+    /* Marge exterieurs */
 }
 
 .container {
-    /* Cible la classe .container pour encapsuler le contenu principal */
     width: 100%;
-    /* Configure la largeur du conteneur à 100% */
     max-width: 400px;
     /* Fixe une largeur maximale de 400px pour éviter qu'il soit trop large sur grand écran */
     padding: 20px;
-    /* Ajoute un espace interne de 20px tout autour du contenu */
     display: flex;
     /* Active le modèle de boîte flexible Flexbox */
     justify-content: center;
-    /* Aligne et centre le contenu horizontalement */
 }
 
 .card {
-    /* Cible la classe .card représentant les blocs de contenu */
     background: white;
-    /* Définit une couleur de fond blanche pour le bloc */
     padding: 30px;
-    /* Ajoute un espace interne de 30px de tous les côtés */
     border-radius: 12px;
-    /* Arrondit les angles du bloc avec un rayon de 12px */
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     /* Ajoute un effet d'ombre portée pour donner du relief et de la profondeur */
     text-align: center;
-    /* Centre le texte et les éléments textuels à l'intérieur de la carte */
     width: 100%; /* Pour que la carte utilise la largeur du container */
     /* Fixe la largeur de la carte à 100% de son élément parent */
 }
@@ -64,13 +54,10 @@ body {
 .auth-page {
     /* Cible la classe .auth-page pour la mise en page d'authentification */
     background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
-    /* Définit le dégradé de couleurs bleu/cyan en arrière-plan */
     height: 100vh;
     /* Fixe la hauteur à 100% de la hauteur visible de la fenêtre */
     display: flex;
-    /* Active le système Flexbox */
     justify-content: center;
-    /* Centre le contenu horizontalement */
     align-items: center;
     /* Centre le contenu verticalement */
 }
@@ -80,35 +67,27 @@ input, select {
     width: 100%;
     /* Étire le champ de saisie sur toute la largeur disponible */
     padding: 12px;
-    /* Ajoute un espace interne de 12px pour une saisie confortable */
     margin: 10px 0;
-    /* Ajoute une marge externe de 10px au-dessus et en dessous de chaque champ */
     border: 1px solid #ddd;
     /* Définit une bordure fine grise de 1px */
     border-radius: 6px;
-    /* Arrondit légèrement les angles du champ à 6px */
     box-sizing: border-box;
     /* Inclut les bordures et le padding dans le calcul de la largeur totale */
     font-size: 16px;
-    /* Configure la taille de la police de saisie à 16px */
 }
 
 button:hover {
     /* Gère l'apparence des boutons au survol du pointeur de la souris */
     background-color: #0c7489;
-    /* Modifie la couleur de fond en bleu-vert cyan au survol */
 }
 
 .register-btn {
     /* Cible la classe .register-btn pour le bouton d'inscription */
     background-color: #0c5568;
-    /* Définit la couleur de fond par défaut en bleu-teal foncé */
 }
 
 .register-btn:hover {
-    /* Gère le bouton d'inscription au survol de la souris */
     background-color: #0a3d52; /* Version plus sombre du teal au survol */
-    /* Remplace le fond par une couleur bleu-teal encore plus sombre au survol */
 }
 
 /* --- 3. STYLE DU TABLEAU DE BORD (ACCUEIL & AUTRES) --- */
