@@ -98,8 +98,8 @@ button:hover {
 
 
         /* HEADER RÉAJUSTÉ */
-    .header { 
-        /* Cible la barre d'en-tête de l'application */
+.header { 
+    /* Cible la barre d'en-tête de l'application */
     display: flex; 
     /* Active le positionnement Flexbox pour aligner les éléments du header */
     align-items: center; 
@@ -147,28 +147,28 @@ button:hover {
     width: auto;
     /* Permet à la largeur de s'ajuster proportionnellement pour conserver le ratio */
 }
-        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
-        /* Cible le bouton du menu principal : taille de police 30px, pointeur main au survol, et 10px de padding */
+.menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+/* Cible le bouton du menu principal : taille de police 30px, pointeur main au survol, et 10px de padding */
 
-        /* SIDEBAR (CORRIGÉE) */
-        .sidebar { 
-            /* Cible la barre latérale de navigation */
-            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
-            /* Fixe la sidebar sur l'écran et la décale de 280px vers la gauche pour la masquer par défaut */
-            width: 260px; height: 100%; background: #0a3d52 ; color: white; 
-            /* Fixe la largeur à 260px, la hauteur à 100%, le fond en bleu sombre, et le texte en blanc */
-            transition: all 0.4s ease; z-index: 10001; 
-            /* Applique une transition fluide de 0.4s pour l'ouverture, et la place devant le header */
-            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-            /* Aligne les liens verticalement et ajoute une ombre sur le bord droit */
-        }
-        /* Classe qui fait apparaître le menu */
-        .sidebar.active { left: 0; }
-        /* Cible la sidebar active : la ramène au bord gauche de l'écran (left: 0) pour la rendre visible */
+/* SIDEBAR (CORRIGÉE) */
+.sidebar { 
+    /* Cible la barre latérale de navigation */
+    position: fixed; top: 0; left: -280px; /* Cachée par défaut */
+    /* Fixe la sidebar sur l'écran et la décale de 280px vers la gauche pour la masquer par défaut */
+    width: 260px; height: 100%; background: #0a3d52 ; color: white; 
+    /* Fixe la largeur à 260px, la hauteur à 100%, le fond en bleu sombre, et le texte en blanc */
+    transition: all 0.4s ease; z-index: 10001; 
+    /* Applique une transition fluide de 0.4s pour l'ouverture, et la place devant le header */
+    display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+    /* Aligne les liens verticalement et ajoute une ombre sur le bord droit */    
+}
+/* Classe qui fait apparaître le menu */
+.sidebar.active { left: 0; }
+    /* Cible la sidebar active : la ramène au bord gauche de l'écran (left: 0) pour la rendre visible */
 
-        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        /* Titre de la sidebar : centré, avec 20px de padding et une fine ligne de séparation en bas */
-        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+.sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+/* Titre de la sidebar : centré, avec 20px de padding et une fine ligne de séparation en bas */
+    .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
         /* Liens de la sidebar : espacés, blancs, sans soulignement, avec transition douce au survol */
         .sidebar a:hover { background: #0c7489 ; padding-left: 35px; }
         /* Liens au survol : fond bleu clair et décalage de 10px vers la droite (padding-left de 35px) */
