@@ -5,27 +5,31 @@
     /* Définit le modèle de boîte : le padding et les bordures sont inclus dans la largeur/hauteur totale */
 }
 
+/* --- 1. BASES COMMUNES A TOUTES LES PAGES --- */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
-    /* Applique un dégradé de couleur en diagonale comme fond d'écran */
-    width: 100%;
-    /* Fixe la largeur du corps à 100% de la fenêtre */
-    height: 100vh;
-    /* Fixe la hauteur du corps à 100% de la hauteur visible de l'écran */
-    
-    /* CES 4 LIGNES FONT LE CENTRAGE */
-    display: flex;
-    /* Active le modèle de boîte flexible Flexbox */
-    justify-content: center; /* Centre horizontalement */
-    /* Aligne et centre les éléments horizontalement dans le conteneur flex */
-    align-items: center;     /* Centre verticalement */
-    /* Aligne et centre les éléments verticalement dans le conteneur flex */
-    min-height: 100vh;       /* Prend toute la hauteur de l'écran */
-    /* S'assure que la hauteur minimale est de 100% de la hauteur de l'écran */
-    
     margin: 0;
-    /* Marge exterieurs */
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* --- 2. STYLE PROPRE AU LOGIN / INSCRIPTION --- */
+body.auth-body {
+    background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
+    width: 100%;
+    height: 100vh;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- 3. STYLE PROPRE AU TABLEAU DE BORD --- */
+body.dashboard-body { 
+    background: #eaf6f8; 
+    overflow-x: hidden;
+    display: block; 
+    height: auto; 
 }
 
 .container {
@@ -91,21 +95,7 @@ button:hover {
 }
 
 /* --- 3. STYLE DU TABLEAU DE BORD (ACCUEIL & AUTRES) --- */
-  body { 
-      /* Redéfinit certaines règles spécifiques pour le corps de la page dans le dashboard */
-    margin: 0; 
-    /* Force la marge extérieure à 0 */
-    font-family: 'Segoe UI', Arial, sans-serif; 
-    /* Choisit la police du dashboard */
-    background: #eaf6f8; 
-    /* Définit une couleur de fond bleu-clair très douce */
-    overflow-x: hidden; /* Empêche le défilement horizontal parasite */
-    /* Masque tout débordement de contenu horizontal pour éviter les barres de défilement latérales */
-    display: block; /* Force l'affichage normal pour annuler le centrage du login */
-    /* Modifie le comportement d'affichage de Flexbox à bloc pour un défilement vertical standard */
-    height: auto; 
-    /* Laisse la hauteur s'adapter automatiquement selon le volume de contenu */
-  }
+
 
         /* HEADER RÉAJUSTÉ */
     .header { 
