@@ -129,103 +129,164 @@
         </div>
     </div><script type="module">
         import { db, auth } from "./auth.js";
+        // Importe les instances de la base de données et de l'authentification Firebase depuis auth.js
         import { collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions de manipulation et de lecture de documents de Firestore
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe l'écouteur de changement d'état d'authentification de Firebase
 
         let classeDuProf = "";
+        // Déclare une variable globale vide pour stocker la classe courante de l'enseignant connecté
 
         // Fonction technique pour harmoniser les noms (crucial pour ton exposé)
         function normNom(s) {
+            // Déclare la fonction qui normalise un nom pour des comparaisons insensibles à la casse et aux accents
             return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+            // Convertit en chaîne, supprime les espaces excessifs, met en minuscules et retire les accents
         }
 
         // --- CHARGEMENT DES DONNÉES DU PROF ---
         onAuthStateChanged(auth, async (user) => {
+            // Écoute les changements de connexion de l'utilisateur
             if (user) {
+                // Si l'utilisateur est connecté
                 // On cherche dans les deux collections possibles
                 let snap = await getDoc(doc(db, "users", user.uid));
+                // Récupère les données utilisateur dans la collection principale "users"
                 if (!snap.exists()) {
+                    // Si le profil n'existe pas dans la collection principale
                     snap = await getDoc(doc(db, "utilisateurs", user.uid));
+                    // Récupère les données utilisateur dans l'ancienne collection "utilisateurs"
                 }
 
                 if (snap.exists()) {
+                    // Si le document profil existe dans l'une des deux collections
                     const userData = snap.data();
+                    // Extrait les champs de données du document profil
                     const classeSelect = document.getElementById('select-classe-saisie');
+                    // Récupère l'élément HTML correspondant au menu déroulant des classes
                     const matiereSelect = document.getElementById('select-matiere-saisie');
+                    // Récupère l'élément HTML correspondant au menu déroulant des matières
 
                     // On vide les sélections avant de remplir (évite les doublons)
                     classeSelect.innerHTML = '<option value="">-- Sélectionner la classe --</option>';
+                    // Réinitialise le sélecteur de classe avec l'option vide par défaut
                     matiereSelect.innerHTML = '<option value="">-- Sélectionner le cours --</option>';
+                    // Réinitialise le sélecteur de cours avec l'option vide par défaut
 
                     if (Array.isArray(userData.classe)) {
+                        // Si le champ classe du profil est un tableau (plusieurs classes)
                         userData.classe.forEach(cl => {
+                            // Parcourt chaque classe pour l'ajouter au menu déroulant
                             classeSelect.innerHTML += `<option value="${cl}">${cl}</option>`;
+                            // Concatène une option HTML dans le menu de sélection des classes
                         });
                     }
                     if (Array.isArray(userData.matieres)) {
+                        // Si le champ matieres du profil de l'enseignant est un tableau
                         userData.matieres.forEach(mat => {
+                            // Parcourt chaque matière enseignée par le professeur
                             const nomNettoye = mat.trim(); // Enlever les espaces inutiles
+                            // Supprime les espaces inutiles en début et fin de chaîne
                             if(nomNettoye) matiereSelect.innerHTML += `<option value="${nomNettoye}">${nomNettoye}</option>`;
+                            // Si le nom nettoyé n'est pas vide, l'ajoute comme option dans le menu des matières
                         });
                     }
                 }
             } else {
+                // Si l'utilisateur n'est pas connecté
                 window.location.href = "login.html";
+                // Redirige l'utilisateur vers la page de connexion
             }
         });
 
         // --- ENREGISTREMENT ---
         const form = document.getElementById('form-saisie-notes');
+        // Récupère l'élément HTML du formulaire de saisie de notes
         form.addEventListener('submit', async (e) => {
+            // Écoute la soumission du formulaire pour enregistrer la note (async pour await)
             e.preventDefault();
+            // Empêche le rechargement de la page
             const noteObtenue = parseFloat(document.getElementById('note-valeur').value);
+            // Récupère la note obtenue saisie et la convertit en nombre à virgule
             const noteMaximale = parseFloat(document.getElementById('note-max').value);
+            // Récupère le maximum possible de la note et le convertit en nombre à virgule
 
             if (noteObtenue > noteMaximale) {
+                // Si la note attribuée est supérieure à la note maximale autorisée
                 alert("❌ La note ne peut pas être supérieure au total.");
+                // Affiche un message d'erreur d'avertissement
                 return;
+                // Arrête l'exécution de l'enregistrement de la note
             }
 
             try {
+                // Bloc try pour intercepter les erreurs d'écriture de la note dans Firestore
                 await addDoc(collection(db, "notes"), {
+                    // Enregistre un nouveau document dans la collection "notes" de Firestore
                     classe: document.getElementById('select-classe-saisie').value,
+                    // Enregistre la classe sélectionnée
                     matiere: document.getElementById('select-matiere-saisie').value,
+                    // Enregistre le cours sélectionné
                     periode: document.getElementById('note-periode').value,
+                    // Enregistre la période scolaire choisie
                     nomEleve: document.getElementById('nom-eleve').value,
+                    // Enregistre le nom brut de l'élève saisi
                     nomEleveNorm: normNom(document.getElementById('nom-eleve').value),
+                    // Enregistre la version normalisée du nom pour simplifier les requêtes
                     note: noteObtenue,
+                    // Enregistre la note obtenue par l'élève
                     max: noteMaximale,
+                    // Enregistre le barème maximum de l'évaluation
                     dateSaisie: new Date(),
+                    // Enregistre la date et l'heure courante de saisie de la note
                     profId: auth.currentUser.uid
+                    // Enregistre l'UID de l'enseignant qui saisit la note
                 });
 
                 alert("✅ Note enregistrée !");
+                // Affiche un message de succès
                 document.getElementById('nom-eleve').value = "";
+                // Efface le champ du nom de l'élève pour le préparer à une nouvelle saisie
                 document.getElementById('note-valeur').value = "";
+                // Efface le champ contenant la note obtenue pour la saisie suivante
                 document.getElementById('nom-eleve').focus();
+                // Redirige le focus du curseur sur le champ du nom de l'élève
             } catch (error) {
+                // Si l'enregistrement Firestore échoue
                 alert("Erreur lors de l'enregistrement.");
+                // Affiche un message d'erreur générique
             }
         });
 
         // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+            if (
+                e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+                (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
+                (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
+            ) {
+                e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
+                return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
+            }
+        });
     </script>
 
     <script type="module" src="app.js"></script>

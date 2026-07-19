@@ -402,27 +402,40 @@
     <script>
         // FONCTION POUR OUVRIR / FERMER LE MENU
         function toggleMenu() {
+            // Déclare la fonction qui bascule l'affichage du menu latéral
             document.getElementById("sidebar").classList.toggle("active");
+            // Ajoute ou supprime la classe CSS "active" sur la barre latérale pour l'ouvrir/fermer
             document.getElementById("overlay").classList.toggle("active");
+            // Ajoute ou supprime la classe CSS "active" sur le fond semi-transparent
         }
         // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+            if (
+                e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+                (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
+                (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
+            ) {
+                e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
+                return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
+            }
+        });
     </script>
     
     <script type="module" src="app.js"></script>

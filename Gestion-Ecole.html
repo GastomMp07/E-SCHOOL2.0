@@ -241,60 +241,96 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        // Importe la fonction pour initialiser une application Firebase
         import { db, auth } from "./auth.js";
+        // Importe les instances de la base de données et de l'authentification déjà configurées
         import { collection, getDocs, doc, setDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions Firestore pour lire, écrire, modifier et créer des documents
         import { getAuth, createUserWithEmailAndPassword as createSecondaryUser, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe les fonctions d'authentification Firebase, notamment la création de compte
 
         // --- 1. FONCTION D'INSCRIPTION SÉCURISÉE (SANS DÉCONNEXION) ---
         // Configuration secondaire pour créer des comptes sans déconnecter l'admin
         // Remplace par tes propres clés API que tu trouveras dans auth.js ou ta console Firebase
         const secondaryConfig = {
+            // Déclare la configuration d'une application Firebase secondaire pour créer des comptes sans déconnecter l'admin
             apiKey: "AIzaSyD-zylLBSzTL0xyUZP75G8QEjblauNw4Nk",
+            // Clé API du projet Firebase
             authDomain: "e-school-8a0c8.firebaseapp.com",
+            // Domaine d'authentification Firebase
             projectId: "e-school-8a0c8",
+            // Identifiant du projet Firebase
             storageBucket: "e-school-8a0c8.firebasestorage.app",
+            // Bucket de stockage Firebase
             messagingSenderId: "313905413411",
+            // Identifiant de l'expéditeur pour les notifications
             appId: "1:313905413411:web:bec2f4e79394bc5fce6096"
+            // Identifiant unique de cette app dans Firebase
         };
 
         // Initialisation de l'app secondaire
         const secondaryApp = initializeApp(secondaryConfig, "Secondary");
+        // Initialise une deuxième instance Firebase nommée "Secondary" pour créer des comptes sans affecter l'admin
         const secondaryAuth = getAuth(secondaryApp);
+        // Récupère l'instance d'authentification de l'app secondaire
 
         const formIns = document.getElementById('form-inscription-admin');
+        // Récupère l'élément HTML du formulaire d'inscription d'un nouvel élève
 
         formIns.addEventListener('submit', async (e) => {
+            // Écoute la soumission du formulaire d'inscription (async pour utiliser await)
             e.preventDefault();
+            // Empêche le rechargement de la page lors de la soumission
             const nom = document.getElementById('new-nom').value;
+            // Récupère le nom de l'élève saisi par l'admin
             const email = document.getElementById('new-email').value;
+            // Récupère l'email de l'élève saisi par l'admin
             const pass = document.getElementById('new-pass').value;
+            // Récupère le mot de passe provisoire saisi par l'admin
             const classe = document.getElementById('new-classe').value;
+            // Récupère la classe sélectionnée pour l'élève
 
             try {
+                // Bloc try : tente de créer le compte et d'enregistrer les données
                 // 1. Créer l'utilisateur sur l'instance secondaire
                 const { user } = await createSecondaryUser(secondaryAuth, email, pass);
+                // Crée le compte Firebase sur l'instance secondaire pour ne pas déconnecter l'admin
                 
                 // 2. Enregistrer les données dans Firestore (utilise l'instance 'db' normale)
                 await setDoc(doc(db, "users", user.uid), {
+                    // Crée ou remplace le document de l'élève dans la collection "users"
                     nom: nom,
+                    // Nom de l'élève
                     email: email,
+                    // Email de l'élève
                     role: "eleve",
+                    // Attribue automatiquement le rôle "eleve" à tout utilisateur inscrit par l'admin
                     classe: [classe],
+                    // Classe de l'élève sous forme de tableau (une seule classe)
                     statutPaiement: true,
+                    // Active l'accès aux notes dès l'inscription par l'admin
                     createdAt: new Date()
+                    // Date et heure d'inscription
                 });
 
                 // 3. Déconnecter l'utilisateur créé de l'instance SECONDAIRE immédiatement
                 // Cela n'affecte pas l'admin sur l'instance principale
                 await signOut(secondaryAuth);
+                // Déconnecte le nouveau compte de l'instance secondaire pour ne pas interférer avec l'admin
 
                 alert("✅ Élève inscrit avec succès ! L'admin reste connecté.");
+                // Informe l'admin que l'inscription a réussi et qu'il est toujours connecté
                 formIns.reset();
+                // Réinitialise le formulaire pour permettre une nouvelle inscription
                 chargerGestionPaiements(); 
+                // Recharge la liste des élèves pour inclure le nouvel élève inscrit
                 
             } catch (err) {
+                // Si une erreur Firebase survient (email déjà utilisé, erreur réseau, etc.)
                 console.error(err);
+                // Affiche l'erreur complète dans la console pour le débogage
                 alert("Erreur d'inscription : " + err.message);
+                // Informe l'admin du message d'erreur Firebase
             }
         });
 
@@ -302,6 +338,7 @@
 
         // On définit les classes dans l'ordre croissant
         const listeClasses = [
+            // Déclare le tableau de toutes les classes disponibles dans l'école
             "7emè A",
             "7emè B",
             "8emè A", 
@@ -333,71 +370,113 @@
         ]
 
         async function chargerGestionPaiements() {
+            // Déclare une fonction asynchrone qui lance l'affichage des dossiers de classes
             const container = document.getElementById('liste-paiements-eleves');
+            // Récupère le conteneur HTML où s'affichera la liste des classes et des élèves
             afficherDossiersClasses(container);
+            // Appelle la fonction qui génère les boutons/dossiers de chaque classe
         }
 
         // Affiche les "dossiers" de chaque classe
         function afficherDossiersClasses(container) {
+            // Déclare la fonction qui génère la grille de dossiers représentant chaque classe
             container.innerHTML = `<h4>Sélectionnez une classe :</h4><div class="classes-grid"></div>`;
+            // Initialise le HTML du conteneur avec un titre et une grille vide
             const grid = container.querySelector('.classes-grid');
+            // Récupère l'élément de la grille qui vient d'être créée
 
             listeClasses.forEach(classe => {
+                // Parcourt chaque classe pour créer un dossier cliquable correspondant
                 const div = document.createElement('div');
+                // Crée un nouvel élément <div> pour représenter le dossier de classe
                 div.className = "class-folder";
+                // Assigne la classe CSS "class-folder" pour le style du dossier
                 div.innerHTML = `📁<br>${classe}`;
+                // Remplit le dossier avec une icône et le nom de la classe
                 div.onclick = () => chargerElevesDeLaClasse(classe);
+                // Assigne un gestionnaire de clic qui charge les élèves de cette classe
                 grid.appendChild(div);
+                // Ajoute le dossier à la grille
             });
         }
 
         document.getElementById('form-horaire').addEventListener('submit', async (e) => {
+            // Écoute la soumission du formulaire d'ajout d'horaire (async pour await)
             e.preventDefault();
+            // Empêche le rechargement de la page
             const horaireData = {
+                // Construit l'objet contenant toutes les données du créneau horaire
                 jour: document.getElementById('h-jour').value,
+                // Jour de la semaine sélectionné
                 heure: document.getElementById('h-heure').value,
+                // Plage horaire saisie (ex: 08h00 - 09h30)
                 classe: document.getElementById('h-classe').value,
+                // Classe concernée par ce créneau
                 matiere: document.getElementById('h-matiere').value,
+                // Nom de la matière enseignée
                 professeur: document.getElementById('h-prof').value,
+                // Nom du professeur qui enseigne
                 createdAt: new Date()
+                // Date et heure d'ajout de ce créneau
             };
 
             try {
+                // Bloc try : tente d'enregistrer le créneau dans Firestore
                 await addDoc(collection(db, "horaires"), horaireData);
+                // Ajoute un nouveau document dans la collection "horaires" avec les données du créneau
                 alert("Horaire ajouté !");
+                // Informe l'admin que l'horaire a bien été enregistré
                 e.target.reset();
+                // Réinitialise le formulaire après l'enregistrement réussi
             } catch (err) {
+                // Si une erreur Firestore survient
                 alert("Erreur : " + err.message);
+                // Affiche le message d'erreur à l'admin
             }
         });
 
         // Affiche les élèves de la classe sélectionnée
         async function chargerElevesDeLaClasse(nomClasse) {
+            // Déclare une fonction asynchrone qui affiche les élèves d'une classe spécifique
             const container = document.getElementById('liste-paiements-eleves');
+            // Récupère le conteneur HTML pour l'affichage
             container.innerHTML = `
                 <button class="back-btn" onclick="chargerGestionPaiements()">⬅ Retour aux classes</button>
                 <h4>Élèves de : ${nomClasse}</h4>
                 <div id="sub-liste-eleves">Chargement des élèves...</div>
             `;
+            // Injecte le HTML avec un bouton retour et un conteneur pour la liste des élèves
 
             const subContainer = document.getElementById('sub-liste-eleves');
+            // Récupère le sous-conteneur où les élèves seront affichés
             
             try {
+                // Bloc try : tente de récupérer les données des élèves depuis Firestore
                 const querySnapshot = await getDocs(collection(db, "users"));
+                // Récupère tous les documents de la collection "users" (tous les utilisateurs)
                 let elevesTrouves = 0;
+                // Initialise le compteur d'élèves trouvés pour cette classe
                 subContainer.innerHTML = "";
+                // Vide le contenu du sous-conteneur avant d'y ajouter les élèves
 
                 querySnapshot.forEach((userDoc) => {
+                    // Parcourt chaque utilisateur pour filtrer ceux qui appartiennent à cette classe
                     const data = userDoc.data();
+                    // Extrait les données du document utilisateur courant
                     
                     // On vérifie si c'est un élève ET si sa classe correspond
                     // On gère le fait que 'classe' puisse être une String ou un Tableau
                     const classeEleve = Array.isArray(data.classe) ? data.classe[0] : data.classe;
+                    // Si 'classe' est un tableau, prend le premier élément ; sinon utilise la valeur directement
 
                     if (data.role === "eleve" && classeEleve === nomClasse) {
+                        // Filtre : traite uniquement les élèves dont la classe correspond
                         elevesTrouves++;
+                        // Incrémente le compteur d'élèves trouvés
                         const div = document.createElement('div');
+                        // Crée un <div> pour représenter la ligne de cet élève
                         div.className = "paiement-row";
+                        // Assigne la classe CSS pour le style de la ligne
                         div.innerHTML = `
                             <div style="flex: 1;">
                                 <strong>${data.nom}</strong><br>
@@ -413,71 +492,109 @@
                                     <span class="slider"></span>
                                 </label>
                             </div>`;
+                        // Génère le HTML de la ligne avec le nom, l'email, un bouton bilan et un switch de paiement
                         subContainer.appendChild(div);
+                        // Ajoute la ligne de l'élève au sous-conteneur
 
                         // Event listener pour le switch
                         div.querySelector('input').addEventListener('change', async (e) => {
+                            // Écoute le changement d'état du switch de paiement pour cet élève
                             await updateDoc(doc(db, "users", userDoc.id), { statutPaiement: e.target.checked });
+                            // Met à jour le statut de paiement dans Firestore selon l'état du switch
                         });
                     }
                 });
 
                 if (elevesTrouves === 0) {
+                    // Si aucun élève n'a été trouvé dans cette classe
                     subContainer.innerHTML = "<p>Aucun élève inscrit dans cette classe.</p>";
+                    // Affiche un message indiquant qu'aucun élève n'est inscrit
                 }
 
             } catch (err) {
+                // Si une erreur Firestore survient lors du chargement
                 console.error(err);
+                // Affiche l'erreur dans la console pour le débogage
                 subContainer.innerHTML = "Erreur lors du chargement.";
+                // Affiche un message d'erreur à l'admin
             }
         }
 
         // On rend la fonction accessible globalement pour le bouton "Retour"
         window.chargerGestionPaiements = chargerGestionPaiements;
+        // Expose la fonction sur window pour qu'elle soit appelable depuis le HTML (onclick="chargerGestionPaiements()")
                 // --- LANCEMENT DES FONCTIONS ---
         // On s'assure que tout est appelé quand la page charge
         async function initialiserDashboard() {
+            // Déclare une fonction asynchrone qui initialise toutes les sections du tableau de bord
             try {
+                // Bloc try : tente d'initialiser les différentes sections
                 await chargerGestionPaiements();
+                // Charge et affiche la liste des classes et des élèves
                 await chargerStatistiquesProfs(); // <-- C'était manquant ici !
+                // Charge et affiche les statistiques des évaluations des professeurs
                 await calculerPresences();       // <-- C'était manquant ici !
+                // Calcule et affiche les données de présence (si cette fonction existe)
             } catch (err) {
+                // Si une erreur survient lors de l'initialisation
                 console.error("Erreur lors du chargement des données :", err);
+                // Affiche l'erreur dans la console pour le débogage
             }
         }
 
         initialiserDashboard();
+        // Lance l'initialisation du tableau de bord au chargement de la page
 
         async function chargerStatistiquesProfs() {
+            // Déclare une fonction asynchrone qui charge et affiche les statistiques des évaluations des profs
             try {
+                // Bloc try : tente de récupérer les données d'évaluation
                 const snap = await getDocs(collection(db, "evaluations_profs"));
+                // Récupère tous les documents de la collection des évaluations des professeurs
                 const stats = {};
+                // Initialise un objet pour stocker les statistiques agrégées par professeur
                 
                 console.log("Docs trouvés dans evaluations_profs:", snap.size);
+                // Affiche dans la console le nombre total d'évaluations trouvées (pour débogage)
 
                 snap.forEach(docSnap => {
+                    // Parcourt chaque document d'évaluation
                     const d = docSnap.data();
+                    // Extrait les données de l'évaluation courante
                     // On vérifie que le nom du prof existe
                     if (d.profNom) {
+                        // Vérifie que l'évaluation contient bien un nom de professeur
                         if (!stats[d.profNom]) stats[d.profNom] = { m: 0, d: 0, c: 0 };
+                        // Si c'est la première évaluation pour ce prof, initialise ses statistiques à zéro
                         
                         // On utilise parseFloat pour transformer le texte en nombre
                         stats[d.profNom].m += parseFloat(d.maitrise || 0);
+                        // Additionne la note de maîtrise (convertie en nombre) au total du prof
                         stats[d.profNom].d += parseFloat(d.disponibilite || 0);
+                        // Additionne la note de disponibilité (convertie en nombre) au total du prof
                         stats[d.profNom].c++;
+                        // Incrémente le compteur d'évaluations reçues par ce professeur
                     }
                 });
 
                 const container = document.getElementById('stats-profs-list');
+                // Récupère l'élément HTML où les statistiques des profs seront affichées
                 if (Object.keys(stats).length === 0) {
+                    // Vérifie si des statistiques ont été calculées (aucun prof évalué)
                     container.innerHTML = "<p>Aucune évaluation enregistrée pour le moment.</p>";
+                    // Affiche un message si aucune évaluation n'existe encore
                     return;
+                    // Arrête l'exécution car il n'y a rien à afficher
                 }
 
                 container.innerHTML = "";
+                // Vide le conteneur avant d'y afficher les nouvelles statistiques
                 for (const [nom, d] of Object.entries(stats)) {
+                    // Parcourt chaque professeur qui a des statistiques calculées
                     const moyenneMaitrise = (d.m / d.c).toFixed(1);
+                    // Calcule la moyenne de maîtrise avec une décimale
                     const moyenneDispo = (d.d / d.c).toFixed(1);
+                    // Calcule la moyenne de disponibilité avec une décimale
 
                     container.innerHTML += `
                         <div class="prof-card">
@@ -496,33 +613,48 @@
                                 Basé sur ${d.c} évaluation(s)
                             </div>
                         </div>`;
+                    // Génère et injecte la carte HTML d'un professeur avec ses moyennes
                 }
             } catch (error) {
+                // Si une erreur survient lors du chargement des statistiques
                 console.error("Erreur stats profs:", error);
+                // Affiche l'erreur dans la console pour le débogage
                 document.getElementById('stats-profs-list').innerHTML = "Erreur de chargement.";
+                // Affiche un message d'erreur dans la section des statistiques
             }
         }
         // --- SÉCURITÉ : ANTI-INSPECTION ---
         // Bloquer le clic droit
         document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
         // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
         document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
             if (
                 e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
                 (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
                 (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
                 (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
                 (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
             ) {
                 e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
                 alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
                 return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
             }
         });
 
                 // --- INITIALISATION ---
                 chargerGestionPaiements();
+                // Appelle la fonction de chargement de la gestion des paiements au démarrage de la page
                 // ... (vos autres fonctions chargerStatistiquesProfs etc restent ici)
     </script>
     <script type="module" src="app.js"></script>

@@ -158,75 +158,119 @@
 
     <script type="module">
         import { db, auth } from "./auth.js";
+        // Importe les instances de la base de données et de l'authentification Firebase depuis auth.js
         import { collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions de création et de lecture de documents Firestore
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe l'écouteur de changement d'état de connexion de Firebase Auth
 
         let nomAuteur = "Un Enseignant";
+        // Déclare une variable pour stocker le nom de l'auteur du communiqué, valeur par défaut fournie
 
         // 1. Récupérer les infos de l'utilisateur connecté pour l'auteur
         onAuthStateChanged(auth, async (user) => {
+            // Écoute les changements d'état de connexion de l'utilisateur
             if (user) {
+                // Si l'utilisateur est connecté
                 try {
+                    // Bloc try pour intercepter les échecs liés aux requêtes Firestore ou réseau
                     // Cherche dans "users" ou "utilisateurs"
                     let userSnap = await getDoc(doc(db, "users", user.uid));
+                    // Récupère les informations de l'utilisateur connecté dans la collection principale "users"
                     if (!userSnap.exists()) {
+                        // Si l'utilisateur n'existe pas dans la collection principale
                         userSnap = await getDoc(doc(db, "utilisateurs", user.uid));
+                        // Récupère les informations de l'utilisateur dans l'ancienne collection "utilisateurs"
                     }
 
                     if (userSnap.exists()) {
+                        // Si le document utilisateur a été trouvé dans l'une des deux collections
                         nomAuteur = userSnap.data().nom;
+                        // Assigne le nom de l'utilisateur à la variable d'auteur
                     }
                 } catch (error) {
+                    // En cas d'erreur lors de la récupération des données
                     console.error("Erreur de récupération profil:", error);
+                    // Affiche l'erreur complète dans la console de débogage
                 }
             } else {
+                // Si l'utilisateur n'est pas connecté
                 // Rediriger si pas connecté
                 window.location.href = "login.html";
+                // Redirige l'utilisateur vers la page de connexion
             }
         });
 
         // 2. Gestion du formulaire
         const formRedac = document.getElementById('form-redac');
+        // Récupère l'élément HTML du formulaire de rédaction
         formRedac.addEventListener('submit', async (e) => {
+            // Écoute la soumission du formulaire (async pour pouvoir utiliser await)
             e.preventDefault();
+            // Empêche le rechargement automatique de la page à la soumission
             
             const titre = document.getElementById('titre-com').value;
+            // Récupère la valeur saisie dans le champ du titre de l'annonce
             const contenu = document.getElementById('message-com').value;
+            // Récupère le texte saisi dans la zone de texte du message
             const cible = document.getElementById('com-cible').value;
+            // Récupère la cible choisie dans la liste déroulante des destinataires
 
             try {
+                // Bloc try pour intercepter les erreurs d'écriture dans la base de données
                 await addDoc(collection(db, "communiques"), {
+                    // Crée et enregistre un nouveau document dans la collection "communiques"
                     titre: titre,
+                    // Attribue le titre saisi au document
                     message: contenu,
+                    // Attribue le contenu du message au document
                     destinataire: cible,
+                    // Attribue la classe destinataire (ou "tous") au document
                     timestamp: Date.now(),
+                    // Enregistre le moment précis de publication en millisecondes pour le tri
                     date: new Date(),
+                    // Enregistre la date et l'heure actuelles
                     auteur: nomAuteur
+                    // Enregistre le nom du rédacteur connecté
                 });
                 alert("✅ Communiqué publié avec succès !");
+                // Affiche un message de succès à l'utilisateur
                 formRedac.reset();
+                // Vide tous les champs du formulaire de rédaction
             } catch (error) {
+                // Si la création du document échoue
                 alert("Erreur lors de la publication : " + error.message);
+                // Affiche un message d'erreur décrivant l'échec
             }
         });
         // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+            if (
+                e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+                (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
+                (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
+            ) {
+                e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
+                return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
+            }
+        });
     </script>
 
     <script type="module" src="app.js"></script>

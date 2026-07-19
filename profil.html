@@ -129,77 +129,129 @@
 
     <script type="module">
         import { auth, db } from "./auth.js";
+        // Importe les instances d'authentification et de base de données Firebase depuis auth.js
         import { doc, getDoc, updateDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions de requêtes et de manipulation de documents Firestore
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe l'écouteur d'état d'authentification de Firebase Auth
 
         onAuthStateChanged(auth, async (user) => {
+            // Déclenche l'écoute du changement d'état de connexion de l'utilisateur
             if (!user) {
+                // Si l'utilisateur n'est pas connecté
                 window.location.href = "login.html";
+                // Redirige l'utilisateur vers la page de connexion
                 return;
+                // Interrompt l'exécution de la fonction
             }
 
             let snap = await getDoc(doc(db, "users", user.uid));
+            // Tente de récupérer les informations de l'utilisateur connecté dans la collection "users"
             if (!snap.exists()) {
+                // Si l'utilisateur n'est pas trouvé dans la collection principale "users"
                 snap = await getDoc(doc(db, "utilisateurs", user.uid));
+                // Cherche le document de l'utilisateur dans l'ancienne collection "utilisateurs"
             }
 
             if (snap.exists()) {
+                // Si les données de l'utilisateur existent dans l'une des collections
                 const data = snap.data();
+                // Extrait les champs de données du document de l'utilisateur
                 document.getElementById('prof-nom').innerText = data.nom || "Utilisateur";
+                // Met à jour l'élément HTML affichant le nom de l'utilisateur
                 document.getElementById('prof-email').innerText = user.email;
+                // Met à jour l'élément HTML affichant l'email de l'utilisateur
                 document.getElementById('prof-role').innerText = data.role;
+                // Met à jour l'élément HTML affichant le rôle de l'utilisateur
                 if(data.photoURL) document.getElementById('display-pic').src = data.photoURL;
+                // Si l'utilisateur a enregistré une photo de profil, met à jour la source de l'image correspondante
 
                 if (data.role.toLowerCase().includes("eleve")) {
+                    // Si l'utilisateur connecté a le rôle d'élève
                     document.getElementById('badge-container').style.display = "block";
+                    // Affiche le conteneur du badge de paiement
                     document.getElementById('presence-section').style.display = "block";
+                    // Affiche la section des présences
                     document.getElementById('row-classe').style.display = "inline";
+                    // Rend visible la ligne affichant la classe de l'élève
                     document.getElementById('prof-classe').innerText = data.classe || "Non définie";
+                    // Met à jour l'élément HTML affichant la classe de l'élève
 
                     // Statut Paiement
                     const badgePaiement = document.getElementById('status-badge');
+                    // Récupère l'élément HTML correspondant au badge de paiement
                     if (data.statutPaiement === true) {
+                        // Si le statut de paiement de l'élève est en règle
                         badgePaiement.innerText = "✅ Frais Scolaires en règle";
+                        // Affiche le texte confirmant que le paiement est en règle
                         badgePaiement.className = "status-badge paid";
+                        // Applique la classe CSS correspondante pour le style vert
                     } else {
+                        // Si le paiement est en retard ou non régularisé
                         badgePaiement.innerText = "⚠️ Paiement en retard";
+                        // Affiche le texte d'avertissement de retard
                         badgePaiement.className = "status-badge unpaid";
+                        // Applique la classe CSS correspondante pour le style rouge
                     }
 
                     // --- CALCUL PRÉSENCE (MÊME LOGIQUE QUE SUPERVISION) ---
                     const q = query(collection(db, "presences"), where("nomEleve", "==", data.nom));
+                    // Construit une requête pour récupérer toutes les présences de cet élève précis
                     const presSnap = await getDocs(q);
+                    // Exécute la requête Firestore et attend la réponse
                     
                     let nbPresents = 0;
+                    // Initialise le nombre de jours présents à zéro
                     let nbTotalJours = 0;
+                    // Initialise le nombre total de jours d'appel enregistrés à zéro
                     const dateAujourdhui = new Date().toLocaleDateString('fr-FR');
+                    // Récupère la date actuelle sous forme de chaîne de caractères (JJ/MM/AAAA)
                     let statutDuJour = "Non fait";
+                    // Initialise par défaut le statut de présence du jour à "Non fait"
 
                     presSnap.forEach(d => {
+                        // Parcourt chaque document d'appel de présence récupéré pour cet élève
                         const p = d.data();
+                        // Extrait les données de présence du document courant
                         nbTotalJours++;
+                        // Incrémente le nombre de jours d'appel total
                         if(p.statut === "Présent") nbPresents++;
+                        // Si l'élève était présent à cette date, incrémente le nombre de présences
                         
                         if(p.date === dateAujourdhui) {
+                            // Si la date du document correspond à la date d'aujourd'hui
                             statutDuJour = p.statut;
+                            // Enregistre le statut de présence de l'élève pour aujourd'hui
                         }
                     });
 
                     // Affichage du ratio
                     document.getElementById('ratio-text').innerText = `${nbPresents} / ${nbTotalJours}`;
+                    // Met à jour le texte du ratio affichant le nombre de présences sur le total
                     document.getElementById('date-aujourdhui').innerText = "Aujourd'hui : " + dateAujourdhui;
+                    // Affiche la date du jour à l'élève
 
                     // Affichage du badge du jour
                     const badgeJour = document.getElementById('badge-aujourdhui');
+                    // Récupère l'élément HTML correspondant au badge du statut du jour
                     if(statutDuJour === "Présent") {
+                        // Si l'élève est marqué présent aujourd'hui
                         badgeJour.innerText = "✅ Présent aujourd'hui";
+                        // Affiche le statut présent
                         badgeJour.style.background = "#28a745";
+                        // Applique une couleur verte en arrière-plan
                     } else if(statutDuJour === "Absent") {
+                        // Si l'élève est marqué absent aujourd'hui
                         badgeJour.innerText = "❌ Absent aujourd'hui";
+                        // Affiche le statut absent
                         badgeJour.style.background = "#cc0000";
+                        // Applique une couleur rouge en arrière-plan
                     } else {
+                        // Si l'appel n'a pas encore été validé pour la classe aujourd'hui
                         badgeJour.innerText = "⏳ Appel non encore validé";
+                        // Affiche un texte d'attente
                         badgeJour.style.background = "#999";
+                        // Applique une couleur grise en arrière-plan
                     }
                 }
             }
@@ -207,47 +259,76 @@
 
         // Gestion de la photo
         document.getElementById('upload-input').addEventListener('change', async (e) => {
+            // Écoute la sélection d'un fichier image par l'utilisateur
             const file = e.target.files[0];
+            // Récupère le premier fichier sélectionné
             if (file) {
+                // Si un fichier a bien été sélectionné
                 if (file.size > 800000) {
+                    // Si la taille du fichier dépasse 800 Ko
                     alert("L'image est trop lourde ! (Max 800 Ko)");
+                    // Affiche un message d'avertissement
                     return;
+                    // Interrompt le processus de mise en ligne
                 }
                 const reader = new FileReader();
+                // Crée une instance de FileReader pour lire le contenu du fichier
                 reader.onload = async (event) => {
+                    // Définit le comportement à adopter lorsque la lecture du fichier est terminée
                     const base64String = event.target.result;
+                    // Récupère l'image convertie sous forme de chaîne de caractères Base64
                     const user = auth.currentUser;
+                    // Récupère l'utilisateur Firebase actuellement connecté
                     if (user) {
+                        // Si l'utilisateur est bien connecté
                         try {
+                            // Bloc try pour intercepter les erreurs lors de l'enregistrement de l'image
                             const updateData = { photoURL: base64String };
+                            // Prépare l'objet de mise à jour contenant l'URL de la photo en Base64
                             await updateDoc(doc(db, "users", user.uid), updateData).catch(() => {});
+                            // Tente de mettre à jour le document de l'utilisateur dans la collection "users"
                             await updateDoc(doc(db, "utilisateurs", user.uid), updateData).catch(() => {});
+                            // Tente de mettre à jour le document de l'utilisateur dans la collection "utilisateurs"
                             document.getElementById('display-pic').src = base64String;
+                            // Met à jour immédiatement l'affichage de l'image sur le profil
                             alert("Photo mise à jour !");
+                            // Informe l'utilisateur que l'image a bien été enregistrée
                         } catch (error) { alert("Erreur d'enregistrement."); }
+                        // En cas d'erreur de base de données, affiche une alerte
                     }
                 };
                 reader.readAsDataURL(file);
+                // Lance la lecture du fichier image et le convertit en URL de données (Base64)
             }
         });
         // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+            if (
+                e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+                (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
+                (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
+            ) {
+                e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
+                return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
+            }
+        });
     </script>
 </body>
 </html>

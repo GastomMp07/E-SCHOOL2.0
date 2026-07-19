@@ -121,113 +121,187 @@
 
     <script type="module">
     import { auth, db } from "./auth.js";
+    // Importe les instances Firebase (authentification et base de données) depuis auth.js
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // Importe la fonction pour écouter les changements d'état de connexion
     import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    // Importe les fonctions Firestore pour lire des documents et exécuter des requêtes filtrées
 
     let toutesMesNotes = [];
+    // Déclare un tableau global qui contiendra toutes les notes de l'élève connecté
     let periodeSelectionnee = "1ère Période";
+    // Initialise la période sélectionnée par défaut à la première période
 
     function normNom(s) {
+        // Déclare une fonction qui normalise un nom pour des comparaisons insensibles à la casse et aux accents
         return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+        // Convertit en chaîne, supprime les espaces excessifs, met en minuscules et retire les accents
     }
 
     function premiereValeurUtile(...candidats) {
+        // Déclare une fonction qui retourne la première valeur non nulle et non vide parmi les arguments
         for (const x of candidats) {
+            // Parcourt chaque valeur candidate dans l'ordre
             if (x == null) continue;
+            // Ignore les valeurs nulles ou undefined
             const s = String(x).trim();
+            // Convertit la valeur en chaîne et retire les espaces
             if (s !== "") return s;
+            // Si la chaîne n'est pas vide, la retourne immédiatement
         }
         return "";
+        // Si toutes les valeurs sont vides ou nulles, retourne une chaîne vide
     }
 
     window.changerPeriode = (periode, btn) => {
+        // Expose la fonction de changement de période sur window pour qu'elle soit accessible depuis le HTML
         periodeSelectionnee = periode;
+        // Met à jour la variable globale avec la nouvelle période choisie
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        // Retire la classe CSS 'active' de tous les onglets
         btn.classList.add('active');
+        // Ajoute la classe CSS 'active' à l'onglet cliqué pour le mettre en surbrillance
         afficherNotesFiltrees();
+        // Appelle la fonction qui affiche les notes correspondant à la nouvelle période
     };
 
     async function obtenirNbCoursAttendus(maClasse) {
+        // Déclare une fonction asynchrone qui compte le nombre de matières uniques dans l'horaire de la classe
         try {
+            // Bloc try : tente de récupérer les données Firestore
             const q = query(collection(db, "horaires"), where("classe", "==", maClasse));
+            // Construit une requête pour filtrer les horaires de la classe spécifiée
             const snap = await getDocs(q);
+            // Exécute la requête et attend la réponse
             const matieresUniques = new Set();
+            // Crée un ensemble (Set) pour stocker les matières sans doublons
             snap.forEach(doc => {
+                // Parcourt chaque créneau d'horaire récupéré
                 const cours = doc.data().matiere;
+                // Extrait le nom de la matière du document
                 if (cours) matieresUniques.add(cours.trim());
+                // Si la matière existe, l'ajoute à l'ensemble (les doublons sont ignorés automatiquement)
             });
             return matieresUniques.size;
+            // Retourne le nombre de matières uniques trouvées
         } catch (e) { return 0; }
+        // En cas d'erreur, retourne 0 (aucune matière attendue)
     }
 
     async function afficherNotesFiltrees() {
+        // Déclare une fonction asynchrone qui affiche les notes selon la période sélectionnée
         const container = document.getElementById('liste-notes');
+        // Récupère l'élément HTML où les notes seront affichées
         const user = auth.currentUser;
+        // Récupère l'utilisateur actuellement connecté
         if (!user) return;
+        // Si personne n'est connecté, arrête l'exécution
 
         const profil = await lireProfilFusionne(user.uid);
+        // Récupère le profil fusionné de l'élève (données des deux collections)
         
         // --- LOGIQUE DE FILTRAGE PAR PÉRIODE OU SEMESTRE ---
         let notesAffichees = [];
+        // Initialise le tableau des notes à afficher (vide au départ)
         let titreBulletin = periodeSelectionnee;
+        // Initialise le titre du bulletin avec le nom de la période sélectionnée
         let labelMax = "MAX";
+        // Initialise le label de la colonne maximum
 
         if (periodeSelectionnee === "SYNTHESE_S1") {
+            // Si la période sélectionnée est la synthèse du premier semestre
             const periodesS1 = ["1ère Période", "2ème Période", "Examen 1er Semestre"];
+            // Définit les trois périodes qui composent le premier semestre
             notesAffichees = toutesMesNotes.filter(n => periodesS1.includes(n.periode));
+            // Filtre les notes pour ne garder que celles du premier semestre
             titreBulletin = "SYNTHÈSE DU PREMIER SEMESTRE";
+            // Définit le titre du bulletin pour la synthèse S1
             labelMax = "MAX S1";
+            // Change le label de la colonne max pour le semestre 1
         } else if (periodeSelectionnee === "SYNTHESE_S2") {
+            // Si la période sélectionnée est la synthèse du deuxième semestre
             const periodesS2 = ["3ème Période", "4ème Période", "Examen 2ème Semestre"];
+            // Définit les trois périodes qui composent le deuxième semestre
             notesAffichees = toutesMesNotes.filter(n => periodesS2.includes(n.periode));
+            // Filtre les notes pour ne garder que celles du deuxième semestre
             titreBulletin = "SYNTHÈSE DU SECOND SEMESTRE";
+            // Définit le titre du bulletin pour la synthèse S2
             labelMax = "MAX S2";
+            // Change le label de la colonne max pour le semestre 2
         } else {
+            // Pour une période simple (non synthèse)
             notesAffichees = toutesMesNotes.filter(n => n.periode === periodeSelectionnee);
+            // Filtre les notes pour ne garder que celles de la période exacte sélectionnée
             titreBulletin = "BULLETIN : " + periodeSelectionnee.toUpperCase();
+            // Construit le titre du bulletin avec le nom de la période en majuscules
         }
 
         if (notesAffichees.length === 0) {
+            // Si aucune note n'a été trouvée pour cette période
             container.innerHTML = "<p style='text-align:center; padding:20px;'>Aucune note trouvée pour cette sélection.</p>";
+            // Affiche un message indiquant qu'il n'y a pas de notes
             return;
+            // Arrête l'exécution pour ne pas générer un bulletin vide
         }
 
         // --- CALCUL DU RANG (PLACE) ---
         // Pour les synthèses, on calcule sur le total des périodes concernées
         const totauxEleves = {};
+        // Initialise un objet pour stocker le total de points de chaque élève de la classe
         const qClasse = query(collection(db, "notes"), where("classe", "==", profil.maClasse));
+        // Construit une requête pour récupérer toutes les notes de la classe de l'élève
         const snapClasse = await getDocs(qClasse);
+        // Exécute la requête et attend toutes les notes de la classe
         
         snapClasse.forEach(doc => {
+            // Parcourt chaque note de tous les élèves de la classe
             const d = doc.data();
+            // Extrait les données du document de note courant
             const nom = normNom(d.nomEleveNorm || d.nomEleve);
+            // Normalise le nom de l'élève pour des comparaisons fiables
             
             let match = false;
+            // Initialise la variable de correspondance de période à false
             if (periodeSelectionnee === "SYNTHESE_S1") match = ["1ère Période", "2ème Période", "Examen 1er Semestre"].includes(d.periode);
+            // Pour S1, vérifie si la note appartient à l'une des trois périodes du S1
             else if (periodeSelectionnee === "SYNTHESE_S2") match = ["3ème Période", "4ème Période", "Examen 2ème Semestre"].includes(d.periode);
+            // Pour S2, vérifie si la note appartient à l'une des trois périodes du S2
             else match = (d.periode === periodeSelectionnee);
+            // Pour une période simple, vérifie la correspondance exacte
 
             if (match) {
+                // Si la note correspond à la sélection de période courante
                 totauxEleves[nom] = (totauxEleves[nom] || 0) + (parseFloat(d.note) || 0);
+                // Ajoute la note au total de cet élève (initialise à 0 si c'est la première note)
             }
         });
 
         const classements = Object.entries(totauxEleves).sort((a, b) => b[1] - a[1]).map(entry => entry[0]);
+        // Trie les élèves du meilleur au moins bon total et extrait leurs noms normalisés
         const maPlace = classements.indexOf(profil.monNomNorm) + 1;
+        // Trouve la position de l'élève connecté dans le classement (1-indexé)
 
         // --- REGROUPEMENT PAR MATIÈRE (Utile pour les synthèses) ---
         const matieresRegroupees = {};
+        // Initialise un objet pour regrouper les totaux de notes par matière
         notesAffichees.forEach(n => {
+            // Parcourt toutes les notes à afficher pour les regrouper par matière
             if (!matieresRegroupees[n.matiere]) {
+                // Si la matière n'a pas encore de groupe, en crée un avec des totaux à zéro
                 matieresRegroupees[n.matiere] = { obtenu: 0, max: 0 };
+                // Initialise l'objet de regroupement avec les totaux à zéro
             }
             matieresRegroupees[n.matiere].obtenu += parseFloat(n.note) || 0;
+            // Additionne la note obtenue au total de la matière
             matieresRegroupees[n.matiere].max += parseFloat(n.max || 20);
+            // Additionne le maximum possible au total max de la matière (20 par défaut si absent)
         });
 
         // --- GÉNÉRATION HTML ---
         let totalObtenu = 0;
+        // Initialise le total général de tous les points obtenus
         let totalMaxGeneral = 0;
+        // Initialise le total général de tous les points possibles
 
         let html = `
             <div class="bulletin-final animate__animated animate__fadeIn" style="background:white; padding:20px; border-radius:10px; border:2px solid #0c5568; color:#333;">
@@ -253,10 +327,14 @@
                         </tr>
                     </thead>
                     <tbody>`;
+        // Construit la structure HTML de l'en-tête du bulletin avec les informations de l'élève et le tableau de notes
 
         for (const [nomMatiere, data] of Object.entries(matieresRegroupees)) {
+            // Parcourt chaque matière regroupée pour générer une ligne dans le tableau
             totalObtenu += data.obtenu;
+            // Ajoute le total de la matière au grand total général obtenu
             totalMaxGeneral += data.max;
+            // Ajoute le maximum de la matière au grand total maximum général
 
             html += `
                 <tr>
@@ -264,9 +342,11 @@
                     <td style="padding:8px; border:1px solid #ddd; text-align:center; font-weight:bold; ${data.obtenu < (data.max/2) ? 'color:red;' : ''}">${data.obtenu}</td>
                     <td style="padding:8px; border:1px solid #ddd; text-align:center; color:#666;">/ ${data.max}</td>
                 </tr>`;
+            // Ajoute une ligne HTML pour cette matière avec le nom, les points obtenus (en rouge si < 50%) et le max
         }
 
         const pct = totalMaxGeneral > 0 ? ((totalObtenu / totalMaxGeneral) * 100).toFixed(1) : 0;
+        // Calcule le pourcentage global (1 décimale) ou 0 si le total max est nul
 
         html += `
                     </tbody>
@@ -282,95 +362,154 @@
                     </div>
                 </div>
             </div>`;
+        // Finalise le HTML du bulletin avec le rang, le total et le pourcentage
         
         container.innerHTML = html;
+        // Injecte le HTML du bulletin généré dans le conteneur de la page
     }
 
     async function verifierEvaluations(uid, maClasse) {
+        // Vérifie si l'élève a évalué suffisamment d'enseignants pour accéder à ses notes
         const qMatieres = query(collection(db, "notes"), where("classe", "==", maClasse));
+        // Requête pour récupérer toutes les notes de la classe de l'élève
         const snapMat = await getDocs(qMatieres);
+        // Exécute la requête et attend les résultats
         const matieresDistinctes = new Set();
+        // Crée un ensemble pour stocker les matières uniques sans doublons
         snapMat.forEach(d => matieresDistinctes.add(d.data().matiere));
+        // Parcourt les notes et ajoute chaque matière à l'ensemble
         if (matieresDistinctes.size === 0) return true;
+        // Si aucune matière n'a de notes, l'accès est autorisé (pas d'évaluation requise)
         const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", uid));
+        // Requête pour récupérer toutes les évaluations soumises par cet élève
         const snapEval = await getDocs(qEvals);
+        // Exécute la requête et attend les résultats
         return snapEval.size >= matieresDistinctes.size;
+        // Retourne vrai si l'élève a soumis autant d'évaluations que de matières
     }
 
     onAuthStateChanged(auth, async (user) => {
+        // Écoute les changements d'état de connexion (async pour utiliser await)
         if (!user) { window.location.href = "login.html"; return; }
+        // Si personne n'est connecté, redirige vers login et arrête l'exécution
         const container = document.getElementById('liste-notes');
+        // Récupère l'élément HTML où les notes seront affichées
         const tabs = document.getElementById('tabs-section');
+        // Récupère l'élément HTML de la barre d'onglets de périodes
 
         try {
+            // Bloc try : tente de charger les données de l'élève
             const profil = await lireProfilFusionne(user.uid);
+            // Récupère et fusionne le profil de l'élève depuis les deux collections Firestore
             if (!profil.ok || !profil.maClasse) {
+                // Vérifie que le profil est valide et qu'une classe est définie
                 container.innerHTML = "Profil incomplet.";
+                // Affiche un message d'erreur si le profil est incomplet
                 return;
+                // Arrête l'exécution
             }
 
             const evaluationsTerminees = await verifierEvaluations(user.uid, profil.maClasse);
+            // Vérifie si l'élève a complété les évaluations requises pour accéder à ses notes
             if (!evaluationsTerminees) {
+                // Si les évaluations ne sont pas encore complétées
                 container.innerHTML = `<div class="lock-message"><div class="lock-icon">🔒</div><h3>Accès restreint</h3><p>Évaluez vos professeurs pour voir vos points.</p><a href="CoterE.html" class="btn-action">Évaluer</a></div>`;
+                // Affiche un message de verrouillage avec un lien vers la page d'évaluation
                 return;
+                // Arrête l'exécution pour ne pas afficher les notes sans évaluation
             }
 
             tabs.style.display = "flex";
+            // Rend visible la barre d'onglets de périodes
             const q = query(collection(db, "notes"), where("classe", "==", profil.maClasse));
+            // Construit une requête pour récupérer toutes les notes de la classe de l'élève
             const querySnapshot = await getDocs(q);
+            // Exécute la requête et attend toutes les notes
 
             toutesMesNotes = [];
+            // Réinitialise le tableau global des notes
             querySnapshot.forEach((snap) => {
+                // Parcourt chaque note retournée par la requête
                 const data = snap.data();
+                // Extrait les données du document de note courant
                 if (normNom(data.nomEleveNorm || data.nomEleve) === profil.monNomNorm) {
+                    // Vérifie si la note appartient bien à l'élève connecté (comparaison normalisée)
                     toutesMesNotes.push(data);
+                    // Ajoute la note au tableau global si elle appartient à cet élève
                 }
             });
 
             await afficherNotesFiltrees();
+            // Appelle la fonction pour afficher les notes de la période sélectionnée par défaut
         } catch (error) {
+            // Si une erreur survient lors du chargement des données
             container.innerHTML = "Erreur de chargement.";
+            // Affiche un message d'erreur à l'utilisateur
         }
     });
 
     async function lireProfilFusionne(uid) {
+        // Déclare une fonction asynchrone qui lit et fusionne le profil de l'utilisateur depuis deux collections
         try {
+            // Bloc try : tente de lire les données sans faire planter l'application
             const snapUsers = await getDoc(doc(db, "users", uid));
+            // Lit le document de l'utilisateur dans la collection principale "users"
             const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
+            // Lit le document de l'utilisateur dans l'ancienne collection "utilisateurs"
             const u = snapUsers.exists() ? snapUsers.data() : {};
+            // Si le document "users" existe, récupère ses données ; sinon utilise un objet vide
             const v = snapUtils.exists() ? snapUtils.data() : {};
+            // Si le document "utilisateurs" existe, récupère ses données ; sinon utilise un objet vide
             return { 
+                // Retourne un objet de profil fusionné avec les données des deux collections
                 ok: snapUsers.exists() || snapUtils.exists(), 
+                // Indique si au moins un des deux profils existe
                 maClasse: premiereValeurUtile(u.classe, v.classe), 
+                // Prend la première valeur de classe non nulle trouvée dans les deux profils
                 monNomNorm: normNom(premiereValeurUtile(u.nom, v.nom)) 
+                // Prend le premier nom non nul trouvé et le normalise pour les comparaisons
             };
         } catch (e) { return { ok: false }; }
+        // En cas d'erreur, retourne un objet indiquant que le profil est invalide
     }
     // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Bloquer le clic droit
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+    // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+    document.addEventListener('keydown', (e) => {
+        // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+        if (
+            e.key === 'F12' || 
+            // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+            (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+            // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+            (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+            // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+            (e.ctrlKey && e.key === 'u') ||
+            // Vérifie Ctrl+U (affiche le code source)
+            (e.ctrlKey && e.key === 's')
+            // Vérifie Ctrl+S (sauvegarde de la page)
+        ) {
+            e.preventDefault();
+            // Annule l'action par défaut du raccourci clavier détecté
+            alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+            // Affiche un message expliquant pourquoi l'action est bloquée
+            return false;
+            // Retourne false pour s'assurer que l'événement est complètement stoppé
+        }
+    });
 
 </script>
  <script>
         // FONCTION POUR OUVRIR / FERMER LE MENU
         function toggleMenu() {
+            // Déclare la fonction qui bascule l'affichage du menu latéral
             document.getElementById("sidebar").classList.toggle("active");
+            // Ajoute ou supprime la classe CSS "active" sur la barre latérale pour l'ouvrir/fermer
             document.getElementById("overlay").classList.toggle("active");
+            // Ajoute ou supprime la classe CSS "active" sur le fond semi-transparent
         }
     </script>
     

@@ -1,9 +1,13 @@
 rules_version = '2';
-
+// Spécifie la version 2 du moteur de règles de sécurité de Firebase Firestore
 service cloud.firestore {
+  // Déclare que ces règles s'appliquent au service Cloud Firestore
   match /databases/{database}/documents {
+    // Cible le point d'entrée par défaut de la base de données Firestore pour tous les documents
     match /{document=**} {
+      // Correspond de manière récursive à n'importe quel document ou sous-collection de la base de données
       allow read, write: if true;
+      // Autorise toutes les requêtes en lecture et en écriture sans aucune restriction de sécurité (à des fins de développement)
     }
   }
 }    

@@ -142,82 +142,130 @@
     <script type="module" src="app.js"></script>
     <script type="module">
         import { auth, db } from "./auth.js";
+        // Importe les instances Firebase (authentification et base de données) depuis auth.js
         import { collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions Firestore pour créer des requêtes et lire/écrire des documents
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe la fonction pour écouter les changements d'état de connexion
 
         const profSelect = document.getElementById('prof-select');
+        // Récupère l'élément <select> qui affichera la liste des enseignants à évaluer
         const formEval = document.getElementById('form-evaluation');
+        // Récupère l'élément HTML du formulaire d'évaluation
 
         // 1. Charger dynamiquement tous les enseignants de l'école
         async function chargerEnseignants() {
+            // Déclare une fonction asynchrone qui charge la liste des enseignants depuis Firestore
             try {
+                // Bloc try : tente de récupérer les données sans planter l'application
                 const q = query(collection(db, "users"), where("role", "==", "enseignant"));
+                // Construit une requête Firestore pour filtrer uniquement les utilisateurs avec le rôle "enseignant"
                 const querySnapshot = await getDocs(q);
+                // Exécute la requête et attend la réponse de Firestore
                 
                 profSelect.innerHTML = '<option value="">-- Choisissez un enseignant --</option>';
+                // Réinitialise le menu déroulant avec une option par défaut vide
                 
                 querySnapshot.forEach((doc) => {
+                    // Parcourt chaque document (enseignant) retourné par la requête
                     const prof = doc.data();
+                    // Extrait les données (nom, rôle, etc.) du document courant
                     profSelect.innerHTML += `<option value="${doc.id}">${prof.nom}</option>`;
+                    // Ajoute une option dans la liste déroulante avec l'ID comme valeur et le nom comme libellé
                 });
             } catch (error) {
+                // Si une erreur survient (réseau, permissions Firestore, etc.)
                 console.error("Erreur lors du chargement des profs:", error);
+                // Affiche l'erreur dans la console pour faciliter le débogage
             }
         }
 
         // 2. Envoyer l'évaluation
         formEval.addEventListener('submit', async (e) => {
+            // Écoute la soumission du formulaire d'évaluation (async pour utiliser await)
             e.preventDefault();
+            // Empêche le rechargement de la page lors de la soumission du formulaire
             const user = auth.currentUser;
+            // Récupère l'objet de l'utilisateur actuellement connecté
 
             if (!user) {
+                // Vérifie qu'un utilisateur est bien connecté avant de continuer
                 alert("Vous devez être connecté.");
+                // Informe l'utilisateur qu'il doit être connecté pour évaluer
                 return;
+                // Arrête l'exécution si personne n'est connecté
             }
 
             try {
+                // Bloc try : tente d'enregistrer l'évaluation dans Firestore
                 await addDoc(collection(db, "evaluations_profs"), {
+                    // Crée un nouveau document dans la collection "evaluations_profs"
                     profId: profSelect.value,
+                    // ID Firestore de l'enseignant évalué
                     profNom: profSelect.options[profSelect.selectedIndex].text,
+                    // Nom de l'enseignant sélectionné (texte visible de l'option)
                     eleveId: user.uid,
+                    // UID de l'élève qui soumet l'évaluation
                     maitrise: document.getElementById('note-maitrise').value,
+                    // Note de maîtrise du sujet donnée par l'élève (de 1 à 5)
                     disponibilite: document.getElementById('note-dispo').value,
+                    // Note de disponibilité donnée par l'élève (de 1 à 5)
                     date: new Date()
+                    // Date et heure exacte de l'évaluation
                 });
 
                 alert("Merci ! Votre évaluation a été enregistrée.");
+                // Informe l'élève que son évaluation a bien été sauvegardée
                 formEval.reset();
+                // Réinitialise tous les champs du formulaire après soumission réussie
             } catch (error) {
+                // Si une erreur Firestore survient lors de l'enregistrement
                 alert("Erreur : " + error.message);
+                // Affiche le message d'erreur à l'utilisateur
             }
         });
 
         // Lancer le chargement au démarrage
         onAuthStateChanged(auth, (user) => {
+            // Écoute les changements d'état de connexion au chargement de la page
             if (user) {
+                // Si un utilisateur est connecté, on charge la liste des enseignants
                 chargerEnseignants();
+                // Appelle la fonction pour remplir le menu déroulant des enseignants
             } else {
+                // Si personne n'est connecté
                 window.location.href = "login.html";
+                // Redirige vers la page de connexion
             }
         });
         // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+            if (
+                e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+                (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
+                (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
+            ) {
+                e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
+                return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
+            }
+        });
     </script>
 
 </body>

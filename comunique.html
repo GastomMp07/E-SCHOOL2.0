@@ -121,149 +121,219 @@
     <script type="module" src="app.js"></script>
     <script type="module">
         import { auth, db } from "./auth.js";
+        // Importe les instances de la base de données et de l'authentification depuis auth.js
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe l'écouteur de changement d'état de connexion de Firebase Auth
         import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions Firestore nécessaires pour requêter et manipuler des documents
 
         // ... (vos imports Firebase en haut du script)
 
-onAuthStateChanged(auth, async (user) => {
-    const container = document.getElementById("liste-communiques");
-    
-    if (!user) {
-        window.location.href = "login.html";
-        return;
-    }
+        onAuthStateChanged(auth, async (user) => {
+            // Écoute les changements d'état de connexion de l'utilisateur
+            const container = document.getElementById("liste-communiques");
+            // Récupère le conteneur HTML où seront affichés les communiqués
+            
+            if (!user) {
+                // Si aucun utilisateur n'est connecté
+                window.location.href = "login.html";
+                // Redirige vers la page de connexion
+                return;
+                // Arrête l'exécution de la fonction d'écoute
+            }
 
-    try {
-        // 1. Récupérer les infos de l'utilisateur (on vérifie les deux collections possibles)
-        const userSnap = await getDoc(doc(db, "users", user.uid));
-        let userData = userSnap.exists() ? userSnap.data() : {};
+            try {
+                // Bloc try pour attraper les erreurs de lecture Firestore ou réseau
+                // 1. Récupérer les infos de l'utilisateur (on vérifie les deux collections possibles)
+                const userSnap = await getDoc(doc(db, "users", user.uid));
+                // Tente de récupérer les informations de l'utilisateur connecté dans la collection "users"
+                let userData = userSnap.exists() ? userSnap.data() : {};
+                // Si le document existe, extrait ses données, sinon initialise un objet vide
 
-        if (!userSnap.exists()) {
-            const utilSnap = await getDoc(doc(db, "utilisateurs", user.uid));
-            if (utilSnap.exists()) userData = utilSnap.data();
-        }
+                if (!userSnap.exists()) {
+                    // Si l'utilisateur n'est pas trouvé dans la collection "users"
+                    const utilSnap = await getDoc(doc(db, "utilisateurs", user.uid));
+                    // Cherche le document dans l'ancienne collection "utilisateurs"
+                    if (utilSnap.exists()) userData = utilSnap.data();
+                    // Si le document est présent, extrait les données
+                }
 
-        // On normalise le rôle et on récupère la liste des classes (tableau)
-        const role = (userData.role || "").toLowerCase();
-        const userClasses = Array.isArray(userData.classe) 
-            ? userData.classe 
-            : (userData.classe ? [userData.classe] : ["tous"]);
+                // On normalise le rôle et on récupère la liste des classes (tableau)
+                const role = (userData.role || "").toLowerCase();
+                // Extrait le rôle de l'utilisateur et le convertit en minuscules
+                const userClasses = Array.isArray(userData.classe) 
+                    // Vérifie si la propriété classe est déjà un tableau
+                    ? userData.classe 
+                    // Si oui, l'utilise directement
+                    : (userData.classe ? [userData.classe] : ["tous"]);
+                    // Si non, l'enveloppe dans un tableau ou utilise ["tous"] par défaut
 
-        // 2. Récupérer TOUS les communiqués depuis Firestore
-        const snap = await getDocs(collection(db, "communiques"));
-        const docs = [];
-        snap.forEach((docSnap) => {
-            docs.push({ id: docSnap.id, ...docSnap.data() });
+                // 2. Récupérer TOUS les communiqués depuis Firestore
+                const snap = await getDocs(collection(db, "communiques"));
+                // Récupère tous les documents de la collection "communiques"
+                const docs = [];
+                // Initialise un tableau vide pour stocker les communiqués
+                snap.forEach((docSnap) => {
+                    // Parcourt chaque document récupéré
+                    docs.push({ id: docSnap.id, ...docSnap.data() });
+                    // Ajoute l'identifiant et les données du communiqué au tableau
+                });
+
+                // 3. Trier par date (le plus récent en premier)
+                docs.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
+                // Trie le tableau par timestamp décroissant (les plus récents en premier)
+
+                // 4. Appeler la fonction d'affichage avec la classe de l'utilisateur
+                afficherCommuniques(container, docs, userClasses, role);
+                // Lance le rendu des communiqués filtrés sur l'écran
+
+            } catch (e) {
+                // En cas d'erreur de chargement
+                console.error("Erreur lors du chargement :", e);
+                // Affiche le détail de l'erreur dans la console
+                container.innerHTML = "<p style='color:#b91c1c;'>Erreur de connexion aux communiqués.</p>";
+                // Affiche un message d'erreur rouge à l'utilisateur
+            }
         });
 
-        // 3. Trier par date (le plus récent en premier)
-        docs.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0));
-
-        // 4. Appeler la fonction d'affichage avec la classe de l'utilisateur
-        afficherCommuniques(container, docs, userClasses, role);
-
-    } catch (e) {
-        console.error("Erreur lors du chargement :", e);
-        container.innerHTML = "<p style='color:#b91c1c;'>Erreur de connexion aux communiqués.</p>";
-    }
-});
         function formaterDate(data) {
+            // Déclare une fonction pour mettre en forme la date de publication
             if (data.timestamp != null && typeof data.timestamp === "number") {
+                // Vérifie si un timestamp numérique valide est présent
                 return new Date(data.timestamp).toLocaleString("fr-FR", {
+                    // Crée un objet Date et le formate selon les standards français
                     dateStyle: "long",
+                    // Affiche la date complète en toutes lettres (ex: 18 avril 2026)
                     timeStyle: "short"
+                    // Affiche l'heure et les minutes (ex: 18:30)
                 });
             }
             const d = data.date;
+            // Récupère l'alternative stockée sous forme d'objet Timestamp Firebase ou Date
             if (d && typeof d.toDate === "function") {
+                // Si l'objet possède une méthode toDate (cas de Firebase Timestamp)
                 return d.toDate().toLocaleString("fr-FR", {
+                    // Convertit en Date JavaScript puis en chaîne française
                     dateStyle: "long",
+                    // Style de date complet
                     timeStyle: "short"
+                    // Style d'heure court
                 });
             }
             if (d instanceof Date) {
+                // Si l'objet est déjà une instance classique de Date JavaScript
                 return d.toLocaleString("fr-FR", {
+                    // Formate la date selon les standards locaux français
                     dateStyle: "long",
+                    // Style de date complet
                     timeStyle: "short"
+                    // Style d'heure court
                 });
             }
             return "Date inconnue";
+            // Retourne une chaîne par défaut si aucun format valide n'est identifié
         }
 
         function afficherCommuniques(container, docs, userClasses = ["tous"], role = "") {
-    container.innerHTML = "";
-    
-    // Filtrage des messages
-    const messagesVisibles = docs.filter(item => {
-        // L'admin et la direction voient TOUT (pour vérification)
-        if (role === "admin" || role === "direction") return true;
-        // Public
-        if (item.destinataire === "tous") return true;
-        // Match avec une des classes de l'élève ou prof
-        return userClasses.includes(item.destinataire);
-    });
+            // Déclare la fonction qui affiche les communiqués dans la page en les filtrant
+            container.innerHTML = "";
+            // Vide le conteneur avant d'effectuer le nouveau rendu
+            
+            // Filtrage des messages
+            const messagesVisibles = docs.filter(item => {
+                // Filtre les communiqués pour ne garder que ceux qui concernent l'utilisateur connecté
+                // L'admin et la direction voient TOUT (pour vérification)
+                if (role === "admin" || role === "direction") return true;
+                // Si l'utilisateur est admin ou direction, le communiqué est conservé
+                // Public
+                if (item.destinataire === "tous") return true;
+                // Si le communiqué est adressé à "tous", il est visible
+                // Match avec une des classes de l'élève ou prof
+                return userClasses.includes(item.destinataire);
+                // Conserve le communiqué si son destinataire figure dans les classes de l'utilisateur
+            });
 
-    if (messagesVisibles.length === 0) {
-        container.innerHTML = "<p style='color:#64748b;padding:16px;'>Aucun communiqué pour vous pour le moment.</p>";
-        return;
-    }
+            if (messagesVisibles.length === 0) {
+                // Si aucun communiqué n'est visible pour l'utilisateur
+                container.innerHTML = "<p style='color:#64748b;padding:16px;'>Aucun communiqué pour vous pour le moment.</p>";
+                // Affiche un message de boîte aux lettres vide
+                return;
+                // Arrête le traitement de la fonction d'affichage
+            }
 
-    const couleurs = ["#0c5568", "#0c7489", "#0d3b4f"];
-    
-    messagesVisibles.forEach((item, i) => {
-        const card = document.createElement("div");
-        card.className = "data-card animate__animated animate__fadeInUp"; // Petit effet sympa
-        card.style.cssText = `
-            border-left: 5px solid ${couleurs[i % couleurs.length]}; 
-            text-align: left; 
-            margin-bottom: 15px; 
-            padding: 15px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        `;
+            const couleurs = ["#0c5568", "#0c7489", "#0d3b4f"];
+            // Définit une palette de couleurs alternées pour les bordures gauches des communiqués
+            
+            messagesVisibles.forEach((item, i) => {
+                // Parcourt chaque communiqué filtré pour le restituer sous forme de carte HTML
+                const card = document.createElement("div");
+                // Crée un nouvel élément div pour faire office de carte
+                card.className = "data-card animate__animated animate__fadeInUp"; // Petit effet sympa
+                // Assigne les classes CSS pour le style et l'animation d'apparition
+                card.style.cssText = `
+                    border-left: 5px solid ${couleurs[i % couleurs.length]}; 
+                    text-align: left; 
+                    margin-bottom: 15px; 
+                    padding: 15px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                `;
+                // Applique les styles CSS en ligne pour la bordure colorée et la mise en page de la carte
 
-        // Badge de cible (ex: "7em A" ou "Public")
-        const badgeColor = item.destinataire === "tous" ? "#28a745" : "#0c5568";
-        const badgeText = item.destinataire === "tous" ? "PUBLIC" : `CLASSE : ${item.destinataire}`;
+                // Badge de cible (ex: "7em A" ou "Public")
+                const badgeColor = item.destinataire === "tous" ? "#28a745" : "#0c5568";
+                // Choisi une couleur verte pour le badge public, et bleu-foncé pour le badge spécifique à une classe
+                const badgeText = item.destinataire === "tous" ? "PUBLIC" : `CLASSE : ${item.destinataire}`;
+                // Libelle le texte du badge selon le ciblage du message
 
-        card.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h4 style="margin: 0; color: #333; font-size: 1.1em;">${item.titre || "(Sans titre)"}</h4>
-                <span style="font-size: 0.7em; background: ${badgeColor}; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold;">
-                    ${badgeText}
-                </span>
-            </div>
-            <small style="color: #64748b; display: block; margin-top: 5px;">
-                Publié le ${formaterDate(item)} — <strong>${item.auteur || "Direction"}</strong>
-            </small>
-            <p style="margin-top: 12px; white-space: pre-wrap; color: #444; line-height: 1.5;">
-                ${item.message || item.contenu || ""}
-            </p>
-        `;
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <h4 style="margin: 0; color: #333; font-size: 1.1em;">${item.titre || "(Sans titre)"}</h4>
+                        <span style="font-size: 0.7em; background: ${badgeColor}; color: white; padding: 2px 8px; border-radius: 10px; font-weight: bold;">
+                            ${badgeText}
+                        </span>
+                    </div>
+                    <small style="color: #64748b; display: block; margin-top: 5px;">
+                        Publié le ${formaterDate(item)} — <strong>${item.auteur || "Direction"}</strong>
+                    </small>
+                    <p style="margin-top: 12px; white-space: pre-wrap; color: #444; line-height: 1.5;">
+                        ${item.message || item.contenu || ""}
+                    </p>
+                `;
+                // Injecte la structure HTML complète de la carte contenant titre, badge, date, auteur et contenu
+                container.appendChild(card);
+                // Insère la carte générée dans le conteneur de communiqués
+            });
+        }
+        // --- SÉCURITÉ : ANTI-INSPECTION ---
+        // Bloquer le clic droit
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-        container.appendChild(card);
-    });
-}
-// --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
-
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        document.addEventListener('keydown', (e) => {
+            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+            if (
+                e.key === 'F12' || 
+                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+                (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+                (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+                (e.ctrlKey && e.key === 'u') ||
+                // Vérifie Ctrl+U (affiche le code source)
+                (e.ctrlKey && e.key === 's')
+                // Vérifie Ctrl+S (sauvegarde de la page)
+            ) {
+                e.preventDefault();
+                // Annule l'action par défaut du raccourci clavier détecté
+                alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un message expliquant pourquoi l'action est bloquée
+                return false;
+                // Retourne false pour s'assurer que l'événement est complètement stoppé
+            }
+        });
     </script>
 
     <script type="module" src="app.js"></script>

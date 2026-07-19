@@ -122,70 +122,111 @@
 
    <script type="module">
     import { auth, db } from "./auth.js";
+    // Importe les instances Firebase d'authentification et de base de données depuis auth.js
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // Importe l'écouteur pour détecter le changement d'état de connexion de l'utilisateur
     import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    // Importe les fonctions de requêtes et de manipulation de documents Firestore
 
     onAuthStateChanged(auth, async (user) => {
+        // Déclenche l'écoute de l'état de l'authentification de l'utilisateur courant
         if (!user) {
+            // Si aucun utilisateur n'est connecté à l'application
             window.location.href = "login.html";
+            // Redirige immédiatement l'utilisateur vers la page de connexion
             return;
+            // Interrompt l'exécution de la fonction d'écoute
         }
 
         const container = document.getElementById('horaire-container');
+        // Récupère l'élément HTML destiné à afficher le planning hebdomadaire
         const displayLabel = document.getElementById('classe-display');
+        // Récupère l'élément textuel affichant les détails de la classe ou de l'enseignant
 
         try {
+            // Bloc de sécurité try-catch pour intercepter les échecs liés à Firestore
             // 1. Récupérer les infos de l'utilisateur (Rôle et Classe/Nom)
             let userSnap = await getDoc(doc(db, "users", user.uid));
+            // Lit le document de l'utilisateur connecté dans la collection principale "users"
             
             if (userSnap.exists()) {
+                // Si l'utilisateur connecté possède un profil dans la collection
                 const userData = userSnap.data();
+                // Extrait les champs et les valeurs du document de profil
                 const role = userData.role; // "eleve", "professeur" ou "admin"
+                // Extrait le rôle de l'utilisateur pour adapter l'affichage
                 let q;
+                // Initialise la variable qui contiendra la requête Firestore
 
                 // 2. Définir la requête selon le rôle
                 if (role === "enseignant" || role === "professeur") {
+                    // Si l'utilisateur connecté est identifié comme un enseignant
                     displayLabel.innerText = "Planning Enseignant : " + userData.nom;
+                    // Indique son nom dans le titre du planning
                     // Le prof voit les cours où son NOM est enregistré
                     q = query(collection(db, "horaires"), where("professeur", "==", userData.nom));
+                    // Filtre les créneaux d'horaires dont le champ professeur correspond exactement au nom de l'utilisateur
                 } else {
+                    // Sinon, si l'utilisateur est un élève
                     // L'élève (ou autre) voit l'horaire de sa CLASSE
                     const maClasse = Array.isArray(userData.classe) ? userData.classe[0] : userData.classe;
+                    // Vérifie si sa classe est stockée sous forme de tableau ou d'une chaîne et extrait la valeur
                     displayLabel.innerText = "Emploi du temps - Classe : " + maClasse;
+                    // Affiche le nom de sa classe dans le titre du planning
                     q = query(collection(db, "horaires"), where("classe", "==", maClasse));
+                    // Filtre les créneaux d'horaires dont la classe correspond à celle de l'élève
                 }
 
                 const querySnapshot = await getDocs(q);
+                // Exécute la requête configurée et attend les résultats
                 container.innerHTML = ""; 
+                // Réinitialise le conteneur du planning avant le rendu
 
                 if (querySnapshot.empty) {
+                    // Si aucun cours n'a été planifié pour cette classe ou cet enseignant
                     container.innerHTML = "<p style='text-align:center; padding:20px;'>Aucun cours programmé pour le moment.</p>";
+                    // Affiche un texte explicatif à l'utilisateur
                     return;
+                    // Interrompt le rendu car la liste est vide
                 }
 
                 // 3. Organiser par jour
                 const joursOrder = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+                // Définit l'ordre officiel des jours de la semaine pour l'affichage
                 const planning = {};
+                // Crée un objet vide pour stocker les cours groupés par jour de la semaine
 
                 querySnapshot.forEach((doc) => {
+                    // Parcourt chaque document de créneau horaire retourné par la base
                     const data = doc.data();
+                    // Récupère les données du document
                     if (!planning[data.jour]) planning[data.jour] = [];
+                    // Si la clé du jour n'existe pas encore dans notre objet, initialise un tableau vide
                     planning[data.jour].push(data);
+                    // Ajoute les données du cours courant dans le tableau associé à son jour
                 });
 
                 // 4. Affichage dynamique
                 joursOrder.forEach(jour => {
+                    // Parcourt chaque jour de la semaine dans l'ordre chronologique défini
                     if (planning[jour]) {
+                        // S'il existe des cours planifiés pour ce jour précis
                         // Trier par heure (alphabétique fonctionne souvent pour 08h, 10h...)
                         planning[jour].sort((a, b) => a.heure.localeCompare(b.heure));
+                        // Trie les cours de la journée selon leur plage horaire de début
 
                         let jourHTML = `<h3 style="color: #0c5568; margin-top: 25px; border-bottom: 2px solid #0c7489; padding-bottom: 5px;">${jour}</h3>`;
+                        // Génère le titre HTML pour le jour courant
                         
                         planning[jour].forEach(cours => {
+                            // Parcourt tous les cours planifiés de ce jour
                             // On adapte le sous-titre : l'élève voit le prof, le prof voit la classe
                             const detailInfo = (role === "professeur") 
+                                // Si c'est un enseignant
                                 ? `🏫 Classe : ${cours.classe}` 
+                                // Affiche la classe concernée
                                 : `👨‍🏫 Enseignant : ${cours.professeur}`;
+                                // Sinon (élève), affiche le nom de l'enseignant en charge du cours
 
                             jourHTML += `
                                 <div class="animate__animated animate__fadeInLeft" style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #0c5568;">
@@ -198,37 +239,56 @@
                                     </div>
                                 </div>
                             `;
+                            // Génère et concatène la carte HTML pour le cours avec le nom, l'heure et les informations adaptées
                         });
                         container.innerHTML += jourHTML;
+                        // Injecte l'ensemble des cours de la journée dans le conteneur principal
                     }
                 });
 
             } else {
+                // Si aucun profil correspondant à l'UID n'existe dans Firestore
                 alert("Profil introuvable.");
+                // Affiche un message d'avertissement
             }
         } catch (error) {
+            // En cas d'erreur de chargement Firestore ou réseau
             console.error("Erreur Firestore :", error);
+            // Affiche l'erreur complète dans la console de débogage
             container.innerHTML = "<p>Erreur de chargement des données.</p>";
+            // Affiche un message d'erreur textuel dans la section horaire
         }
     });
     // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Bloquer le clic droit
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+    // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+    document.addEventListener('keydown', (e) => {
+        // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+        if (
+            e.key === 'F12' || 
+            // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+            (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+            // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+            (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+            // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+            (e.ctrlKey && e.key === 'u') ||
+            // Vérifie Ctrl+U (affiche le code source)
+            (e.ctrlKey && e.key === 's')
+            // Vérifie Ctrl+S (sauvegarde de la page)
+        ) {
+            e.preventDefault();
+            // Annule l'action par défaut du raccourci clavier détecté
+            alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+            // Affiche un message expliquant pourquoi l'action est bloquée
+            return false;
+            // Retourne false pour s'assurer que l'événement est complètement stoppé
+        }
+    });
+
+</script>
 
 </script>
  <script type="module" src="app.js"></script>

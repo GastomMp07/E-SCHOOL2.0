@@ -98,23 +98,36 @@
 
 <script type="module">
     import { auth, db } from "./auth.js";
+    // Importe les instances Firebase (authentification et base de données) depuis auth.js
     import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // Importe la fonction Firebase permettant de créer un compte avec email et mot de passe
     import { doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    // Importe les fonctions pour référencer et écrire un document dans Firestore
 
     // CODES SECRETS
     const CODES = {
+        // Déclare un objet contenant les codes secrets requis pour s'inscrire en tant que prof ou admin
         enseignant: "1234",
+        // Code secret que l'enseignant doit saisir pour valider son inscription
         admin: "0000" // Le code spécifique pour la direction
+        // Code secret que la direction doit saisir pour valider son inscription en tant qu'admin
     };
 
     const regRole = document.getElementById("reg-role");
+    // Récupère l'élément <select> qui permet à l'utilisateur de choisir son rôle
     const groupCode = document.getElementById("admin-code-group");
+    // Récupère le groupe de champ qui contient le code secret (affiché selon le rôle)
     const groupMatiere = document.getElementById("group-matiere");
+    // Récupère le groupe de champ pour les matières enseignées (affiché seulement pour les profs)
     const groupClasse = document.getElementById("group-classe");
+    // Récupère le groupe de champ pour la sélection de classe
     const containerClasses = document.getElementById('classe-checkbox-container');
+    // Récupère le conteneur HTML dans lequel les cases à cocher des classes seront générées
     const labelCode = document.getElementById("label-code");
+    // Récupère l'étiquette du champ code secret pour pouvoir changer son texte dynamiquement
 
     const listeClasses = [
+        // Déclare un tableau contenant toutes les classes disponibles dans l'école
         "7emè A",
         "7emè B",
         "8emè A", 
@@ -147,104 +160,159 @@
 
     // Génération des classes
     listeClasses.forEach(cl => {
+        // Parcourt chaque classe de la liste pour créer une case à cocher correspondante
         containerClasses.innerHTML += `
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
                 <input type="checkbox" class="classe-check" value="${cl}" id="check-${cl}" style="width: 18px; height: 18px; margin-right: 10px;">
                 <label for="check-${cl}" style="margin: 0; font-weight: normal; color: #333;">${cl}</label>
             </div>`;
+        // Ajoute dynamiquement au DOM une ligne avec une case à cocher et son étiquette pour cette classe
     });
 
     const allCheckboxes = document.querySelectorAll('.classe-check');
+    // Sélectionne toutes les cases à cocher générées pour les classes
 
     // Gestion du rôle
     regRole.addEventListener("change", () => {
+        // Écoute le changement de valeur du menu déroulant de rôle
         const val = regRole.value;
+        // Récupère la valeur du rôle actuellement sélectionné
         
         // Affichage du champ code pour prof et admin
         groupCode.style.display = (val === "enseignant" || val === "admin") ? "block" : "none";
+        // Affiche le champ code secret si le rôle est enseignant ou admin, sinon le cache
         // Matières seulement pour prof
         groupMatiere.style.display = (val === "enseignant") ? "block" : "none";
+        // Affiche le champ matières seulement pour le rôle enseignant
         // Cacher les classes pour l'admin (il supervise tout)
         groupClasse.style.display = (val === "admin") ? "none" : "block";
+        // Cache la sélection de classe pour l'admin qui gère toutes les classes
 
         labelCode.innerText = val === "admin" ? "Code Direction Secret" : "Code Autorisation Enseignant";
+        // Change le texte de l'étiquette du code selon si c'est un admin ou un enseignant
         
         allCheckboxes.forEach(cb => cb.checked = false);
+        // Décoche toutes les cases à cocher quand le rôle change pour repartir à zéro
     });
 
     // Limitation élève (1 seule classe)
     allCheckboxes.forEach(cb => {
+        // Parcourt chaque case à cocher pour y attacher une règle de sélection unique pour les élèves
         cb.addEventListener('change', () => {
+            // Écoute le changement d'état (coché/décoché) de chaque case
             if (regRole.value === "eleve" && cb.checked) {
+                // Si le rôle est élève et qu'une case vient d'être cochée
                 allCheckboxes.forEach(other => { if (other !== cb) other.checked = false; });
+                // Décoche toutes les autres cases pour forcer la sélection d'une seule classe
             }
         });
     });
 
     const regForm = document.getElementById("register-form");
+    // Récupère l'élément HTML du formulaire d'inscription
     regForm.addEventListener("submit", async (e) => {
+        // Écoute la soumission du formulaire (async pour utiliser await)
         e.preventDefault();
+        // Empêche le rechargement de la page lors de la soumission du formulaire
 
         const role = regRole.value;
+        // Récupère le rôle choisi par l'utilisateur
         const email = document.getElementById("reg-email").value;
+        // Récupère l'email saisi par l'utilisateur
         const pass = document.getElementById("reg-password").value;
+        // Récupère le mot de passe saisi par l'utilisateur
         const nom = document.getElementById("reg-nom").value;
+        // Récupère le nom complet saisi par l'utilisateur
         
         // Vérification des codes de sécurité
         if (role === "enseignant" || role === "admin") {
+            // Si le rôle nécessite un code secret (prof ou admin), on le vérifie
             const codeSaisi = document.getElementById("reg-admin-code").value;
+            // Récupère le code secret saisi par l'utilisateur
             if (codeSaisi !== CODES[role]) {
+                // Compare le code saisi au code attendu pour ce rôle
                 alert(`❌ Code incorrect pour le rôle ${role} !`);
+                // Informe l'utilisateur que le code est incorrect
                 return;
+                // Arrête l'exécution pour empêcher l'inscription
             }
         }
 
         const checkboxes = document.querySelectorAll('.classe-check:checked');
+        // Sélectionne toutes les cases à cocher qui sont cochées
         const classesChoisies = Array.from(checkboxes).map(cb => cb.value);
+        // Convertit la NodeList en tableau et extrait les valeurs (noms des classes choisies)
 
         if (role !== "admin" && classesChoisies.length === 0) {
+            // Vérifie qu'un non-admin a bien sélectionné au moins une classe
             alert("Veuillez choisir au moins une classe.");
+            // Informe l'utilisateur qu'il doit sélectionner une classe
             return;
+            // Arrête l'exécution pour empêcher l'inscription sans classe
         }
 
         try { 
+            // Bloc try : tente de créer le compte Firebase et d'enregistrer les données
             const { user } = await createUserWithEmailAndPassword(auth, email, pass);
+            // Crée le compte Firebase Authentication et récupère l'objet utilisateur créé
             
             const profil = {
+                // Construit l'objet profil à enregistrer dans Firestore
                 nom: nom,
+                // Nom complet de l'utilisateur
                 role: role,
+                // Rôle de l'utilisateur (eleve, enseignant, admin)
                 email: email,
+                // Adresse email de l'utilisateur
                 classe: role === "admin" ? "Toutes" : classesChoisies,
+                // Pour l'admin, assigne "Toutes" ; pour les autres, le tableau des classes choisies
                 matieres: role === "enseignant" ? document.getElementById("reg-matiere").value.split(',').map(m => m.trim()) : [],
+                // Pour l'enseignant, crée un tableau de matières depuis la saisie ; sinon tableau vide
                 createdAt: new Date()
+                // Date et heure de création du compte
             };
 
             await setDoc(doc(db, "users", user.uid), profil);
+            // Enregistre le profil dans Firestore sous la collection "users" avec l'UID comme identifiant
             alert("Compte " + role.toUpperCase() + " créé !");
+            // Informe l'utilisateur que son compte a été créé avec succès
             window.location.href = "accueil.html";
+            // Redirige l'utilisateur vers la page d'accueil après l'inscription
 
         } catch (error) {
+            // Si Firebase renvoie une erreur (email déjà utilisé, mot de passe trop court, etc.)
             alert("Erreur : " + error.message);
+            // Affiche le message d'erreur Firebase à l'utilisateur
         }
     });
     // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Bloquer le clic droit
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+    // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+    document.addEventListener('keydown', (e) => {
+        // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+        if (
+            e.key === 'F12' || 
+            // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+            (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+            // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+            (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+            // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+            (e.ctrlKey && e.key === 'u') ||
+            // Vérifie Ctrl+U (affiche le code source)
+            (e.ctrlKey && e.key === 's')
+            // Vérifie Ctrl+S (sauvegarde de la page)
+        ) {
+            e.preventDefault();
+            // Annule l'action par défaut du raccourci clavier détecté
+            alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+            // Affiche un message expliquant pourquoi l'action est bloquée
+            return false;
+            // Retourne false pour s'assurer que l'événement est complètement stoppé
+        }
+    });
 
 </script>
 </body>

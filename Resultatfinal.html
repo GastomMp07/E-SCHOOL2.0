@@ -199,117 +199,186 @@
 
 <script type="module">
     import { auth, db } from "./auth.js";
+    // Importe les instances d'authentification et de base de données Firebase depuis auth.js
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    // Importe l'écouteur d'état de connexion de Firebase Auth
     import { doc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    // Importe les fonctions de requêtes et de manipulation de documents Firestore
 
     function normNom(s) {
+        // Déclare la fonction qui normalise un nom pour des comparaisons insensibles à la casse et aux accents
         return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+        // Convertit en chaîne, supprime les espaces excessifs, met en minuscules et retire les accents
     }
 
     async function lireProfilFusionne(uid) {
+        // Déclare une fonction asynchrone qui fusionne les informations de l'élève depuis deux collections possibles
         const snapUsers = await getDoc(doc(db, "users", uid));
+        // Tente de récupérer le document de l'utilisateur dans "users"
         const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
+        // Tente de récupérer le document de l'utilisateur dans "utilisateurs"
         const u = snapUsers.exists() ? snapUsers.data() : {};
+        // Extrait les données si le document principal existe, sinon initialise un objet vide
         const v = snapUtils.exists() ? snapUtils.data() : {};
+        // Extrait les données si l'ancien document existe, sinon initialise un objet vide
         return { 
+            // Retourne un objet profil consolidé
             ok: snapUsers.exists() || snapUtils.exists(), 
+            // Indique si le profil a été trouvé dans l'une ou l'autre collection
             maClasse: u.classe || v.classe || "Non définie", 
+            // Prend la classe définie dans le profil (ou "Non définie")
             monNomBrut: u.nom || v.nom || "Utilisateur"
+            // Prend le nom brut de l'élève pour affichage
         };
     }
 
     const urlParams = new URLSearchParams(window.location.search);
+    // Analyse les paramètres de requête présents dans l'URL de la page
     const targetUid = urlParams.get('uid');
+    // Extrait l'identifiant (UID) de l'élève ciblé depuis l'URL
     const targetClasse = urlParams.get('classe');
+    // Extrait le nom de la classe de l'élève ciblé depuis l'URL
 
     onAuthStateChanged(auth, async (user) => {
+        // Écoute les changements d'état de connexion de l'utilisateur courant
         if (!user) { window.location.href = "login.html"; return; }
+        // Si aucun utilisateur n'est connecté, redirige vers la page de connexion et s'arrête
         const container = document.getElementById('liste-notes');
+        // Récupère l'élément HTML où le bilan annuel sera affiché
 
         try {
+            // Bloc try pour attraper les erreurs Firestore ou réseau
             // Vérification du rôle admin pour accéder à cette page
             const snapAdmin = await getDoc(doc(db, "users", user.uid));
+            // Récupère le profil de l'utilisateur connecté dans Firestore
             const roleData = snapAdmin.exists() ? snapAdmin.data().role : "";
+            // Extrait la valeur du rôle de l'utilisateur
             const role = String(roleData).toLowerCase();
+            // Convertit le rôle en minuscules pour comparaison
             const isAdmin = role === "admin" || role.includes("direction");
+            // Vérifie si l'utilisateur connecté a les droits d'administration ou de direction
 
             if (!isAdmin) {
+                // Si l'utilisateur connecté n'est pas autorisé
                 container.innerHTML = "<p style='color: white; text-align: center;'>Accès restreint à la direction.</p>";
+                // Affiche un message de restriction d'accès
                 return;
+                // Arrête l'exécution de l'affichage
             }
 
             if (!targetUid || !targetClasse) {
+                // Si les paramètres d'URL (élève ciblé ou classe) sont manquants
                 container.innerHTML = "<p style='color: white; text-align: center;'>Veuillez sélectionner un élève via le panel de gestion.</p>";
+                // Affiche un message d'instruction pour l'administrateur
                 return;
+                // Arrête l'exécution de l'affichage
             }
 
             const profil = await lireProfilFusionne(targetUid);
+            // Récupère le profil consolidé de l'élève ciblé
             const monNomCible = normNom(profil.monNomBrut);
+            // Normalise le nom de l'élève pour fiabiliser la recherche de ses notes
             const maClasse = targetClasse;
+            // Assigne la classe ciblée à une variable locale
 
             // 1. Récupérer les notes
             const q = query(collection(db, "notes"), where("classe", "==", maClasse));
+            // Prépare une requête Firestore pour récupérer toutes les notes de la classe ciblée
             const querySnapshot = await getDocs(q);
+            // Exécute la requête et récupère les documents de notes
             
             const toutesNotes = [];
+            // Initialise un tableau vide pour stocker les notes spécifiques de l'élève
             const totauxTousEleves = {}; // Pour calculer le classement de la classe
+            // Initialise un objet pour cumuler les points de chaque élève afin d'établir le classement
 
             querySnapshot.forEach(snap => {
+                // Parcourt chaque document de note retourné pour la classe
                 const data = snap.data();
+                // Extrait les champs du document de note
                 const nomEnBase = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
+                // Normalise le nom de l'élève associé à cette note
                 
                 // On cumule les points de chaque élève de la classe pour établir le rang
                 if (nomEnBase) {
+                    // Si un nom d'élève valide est présent dans l'enregistrement
                     totauxTousEleves[nomEnBase] = (totauxTousEleves[nomEnBase] || 0) + (parseFloat(data.note) || 0);
+                    // Additionne la note courante au total cumulé de cet élève
                 }
 
                 if (nomEnBase === monNomCible && monNomCible !== "") {
+                    // Si la note appartient bien à l'élève ciblé pour le bulletin
                     toutesNotes.push(data);
+                    // Ajoute la note de l'élève ciblé à son tableau personnel de notes
                 }
             });
 
             // Calcul du rang/place au sein de la classe
             const listeClassement = Object.entries(totauxTousEleves).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+            // Trie les élèves selon le cumul de leurs points de manière décroissante et en extrait les noms normalisés
             const maPlace = listeClassement.indexOf(monNomCible) + 1;
+            // Trouve l'index de l'élève ciblé et y ajoute 1 pour obtenir sa place (1-indexé)
             const totalEleves = listeClassement.length;
+            // Calcule le nombre total d'élèves de la classe ayant des notes enregistrées
 
             // 2. Préparer le regroupement (Même si vide)
             const bulletinComplet = {};
+            // Initialise l'objet bulletin regroupant les notes par matière
             
             // On peut ajouter ici des matières par défaut si on veut que le tableau ait des lignes d'office
             // Sinon, on remplit avec les notes trouvées
             toutesNotes.forEach(n => {
+                // Parcourt chaque note de l'élève ciblé
                 const matNom = n.matiere || "Sans nom";
+                // Récupère la matière associée (ou "Sans nom" par défaut)
                 if (!bulletinComplet[matNom]) {
+                    // Si la matière n'est pas encore enregistrée dans le bulletin
                     bulletinComplet[matNom] = {
+                        // Initialise les notes pour chaque période à vide (-) et associe la note max
                         "1ère Période": "-", "2ème Période": "-", "Examen 1er Semestre": "-",
                         "3ème Période": "-", "4ème Période": "-", "Examen 2ème Semestre": "-",
                         max: parseFloat(n.max || 20) 
                     };
                 }
                 bulletinComplet[matNom][n.periode] = parseFloat(n.note);
+                // Affecte la note obtenue à la période scolaire correspondante
             });
 
             // 3. Générer les lignes (Rows)
             let grandTotalObtenu = 0;
+            // Initialise le grand total de points obtenus par l'élève
             let grandTotalMaxPossible = 0;
+            // Initialise le grand total des maximums possibles de toutes ses notes
             let rowsHtml = "";
+            // Initialise la chaîne HTML destinée à contenir les lignes du tableau
 
             if (Object.keys(bulletinComplet).length === 0) {
+                // Si aucune note n'a été saisie pour cet élève
                 rowsHtml = `<tr><td colspan="9" style="text-align:center; padding:30px; color:gray;">Aucune note n'a encore été saisie pour votre profil.</td></tr>`;
+                // Génère une ligne unique de tableau affichant un message de vacuité
             } else {
+                // Sinon, si des notes ont été trouvées
                 for (const [matiere, scores] of Object.entries(bulletinComplet)) {
+                    // Parcourt chaque matière présente dans le bulletin de l'élève
                     const p1 = scores["1ère Période"] === "-" ? 0 : scores["1ère Période"];
+                    // Récupère les points de la P1 ou 0
                     const p2 = scores["2ème Période"] === "-" ? 0 : scores["2ème Période"];
+                    // Récupère les points de la P2 ou 0
                     const e1 = scores["Examen 1er Semestre"] === "-" ? 0 : scores["Examen 1er Semestre"];
+                    // Récupère les points de l'Examen 1er Semestre ou 0
                     
                     const totalS1 = p1 + p2 + e1;
+                    // Calcule le total du premier semestre pour cette matière
                     
                     // Calcul cumulatif
                     ["1ère Période", "2ème Période", "Examen 1er Semestre", "3ème Période", "4ème Période", "Examen 2ème Semestre"].forEach(per => {
+                        // Parcourt toutes les périodes scolaires possibles
                         if (scores[per] !== "-") {
+                            // Si l'élève possède une note valide pour cette période
                             grandTotalObtenu += scores[per];
+                            // Additionne la note obtenue au grand total général
                             grandTotalMaxPossible += scores.max;
+                            // Additionne le maximum de la matière au grand total maximum possible
                         }
                     });
 
@@ -321,10 +390,12 @@
                             <td>${scores["3ème Période"]}</td><td>${scores["4ème Période"]}</td><td>${scores["Examen 2ème Semestre"]}</td>
                             <td class="bold">-</td>
                         </tr>`;
+                    // Concatène une ligne HTML pour le tableau avec les notes des semestres
                 }
             }
 
             const pourcentageActuel = grandTotalMaxPossible > 0 ? ((grandTotalObtenu / grandTotalMaxPossible) * 100).toFixed(1) : 0;
+            // Calcule le pourcentage général de réussite de l'élève
 
             // 4. Affichage final du tableau (TOUJOURS EXÉCUTÉ)
             container.innerHTML = `
@@ -370,36 +441,53 @@
                         <div style="font-style: italic; color: #666; font-size: 0.8em;">Document généré pour supervision direction</div>
                     </div>
                 </div>`;
+            // Injecte le template HTML complet et stylisé du bulletin de notes dans la page
 
         } catch (error) {
+            // En cas d'erreur de réseau ou Firestore
             console.error("Erreur:", error);
+            // Affiche les détails de l'erreur dans la console pour débugger
             container.innerHTML = "<p style='color:white; text-align:center;'>Erreur de chargement des données.</p>";
+            // Affiche un message d'erreur blanc au centre de l'écran
         }
     });
     // --- SÉCURITÉ : ANTI-INSPECTION ---
-// Bloquer le clic droit
-document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Bloquer le clic droit
+    document.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-// Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
-document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'F12' || 
-        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-        (e.ctrlKey && e.key === 'u') ||
-        (e.ctrlKey && e.key === 's')
-    ) {
-        e.preventDefault();
-        alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-        return false;
-    }
-});
+    // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+    document.addEventListener('keydown', (e) => {
+        // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
+        if (
+            e.key === 'F12' || 
+            // Vérifie si la touche F12 (ouvre les DevTools) est pressée
+            (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+            // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
+            (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+            // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
+            (e.ctrlKey && e.key === 'u') ||
+            // Vérifie Ctrl+U (affiche le code source)
+            (e.ctrlKey && e.key === 's')
+            // Vérifie Ctrl+S (sauvegarde de la page)
+        ) {
+            e.preventDefault();
+            // Annule l'action par défaut du raccourci clavier détecté
+            alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+            // Affiche un message expliquant pourquoi l'action est bloquée
+            return false;
+            // Retourne false pour s'assurer que l'événement est complètement stoppé
+        }
+    });
 </script>
 <script>
         // FONCTION POUR OUVRIR / FERMER LE MENU
         function toggleMenu() {
+            // Déclare la fonction qui bascule l'affichage du menu latéral
             document.getElementById("sidebar").classList.toggle("active");
+            // Ajoute ou supprime la classe CSS "active" sur la barre latérale pour l'ouvrir/fermer
             document.getElementById("overlay").classList.toggle("active");
+            // Ajoute ou supprime la classe CSS "active" sur le fond semi-transparent
         }
     </script>
     
