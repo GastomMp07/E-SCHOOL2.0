@@ -112,12 +112,35 @@ async function gererAffichageMenu(role, uid) {
     menus.forEach((el) => { if (el) el.style.display = "none"; });
     // Parcourt chaque élément et le cache (display: none) s'il existe dans le DOM
 
+    // --- GESTION DES CARTES DU FEATURES-GRID ---
+    // Récupère chaque carte du features-grid par son identifiant unique
+    const cardNotes = document.getElementById("card-notes");
+    // Carte "Notes & Résultats" → correspond à l'option "Mes Cotes" du menu élève
+    const cardSaisieNotes = document.getElementById("card-saisie-notes");
+    // Carte "Saisir les notes" → correspond à l'option de saisie réservée aux enseignants
+    const cardPresences = document.getElementById("card-presences");
+    // Carte "Présences" → correspond à l'option "Faire l'Appel" du menu enseignant/admin
+    const cardProfil = document.getElementById("card-profil");
+    // Carte "Mon Profil" → correspond à l'option "Mon Profil" visible pour tous les connectés
+    const cardRedacCom = document.getElementById("card-redac-com");
+    // Carte "Publier un Communiqué" → correspond à l'option de rédaction du menu enseignant/admin
+    const cardAdmin = document.getElementById("card-admin");
+    // Carte "Administration" → correspond à l'option de supervision réservée à l'admin
+
+    // Cache toutes les cartes sensibles par défaut avant d'appliquer les droits du rôle
+    const cards = [cardNotes, cardSaisieNotes, cardPresences, cardProfil, cardRedacCom, cardAdmin];
+    // Regroupe toutes les cartes contrôlées dans un tableau pour un traitement uniforme
+    cards.forEach((card) => { if (card) card.style.display = "none"; });
+    // Masque chaque carte si elle existe dans le DOM, en attendant la vérification du rôle
+
     if (!uid) return;
     // Si aucun utilisateur n'est connecté (uid nul), on sort de la fonction sans rien afficher
 
-    // Le profil reste accessible à tous les connectés
+    // Le profil reste accessible à tous les connectés (menu + carte)
     if (menuProfil) menuProfil.style.display = "block";
     // Rend visible le lien "Mon Profil" pour tout utilisateur authentifié
+    if (cardProfil) cardProfil.style.display = "";
+    // Rend visible la carte "Mon Profil" pour tout utilisateur authentifié
 
     const roleNormalise = normaliserRole(role);
     // Normalise le rôle reçu pour éviter les problèmes de casse ou d'accents
@@ -149,6 +172,14 @@ async function gererAffichageMenu(role, uid) {
             menuProfAppel.innerText = "📝 Faire l'Appel (Admin)";
             // Personnalise le texte pour indiquer que c'est l'admin qui fait l'appel
         }
+
+        // --- CARTES ADMIN : affiche les cartes qui correspondent aux options du menu admin ---
+        if (cardAdmin) cardAdmin.style.display = "";
+        // Affiche la carte "Administration" en miroir du lien menuAdminSupervision
+        if (cardRedacCom) cardRedacCom.style.display = "";
+        // Affiche la carte "Publier un Communiqué" en miroir du lien menuCommunique
+        if (cardPresences) cardPresences.style.display = "";
+        // Affiche la carte "Présences / Appel" en miroir du lien menuProfAppel
     } 
     
     // --- LOGIQUE ENSEIGNANT ---
@@ -161,6 +192,10 @@ async function gererAffichageMenu(role, uid) {
         // Les lignes suivantes sont commentées ou supprimées pour retirer les droits
         // menuCommunique.style.display = "none";
         // menuProfAppel.style.display = "none";
+
+        // --- CARTES ENSEIGNANT : affiche les cartes qui correspondent aux options du menu enseignant ---
+        if (cardSaisieNotes) cardSaisieNotes.style.display = "";
+        // Affiche la carte "Saisir les notes" en miroir du lien menuSaisieNotesProf
     } 
     
     // --- LOGIQUE ÉLÈVE ---
@@ -174,6 +209,10 @@ async function gererAffichageMenu(role, uid) {
             // Si l'élève a payé, affiche le lien vers ses notes
             if (menucoterEleve) menucoterEleve.style.display = "block";
             // Si l'élève a payé, affiche le lien pour évaluer les enseignants
+
+            // --- CARTES ÉLÈVE : affiche la carte notes uniquement si l'élève a payé ---
+            if (cardNotes) cardNotes.style.display = "";
+            // Affiche la carte "Notes & Résultats" en miroir du lien menuNotesEleve (paiement vérifié)
         }
     }
 }

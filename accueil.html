@@ -161,6 +161,9 @@
             border: 1px solid #cce8ef;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+        .feature-card {
+            cursor: pointer;
+        }
         .feature-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(13,59,79,0.16);
@@ -347,36 +350,63 @@
 
         <!-- FEATURES GRID -->
         <div class="features-grid">
-            <div class="feature-card">
+
+            <!-- Carte "Notes & Résultats" : visible uniquement pour les élèves ayant payé -->
+            <div class="feature-card" id="card-notes" style="display:none;" onclick="window.location.href='MesCotes.html'">
                 <span class="feature-icon">📚</span>
-                <h3>Notes & Résultats</h3>
+                <h3>Notes &amp; Résultats</h3>
                 <p>Consultez vos résultats scolaires et suivez votre progression en temps réel.</p>
             </div>
-            <div class="feature-card">
+
+            <!-- Carte "Communiqués" : visible pour tous les utilisateurs connectés -->
+            <div class="feature-card" id="card-communiques" onclick="window.location.href='comunique.html'">
                 <span class="feature-icon">📢</span>
                 <h3>Communiqués</h3>
                 <p>Restez informé des dernières annonces et communications de l'école.</p>
             </div>
-            <div class="feature-card">
+
+            <!-- Carte "Horaires" : visible pour tous les utilisateurs connectés -->
+            <div class="feature-card" id="card-horaires" onclick="window.location.href='horaire.html'">
                 <span class="feature-icon">🗓️</span>
                 <h3>Horaires</h3>
                 <p>Consultez les horaires de cours et l'emploi du temps de votre classe.</p>
             </div>
-            <div class="feature-card">
+
+            <!-- Carte "Présences" : visible pour les enseignants et les admins -->
+            <div class="feature-card" id="card-presences" style="display:none;" onclick="window.location.href='Appel.html'">
                 <span class="feature-icon">✅</span>
                 <h3>Présences</h3>
-                <p>Suivez votre taux de présence et vérifiez votre statut de présence du jour.</p>
+                <p>Gérez et consultez les présences des élèves en classe.</p>
             </div>
-            <div class="feature-card">
+
+            <!-- Carte "Saisir les notes" : visible uniquement pour les enseignants -->
+            <div class="feature-card" id="card-saisie-notes" style="display:none;" onclick="window.location.href='Saisir-note.html'">
+                <span class="feature-icon">✏️</span>
+                <h3>Saisir les notes</h3>
+                <p>Encodez et gérez les résultats de vos élèves directement en ligne.</p>
+            </div>
+
+            <!-- Carte "Mon Profil" : visible pour tous les utilisateurs connectés -->
+            <div class="feature-card" id="card-profil" style="display:none;" onclick="window.location.href='profil.html'">
                 <span class="feature-icon">👤</span>
                 <h3>Mon Profil</h3>
                 <p>Gérez votre compte, votre photo de profil et vos informations personnelles.</p>
             </div>
-            <div class="feature-card">
+
+            <!-- Carte "Publier un Communiqué" : visible pour les enseignants et les admins -->
+            <div class="feature-card" id="card-redac-com" style="display:none;" onclick="window.location.href='Redac-com.html'">
+                <span class="feature-icon">📝</span>
+                <h3>Publier un Communiqué</h3>
+                <p>Rédigez et publiez des annonces officielles pour l'ensemble de l'école.</p>
+            </div>
+
+            <!-- Carte "Administration" : visible uniquement pour les admins -->
+            <div class="feature-card" id="card-admin" style="display:none;" onclick="window.location.href='Gestion-Ecole.html'">
                 <span class="feature-icon">⚙️</span>
                 <h3>Administration</h3>
                 <p>Outils de supervision et gestion réservés à la direction de l'établissement.</p>
             </div>
+
         </div>
 
         <!-- GUIDE RAPIDE -->
