@@ -129,14 +129,12 @@
         // Importe les fonctions Firestore nécessaires pour requêter et manipuler des documents
 
         function normClasse(s) {
-            // Normalise un nom de classe pour la comparaison (retire accents, espaces, tirets et met en minuscules)
+            // Normalise le nom de la classe de façon ultra-fiable (accents, suffixes ordonnes, espaces, casse)
             if (!s) return "";
-            return String(s)
-                .trim()
-                .toLowerCase()
-                .normalize("NFD")
-                .replace(/[\u0300-\u036f]/g, "")
-                .replace(/[^a-z0-9]/g, "");
+            let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Standardise les variantes ordinales (ex: 7emè, 7em, 7ème -> 7 )
+            str = str.replace(/^(\d+)[a-z]*\s*/i, "$1 ");
+            return str.replace(/[^a-z0-9]/g, "");
         }
 
         onAuthStateChanged(auth, async (user) => {
@@ -171,12 +169,14 @@
                 // On normalise le rôle et on récupère la liste des classes (tableau)
                 const role = (userData.role || "").toLowerCase();
                 // Extrait le rôle de l'utilisateur et le convertit en minuscules
-                const userClasses = Array.isArray(userData.classe) 
-                    // Vérifie si la propriété classe est déjà un tableau
-                    ? userData.classe 
-                    // Si oui, l'utilise directement
-                    : (userData.classe ? [userData.classe] : ["tous"]);
-                    // Si non, l'enveloppe dans un tableau ou utilise ["tous"] par défaut
+                let userClasses = [];
+                if (Array.isArray(userData.classe)) {
+                    userClasses = userData.classe;
+                } else if (typeof userData.classe === "string" && userData.classe.trim() !== "") {
+                    userClasses = [userData.classe];
+                } else {
+                    userClasses = ["tous"];
+                }
 
                 // 2. Récupérer TOUS les communiqués depuis Firestore
                 const snap = await getDocs(collection(db, "communiques"));
@@ -248,7 +248,7 @@
             // Déclare la fonction qui affiche les communiqués dans la page en les filtrant
             container.innerHTML = "";
             // Vide le conteneur avant d'effectuer le nouveau rendu
-            
+
             const userClassesArr = Array.isArray(userClasses) ? userClasses : [userClasses];
             const userClassesNorm = userClassesArr.map(c => normClasse(c));
             const roleNorm = normClasse(role);
@@ -261,16 +261,16 @@
                 // L'admin et la direction voient TOUT (pour vérification)
                 if (roleNorm === "admin" || roleNorm.includes("admin") || roleNorm.includes("direction")) return true;
                 
-                // Public (tous, vide ou null)
-                if (destNorm === "tous" || destNorm === "") return true;
+                // Public (tous, vide ou null ou toutes)
+                if (destNorm === "tous" || destNorm === "" || destNorm === "toutes" || destNorm === "touteslesclasses") return true;
                 
-                // Match avec une des classes de l'élève ou prof (comparaison insensible aux accents/espaces)
+                // Match avec une des classes de l'élève ou prof (comparaison normalisée)
                 return userClassesNorm.includes(destNorm);
             });
 
             if (messagesVisibles.length === 0) {
                 // Si aucun communiqué n'est visible pour l'utilisateur
-                container.innerHTML = "<p style='color:#64748b;padding:16px;'>Aucun communiqué pour vous pour me le moment.</p>";
+                container.innerHTML = "<p style='color:#64748b;padding:16px;'>Aucun communiqué pour vous pour le moment.</p>";
                 // Affiche un message de boîte aux lettres vide
                 return;
                 // Arrête le traitement de la fonction d'affichage
@@ -298,7 +298,7 @@
 
                 // Badge de cible (ex: "7em A" ou "PUBLIC")
                 const destNorm = normClasse(item.destinataire);
-                const estPublic = destNorm === "tous" || destNorm === "";
+                const estPublic = destNorm === "tous" || destNorm === "" || destNorm === "toutes" || destNorm === "touteslesclasses";
                 // Détermine si le communiqué est public (destiné à toutes les classes)
                 const badgeColor = estPublic ? "#28a745" : "#0c5568";
                 // Choisit une couleur verte pour le badge public, et bleu-foncé pour le badge spécifique à une classe
