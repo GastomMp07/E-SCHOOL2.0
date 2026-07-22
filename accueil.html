@@ -16,7 +16,7 @@
         }
 
         /* HEADER */
-        .header { 
+        .en-tete { 
             display: flex; 
             align-items: center; 
             justify-content: space-between;
@@ -31,55 +31,55 @@
             z-index: 10000; 
             box-sizing: border-box;
         }
-        .header-left {
+        .en-tete-gauche {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        .header-logo {
+        .logo-en-tete {
             height: 50px;
             width: auto;
         }
-        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+        .btn-menu { font-size: 30px; cursor: pointer; padding: 10px; }
 
-        /* SIDEBAR */
-        .sidebar { 
+        /* BARRE LATERALE */
+        .barre-laterale { 
             position: fixed; top: 0; left: -280px;
             width: 260px; height: 100%; background: #0a3d52; color: white; 
             transition: all 0.4s ease; z-index: 10001; 
             display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
         }
-        .sidebar.active { left: 0; }
-        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);}
-        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
-        .sidebar a:hover {
+        .barre-laterale.active { left: 0; }
+        .barre-laterale h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);}
+        .barre-laterale a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+        .barre-laterale a:hover {
             background: #0c7489;
             padding-left: 35px;
         }
-        .logout-btn { 
+        .btn-deconnexion { 
             background: #0c5568; color: white; border: none; 
             padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
             cursor: pointer; font-weight: bold;
             width: calc(100% - 40px);
         }
 
-        /* OVERLAY */
-        .overlay { 
+        /* VOILE */
+        .voile { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
             transition: 0.3s; z-index: 9999; 
         }
-        .overlay.active { visibility: visible; opacity: 1; }
+        .voile.active { visibility: visible; opacity: 1; }
 
         /* CONTENU PRINCIPAL */
-        .main-content { 
+        .contenu-principal { 
             margin-top: 80px; padding: 20px 20px 40px;
             display: flex; flex-direction: column; align-items: center; 
             flex: 1;
         }
 
-        /* HERO BANNER */
-        .hero-banner {
+        /* BANNIERE HERO */
+        .banniere-hero {
             background: linear-gradient(135deg, #0d3b4f 0%, #0c7489 100%);
             border-radius: 20px;
             padding: 40px 30px;
@@ -92,7 +92,7 @@
             position: relative;
             overflow: hidden;
         }
-        .hero-banner::before {
+        .banniere-hero::before {
             content: '';
             position: absolute;
             top: -60px; right: -60px;
@@ -100,7 +100,7 @@
             background: rgba(255,255,255,0.05);
             border-radius: 50%;
         }
-        .hero-banner::after {
+        .banniere-hero::after {
             content: '';
             position: absolute;
             bottom: -80px; left: -40px;
@@ -108,30 +108,30 @@
             background: rgba(255,255,255,0.04);
             border-radius: 50%;
         }
-        .hero-logo {
+        .logo-hero {
             width: 130px;
             height: auto;
             margin-bottom: 16px;
             position: relative;
             z-index: 1;
         }
-        .hero-banner h1 {
+        .banniere-hero h1 {
             font-size: 2.2em;
             margin: 0 0 8px;
             position: relative;
             z-index: 1;
         }
-        .hero-banner h1 span {
+        .banniere-hero h1 span {
             color: #27bcd5;
         }
-        .hero-banner p {
+        .banniere-hero p {
             font-size: 1.1em;
             opacity: 0.85;
             margin: 0 0 20px;
             position: relative;
             z-index: 1;
         }
-        .hero-tagline {
+        .accroche-hero {
             display: inline-block;
             background: rgba(255,255,255,0.12);
             border: 1px solid rgba(255,255,255,0.25);
@@ -143,8 +143,8 @@
             z-index: 1;
         }
 
-        /* FEATURE CARDS */
-        .features-grid {
+        /* CARTES DE FONCTIONNALITES */
+        .grille-fonctionnalites {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 18px;
@@ -152,7 +152,7 @@
             max-width: 780px;
             margin-bottom: 30px;
         }
-        .feature-card {
+        .carte-fonctionnalite {
             background: white;
             border-radius: 16px;
             padding: 24px 20px;
@@ -161,32 +161,32 @@
             border: 1px solid #cce8ef;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .feature-card {
+        .carte-fonctionnalite {
             cursor: pointer;
         }
-        .feature-card:hover {
+        .carte-fonctionnalite:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(13,59,79,0.16);
         }
-        .feature-icon {
+        .icone-fonctionnalite {
             font-size: 2.4em;
             margin-bottom: 10px;
             display: block;
         }
-        .feature-card h3 {
+        .carte-fonctionnalite h3 {
             margin: 0 0 8px;
             color: #0d3b4f;
             font-size: 1em;
         }
-        .feature-card p {
+        .carte-fonctionnalite p {
             margin: 0;
             font-size: 0.85em;
             color: #667;
             line-height: 1.5;
         }
 
-        /* STATS BAND */
-        .stats-band {
+        /* BANDE DE STATISTIQUES */
+        .bande-statistiques {
             background: white;
             border-radius: 16px;
             padding: 22px 30px;
@@ -200,16 +200,16 @@
             border: 1px solid #cce8ef;
             margin-bottom: 30px;
         }
-        .stat-item {
+        .element-statistique {
             text-align: center;
         }
-        .stat-item .stat-number {
+        .element-statistique .chiffre-statistique {
             display: block;
             font-size: 2em;
             font-weight: bold;
             color: #0c5568;
         }
-        .stat-item .stat-label {
+        .element-statistique .libelle-statistique {
             font-size: 0.8em;
             color: #667;
             text-transform: uppercase;
@@ -217,7 +217,7 @@
         }
 
         /* GUIDE RAPIDE */
-        .guide-card {
+        .carte-guide {
             background: white;
             border-radius: 16px;
             padding: 28px 30px;
@@ -228,7 +228,7 @@
             margin-bottom: 30px;
             text-align: left;
         }
-        .guide-card h2 {
+        .carte-guide h2 {
             color: #0d3b4f;
             margin: 0 0 18px;
             font-size: 1.2em;
@@ -236,13 +236,13 @@
             align-items: center;
             gap: 8px;
         }
-        .guide-step {
+        .etape-guide {
             display: flex;
             align-items: flex-start;
             gap: 14px;
             margin-bottom: 14px;
         }
-        .guide-step-num {
+        .numero-etape {
             background: #0d3b4f;
             color: white;
             width: 30px;
@@ -255,17 +255,17 @@
             font-size: 0.9em;
             flex-shrink: 0;
         }
-        .guide-step-text {
+        .texte-etape {
             padding-top: 4px;
             font-size: 0.95em;
             color: #334;
         }
-        .guide-step-text strong {
+        .texte-etape strong {
             color: #0c5568;
         }
 
         /* CLASSES */
-        .Img {
+        .image-principale {
             display: block;
             width: 75%;
             max-width: 190px;
@@ -290,7 +290,7 @@
             font-size: 20px;
             font-family:Arial, Helvetica, sans-serif
         }
-        .circle { display: none; }
+        .cercle { display: none; }
 
         footer{
             display: flex;
@@ -304,17 +304,17 @@
         }
     </style>
 </head>
-<body class="dashboard-body">
+<body class="corps-tableau-bord">
 
-    <div class="header">
-    <div class="header-left">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+    <div class="en-tete-gauche">
+        <div class="btn-menu" onclick="toggleMenu()">☰</div>
         <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
     </div>
-    <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo" style="height:50px;">
+    <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete" style="height:50px;">
 </div>
 
-    <div id="sidebar" class="sidebar">
+    <div id="sidebar" class="barre-laterale">
     <h2>Menu</h2>
     <a href="accueil.html">Accueil</a>
     
@@ -334,75 +334,75 @@
 
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
-    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
 </div>
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
-    <div class="main-content">
+    <div class="contenu-principal">
 
-        <!-- HERO BANNER -->
-        <div class="hero-banner">
-            <img src="images/logo_small.png" alt="E-SCHOOL" class="hero-logo">
+        <!-- BANNIERE HERO -->
+        <div class="banniere-hero">
+            <img src="images/logo_small.png" alt="E-SCHOOL" class="logo-hero">
             <h1>Bienvenue sur <span>E-SCHOOL</span></h1>
             <p>La plateforme de gestion scolaire intelligente de votre établissement</p>
-            <span class="hero-tagline">✨ Gestion Scolaire Intelligente</span>
+            <span class="accroche-hero">✨ Gestion Scolaire Intelligente</span>
         </div>
 
-        <!-- FEATURES GRID -->
-        <div class="features-grid">
+        <!-- GRILLE DE FONCTIONNALITES -->
+        <div class="grille-fonctionnalites">
 
             <!-- Carte "Notes & Résultats" : visible uniquement pour les élèves ayant payé -->
-            <div class="feature-card" id="card-notes" style="display:none;" onclick="window.location.href='MesCotes.html'">
-                <span class="feature-icon">📚</span>
+            <div class="carte-fonctionnalite" id="card-notes" style="display:none;" onclick="window.location.href='MesCotes.html'">
+                <span class="icone-fonctionnalite">📚</span>
                 <h3>Notes &amp; Résultats</h3>
                 <p>Consultez vos résultats scolaires et suivez votre progression en temps réel.</p>
             </div>
 
             <!-- Carte "Communiqués" : visible pour tous les utilisateurs connectés -->
-            <div class="feature-card" id="card-communiques" onclick="window.location.href='comunique.html'">
-                <span class="feature-icon">📢</span>
+            <div class="carte-fonctionnalite" id="card-communiques" onclick="window.location.href='comunique.html'">
+                <span class="icone-fonctionnalite">📢</span>
                 <h3>Communiqués</h3>
                 <p>Restez informé des dernières annonces et communications de l'école.</p>
             </div>
 
             <!-- Carte "Horaires" : visible pour tous les utilisateurs connectés -->
-            <div class="feature-card" id="card-horaires" onclick="window.location.href='horaire.html'">
-                <span class="feature-icon">🗓️</span>
+            <div class="carte-fonctionnalite" id="card-horaires" onclick="window.location.href='horaire.html'">
+                <span class="icone-fonctionnalite">🗓️</span>
                 <h3>Horaires</h3>
                 <p>Consultez les horaires de cours et l'emploi du temps de votre classe.</p>
             </div>
 
             <!-- Carte "Présences" : visible pour les enseignants et les admins -->
-            <div class="feature-card" id="card-presences" style="display:none;" onclick="window.location.href='Appel.html'">
-                <span class="feature-icon">✅</span>
+            <div class="carte-fonctionnalite" id="card-presences" style="display:none;" onclick="window.location.href='Appel.html'">
+                <span class="icone-fonctionnalite">✅</span>
                 <h3>Présences</h3>
                 <p>Gérez et consultez les présences des élèves en classe.</p>
             </div>
 
             <!-- Carte "Saisir les notes" : visible uniquement pour les enseignants -->
-            <div class="feature-card" id="card-saisie-notes" style="display:none;" onclick="window.location.href='Saisir-note.html'">
-                <span class="feature-icon">✏️</span>
+            <div class="carte-fonctionnalite" id="card-saisie-notes" style="display:none;" onclick="window.location.href='Saisir-note.html'">
+                <span class="icone-fonctionnalite">✏️</span>
                 <h3>Saisir les notes</h3>
                 <p>Encodez et gérez les résultats de vos élèves directement en ligne.</p>
             </div>
 
             <!-- Carte "Mon Profil" : visible pour tous les utilisateurs connectés -->
-            <div class="feature-card" id="card-profil" style="display:none;" onclick="window.location.href='profil.html'">
-                <span class="feature-icon">👤</span>
+            <div class="carte-fonctionnalite" id="card-profil" style="display:none;" onclick="window.location.href='profil.html'">
+                <span class="icone-fonctionnalite">👤</span>
                 <h3>Mon Profil</h3>
                 <p>Gérez votre compte, votre photo de profil et vos informations personnelles.</p>
             </div>
 
             <!-- Carte "Publier un Communiqué" : visible pour les enseignants et les admins -->
-            <div class="feature-card" id="card-redac-com" style="display:none;" onclick="window.location.href='Redac-com.html'">
-                <span class="feature-icon">📝</span>
+            <div class="carte-fonctionnalite" id="card-redac-com" style="display:none;" onclick="window.location.href='Redac-com.html'">
+                <span class="icone-fonctionnalite">📝</span>
                 <h3>Publier un Communiqué</h3>
                 <p>Rédigez et publiez des annonces officielles pour l'ensemble de l'école.</p>
             </div>
 
             <!-- Carte "Administration" : visible uniquement pour les admins -->
-            <div class="feature-card" id="card-admin" style="display:none;" onclick="window.location.href='Gestion-Ecole.html'">
-                <span class="feature-icon">⚙️</span>
+            <div class="carte-fonctionnalite" id="card-admin" style="display:none;" onclick="window.location.href='Gestion-Ecole.html'">
+                <span class="icone-fonctionnalite">⚙️</span>
                 <h3>Administration</h3>
                 <p>Outils de supervision et gestion réservés à la direction de l'établissement.</p>
             </div>
@@ -410,21 +410,21 @@
         </div>
 
         <!-- GUIDE RAPIDE -->
-        <div class="guide-card">
+        <div class="carte-guide">
             <h2>📖 Comment utiliser E-SCHOOL ?</h2>
-            <div class="guide-step">
-                <div class="guide-step-num">1</div>
-                <div class="guide-step-text">Appuyez sur le bouton <strong>☰ (menu)</strong> en haut à gauche pour ouvrir le panneau de navigation.</div>
+            <div class="etape-guide">
+                <div class="numero-etape">1</div>
+                <div class="texte-etape">Appuyez sur le bouton <strong>☰ (menu)</strong> en haut à gauche pour ouvrir le panneau de navigation.</div>
             </div>
-            <div class="guide-step">
-                <div class="guide-step-num">2</div>
-                <div class="guide-step-text">Choisissez la section qui vous intéresse : <strong>Mes Cotes</strong>, <strong>Horaire</strong>, <strong>Communiqués</strong> ou <strong>Mon Profil</strong>.</div>
+            <div class="etape-guide">
+                <div class="numero-etape">2</div>
+                <div class="texte-etape">Choisissez la section qui vous intéresse : <strong>Mes Cotes</strong>, <strong>Horaire</strong>, <strong>Communiqués</strong> ou <strong>Mon Profil</strong>.</div>
             </div>
         </div>
 
     </div>
 
-    <div class="circle"></div>   
+    <div class="cercle"></div>   
     
     <footer>
         <p>&copy; 2026 Arrowdev. Tout droit résèrver</p>

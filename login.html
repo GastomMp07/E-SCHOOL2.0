@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="auth-body">
+<body class="corps-auth">
 
     <style>
         body {
@@ -17,7 +17,7 @@
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
         }
-        .register-container {
+        .conteneur-inscription {
             background: white;
             padding: 30px;
             border-radius: 15px;
@@ -26,32 +26,32 @@
             text-align: center;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
-        .form-group { margin-bottom: 15px; text-align: left; }
+        .groupe-champ { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
         input, select {
             width: 100%; padding: 10px;
             border: 2px solid #e2e8f0; border-radius: 8px;
             box-sizing: border-box;
         }
-        .login-btn {
+        .btn-connexion {
             width: 100%; padding: 12px;
             background-color: #0c5568; color: white;
             border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; margin-top: 10px;
         }
-        .login-btn:hover {
+        .btn-connexion:hover {
             background-color: #0a3d52;
         }
     </style>
-    <div class="container"> 
-        <div class="card animate__animated animate__fadeInDown">
+    <div class="conteneur"> 
+        <div class="carte animate__animated animate__fadeInDown">
             <img src="images/logo_small.png" alt="E-SCHOOL Logo" style="width:70px; margin-bottom:12px;">
             <h2 style="color: #0d3b4f; margin-bottom: 20px;">Connexion</h2>
             
             <form id="login-form">
                 <input type="email" id="login-email" placeholder="Email de l'école" required>
                 <input type="password" id="login-password" placeholder="Mot de passe" required>
-                <button class="login-btn">
+                <button class="btn-connexion">
                     Se connecter
                 </button>
             </form>

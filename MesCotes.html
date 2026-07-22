@@ -13,7 +13,7 @@
             margin: 0;
             display: block;
         }
-        .welcome-card {
+        .carte-accueil {
             max-width: 1000px; 
             width: 95%;
             margin: 100px auto 40px;
@@ -21,7 +21,7 @@
             padding: 20px;
             border-radius: 15px;
         }
-        .tabs-container {
+        .conteneur-onglets {
             display: flex;
             overflow-x: auto;
             gap: 10px;
@@ -29,7 +29,7 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #eee;
         }
-        .tab-btn {
+        .btn-onglet {
             padding: 10px 18px;
             border: none;
             background: #f0f0f0;
@@ -40,38 +40,38 @@
             color: #555;
             transition: all 0.3s ease;
         }
-        .tab-btn.active {
+        .btn-onglet.active {
             background: #0d3b4f;
             color: white;
             box-shadow: 0 4px 10px rgba(204, 0, 0, 0.3);
         }
         /* Style spécial pour les boutons de synthèse */
-        .tab-btn.btn-synthese {
+        .btn-onglet.btn-synthese {
             background: #333;
             color: #fff;
         }
-        .lock-message { text-align: center; padding: 40px 20px; }
+        .message-verrouillage { text-align: center; padding: 40px 20px; }
         .btn-action {
             display: inline-block;
             background: #0d3b4f; color: white;
             padding: 12px 25px; border-radius: 30px;
             text-decoration: none; font-weight: bold; margin-top: 20px;
         }
-        .lock-icon { font-size: 50px; margin-bottom: 20px; }
+        .icone-verrou { font-size: 50px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-    <div class="header-left">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+    <div class="en-tete-gauche">
+        <div class="btn-menu" onclick="toggleMenu()">☰</div>
         <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
     </div>
 
-    <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+    <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
 </div>
 
-    <div id="sidebar" class="sidebar">
+    <div id="sidebar" class="barre-laterale">
     <h2>Menu</h2>
     <a href="accueil.html">Accueil</a>
     
@@ -91,27 +91,27 @@
 
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
-    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
 </div>
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>    
+    <div id="overlay" class="voile" onclick="toggleMenu()"></div>    
 
-    <div class="main-content">
-        <div class="welcome-card">
+    <div class="contenu-principal">
+        <div class="carte-accueil">
             <h2>📊 Mes Bulletins & Résultats</h2>
 
             <div id="content-area">
-                <div class="tabs-container" id="tabs-section" style="display: none;">
-                    <button class="tab-btn active" onclick="changerPeriode('1ère Période', this)">1ère Période</button>
-                    <button class="tab-btn" onclick="changerPeriode('2ème Période', this)">2ème Période</button>
-                    <button class="tab-btn" onclick="changerPeriode('Examen 1er Semestre', this)">Examen 1er Sem</button>
+                <div class="conteneur-onglets" id="tabs-section" style="display: none;">
+                    <button class="btn-onglet active" onclick="changerPeriode('1ère Période', this)">1ère Période</button>
+                    <button class="btn-onglet" onclick="changerPeriode('2ème Période', this)">2ème Période</button>
+                    <button class="btn-onglet" onclick="changerPeriode('Examen 1er Semestre', this)">Examen 1er Sem</button>
                     
-                    <button class="tab-btn btn-synthese" onclick="changerPeriode('SYNTHESE_S1', this)">📊 Total S1</button>
+                    <button class="btn-onglet btn-synthese" onclick="changerPeriode('SYNTHESE_S1', this)">📊 Total S1</button>
                     
-                    <button class="tab-btn" onclick="changerPeriode('3ème Période', this)">3ème Période</button>
-                    <button class="tab-btn" onclick="changerPeriode('4ème Période', this)">4ème Période</button>
-                    <button class="tab-btn" onclick="changerPeriode('Examen 2ème Semestre', this)">Examen 2ème Sem</button>
+                    <button class="btn-onglet" onclick="changerPeriode('3ème Période', this)">3ème Période</button>
+                    <button class="btn-onglet" onclick="changerPeriode('4ème Période', this)">4ème Période</button>
+                    <button class="btn-onglet" onclick="changerPeriode('Examen 2ème Semestre', this)">Examen 2ème Sem</button>
                     
-                    <button class="tab-btn btn-synthese" onclick="changerPeriode('SYNTHESE_S2', this)">📊 Total S2</button>
+                    <button class="btn-onglet btn-synthese" onclick="changerPeriode('SYNTHESE_S2', this)">📊 Total S2</button>
                 </div>
 
                 <div id="liste-notes">Chargement de vos notes...</div>
@@ -157,7 +157,7 @@
         // Expose la fonction de changement de période sur window pour qu'elle soit accessible depuis le HTML
         periodeSelectionnee = periode;
         // Met à jour la variable globale avec la nouvelle période choisie
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.btn-onglet').forEach(b => b.classList.remove('active'));
         // Retire la classe CSS 'active' de tous les onglets
         btn.classList.add('active');
         // Ajoute la classe CSS 'active' à l'onglet cliqué pour le mettre en surbrillance
@@ -413,7 +413,7 @@
             // Vérifie si l'élève a complété les évaluations requises pour accéder à ses notes
             if (!evaluationsTerminees) {
                 // Si les évaluations ne sont pas encore complétées
-                container.innerHTML = `<div class="lock-message"><div class="lock-icon">🔒</div><h3>Accès restreint</h3><p>Évaluez vos professeurs pour voir vos points.</p><a href="CoterE.html" class="btn-action">Évaluer</a></div>`;
+                container.innerHTML = `<div class="message-verrouillage"><div class="icone-verrou">🔒</div><h3>Accès restreint</h3><p>Évaluez vos professeurs pour voir vos points.</p><a href="CoterE.html" class="btn-action">Évaluer</a></div>`;
                 // Affiche un message de verrouillage avec un lien vers la page d'évaluation
                 return;
                 // Arrête l'exécution pour ne pas afficher les notes sans évaluation
@@ -515,6 +515,5 @@
     
     <script type="module" src="app.js"></script>
 
-<script type="module" src="app.js"></script>
 </body>
 </html>

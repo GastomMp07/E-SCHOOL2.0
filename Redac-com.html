@@ -18,13 +18,13 @@
             display: block;
         }
         /* On élargit la carte spécifiquement pour le tableau des notes */
-        .welcome-card {
+        .carte-accueil {
             max-width: 1000px; 
             width: 95%;
             margin-bottom: 40px;
         }
         /* Suppression du reste du CSS local car il est déjà dans style.css */
-        .note-card {
+        .carte-note {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 15px;
@@ -33,7 +33,7 @@
             border-left: 5px solid #0c5568;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .note-matiere {
+        .matiere-note {
             font-weight: bold;
             font-size: 1.1em;
             color: #0c5568;
@@ -43,28 +43,28 @@
             padding-bottom: 5px;
             text-transform: uppercase;
         }
-        .note-stats-grid {
+        .grille-stats-note {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-        .stat-item { display: flex; flex-direction: column; }
-        .stat-label { color: #666; font-size: 0.85em; }
-        .stat-value { font-weight: bold; color: #333; font-size: 0.95em; }
+        .element-statistique { display: flex; flex-direction: column; }
+        .libelle-stat { color: #666; font-size: 0.85em; }
+        .valeur-stat { font-weight: bold; color: #333; font-size: 0.95em; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="header-left">
-            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+        <div class="en-tete-gauche">
+            <div class="btn-menu" onclick="toggleMenu()">☰</div>
             <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
         </div>
     
-        <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+        <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
     </div>
     
-        <div id="sidebar" class="sidebar">
+        <div id="sidebar" class="barre-laterale">
         <h2>Menu</h2>
         <a href="accueil.html">Accueil</a>
     
@@ -85,16 +85,16 @@
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
     
-        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+        <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
     </div>
-        <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+        <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
-    <div class="main-content">
-        <div class="welcome-card animate__animated animate__fadeIn">
+    <div class="contenu-principal">
+        <div class="carte-accueil animate__animated animate__fadeIn">
             <h2>📢 Publier un Communiqué</h2>
             <p>Ce message sera visible par tous les élèves et enseignants de l'école.</p>
 
-            <div class="data-card">
+            <div class="carte-donnees">
                 <form id="form-redac" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
                     
                     <div>
@@ -146,7 +146,7 @@
 
                     
 
-                    <button type="submit" class="register-btn" style="background: #0d3b4f; color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">
+                    <button type="submit" class="btn-inscription" style="background: #0d3b4f; color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px;">
                         Publier l'annonce
                     </button>
                     

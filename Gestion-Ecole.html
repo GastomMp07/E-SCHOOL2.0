@@ -14,12 +14,12 @@
             color: #333;
         }
 
-        .main-content {
+        .contenu-principal {
             display: flex; flex-direction: column; align-items: center;
             padding: 20px 10px; margin-top: 80px; width: 100%;
         }
 
-        .data-card, .welcome-card {
+        .carte-donnees, .carte-accueil {
             background: white; padding: 20px; border-radius: 15px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             margin-bottom: 25px; width: 95%; max-width: 600px;
@@ -36,13 +36,13 @@
             font-weight: bold; cursor: pointer; margin-top: 10px;
         }
 
-        .prof-card {
+        .carte-professeur {
             background: #f8f9fa; border-radius: 12px; padding: 15px;
             margin-bottom: 15px; border-left: 5px solid #2b0101;
         }
 
-        .prof-name { font-weight: bold; text-transform: uppercase; color: #2b0101; display: block; margin-bottom: 10px; border-bottom: 1px solid #ddd; }
-        .prof-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .nom-professeur { font-weight: bold; text-transform: uppercase; color: #2b0101; display: block; margin-bottom: 10px; border-bottom: 1px solid #ddd; }
+        .grille-stats-prof { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         
         /* Switch Paiement */
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
@@ -52,17 +52,17 @@
         input:checked + .slider { background-color: #28a745; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        .paiement-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .ligne-paiement { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
 
         /* Style pour les boutons de classes */
-.classes-grid {
+.grille-classes {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 15px;
     margin-top: 15px;
 }
 
-.class-folder {
+.dossier-classe {
     background: #f8f9fa;
     border: 2px solid #ddd;
     border-radius: 10px;
@@ -74,14 +74,14 @@
     color: #0c5568;
 }
 
-.class-folder:hover {
+.dossier-classe:hover {
     background: #0d3b4f;
     color: white;
     border-color: #0c5568;
     transform: translateY(-3px);
 }
 
-.back-btn {
+.btn-retour {
     background: #666;
     color: white;
     border: none;
@@ -92,21 +92,21 @@
     font-size: 0.9em;
 }
 
-.back-btn:hover { background: #333; }
+.btn-retour:hover { background: #333; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-    <div class="header-left">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+    <div class="en-tete-gauche">
+        <div class="btn-menu" onclick="toggleMenu()">☰</div>
         <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
     </div>
 
-    <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+    <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
 </div>
 
-    <div id="sidebar" class="sidebar">
+    <div id="sidebar" class="barre-laterale">
     <h2>Menu</h2>
     <a href="accueil.html">Accueil</a>
     
@@ -126,19 +126,12 @@
 
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
-    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
 </div>
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
-    <div id="sidebar" class="sidebar">
-        <h2>Panel Admin</h2>
-        <a href="accueil.html">Retour Accueil</a>
-        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
-    </div>
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
-
-    <div class="main-content">
-        <div class="data-card">
+    <div class="contenu-principal">
+        <div class="carte-donnees">
             <h3>🆕 Inscrire un nouvel élève</h3>
             <form id="form-inscription-admin" class="admin-form">
                 <input type="text" id="new-nom" placeholder="Nom complet de l'élève" required>
@@ -179,7 +172,7 @@
             </form>
         </div>
 
-        <div class="data-card">
+        <div class="carte-donnees">
     <h3>📅 Ajouter un créneau d'horaire</h3>
     <form id="form-horaire" class="admin-form">
         <select id="h-jour" required>
@@ -228,12 +221,12 @@
     </form>
 </div>
 
-        <div class="data-card">
+        <div class="carte-donnees">
             <h3>👥 Liste des élèves & Accès</h3>
             <div id="liste-paiements-eleves"><p>Chargement...</p></div>
         </div>
 
-        <div class="data-card">
+        <div class="carte-donnees">
             <h3>⭐ Évaluation Enseignants</h3>
             <div id="stats-profs-list"><p>Chargement...</p></div>
         </div>
@@ -380,17 +373,17 @@
         // Affiche les "dossiers" de chaque classe
         function afficherDossiersClasses(container) {
             // Déclare la fonction qui génère la grille de dossiers représentant chaque classe
-            container.innerHTML = `<h4>Sélectionnez une classe :</h4><div class="classes-grid"></div>`;
+            container.innerHTML = `<h4>Sélectionnez une classe :</h4><div class="grille-classes"></div>`;
             // Initialise le HTML du conteneur avec un titre et une grille vide
-            const grid = container.querySelector('.classes-grid');
+            const grid = container.querySelector('.grille-classes');
             // Récupère l'élément de la grille qui vient d'être créée
 
             listeClasses.forEach(classe => {
                 // Parcourt chaque classe pour créer un dossier cliquable correspondant
                 const div = document.createElement('div');
                 // Crée un nouvel élément <div> pour représenter le dossier de classe
-                div.className = "class-folder";
-                // Assigne la classe CSS "class-folder" pour le style du dossier
+                div.className = "dossier-classe";
+                // Assigne la classe CSS "dossier-classe" pour le style du dossier
                 div.innerHTML = `📁<br>${classe}`;
                 // Remplit le dossier avec une icône et le nom de la classe
                 div.onclick = () => chargerElevesDeLaClasse(classe);
@@ -441,7 +434,7 @@
             const container = document.getElementById('liste-paiements-eleves');
             // Récupère le conteneur HTML pour l'affichage
             container.innerHTML = `
-                <button class="back-btn" onclick="chargerGestionPaiements()">⬅ Retour aux classes</button>
+                <button class="btn-retour" onclick="chargerGestionPaiements()">⬅ Retour aux classes</button>
                 <h4>Élèves de : ${nomClasse}</h4>
                 <div id="sub-liste-eleves">Chargement des élèves...</div>
             `;
@@ -475,7 +468,7 @@
                         // Incrémente le compteur d'élèves trouvés
                         const div = document.createElement('div');
                         // Crée un <div> pour représenter la ligne de cet élève
-                        div.className = "paiement-row";
+                        div.className = "ligne-paiement";
                         // Assigne la classe CSS pour le style de la ligne
                         div.innerHTML = `
                             <div style="flex: 1;">
@@ -597,16 +590,16 @@
                     // Calcule la moyenne de disponibilité avec une décimale
 
                     container.innerHTML += `
-                        <div class="prof-card">
-                            <span class="prof-name">${nom}</span>
-                            <div class="prof-stats-grid">
-                                <div class="stat-item">
-                                    <span class="stat-label">🎓 Maîtrise</span>
-                                    <span class="stat-value">${moyenneMaitrise}/5</span>
+                        <div class="carte-professeur">
+                            <span class="nom-professeur">${nom}</span>
+                            <div class="grille-stats-prof">
+                                <div class="element-statistique">
+                                    <span class="libelle-statistique">🎓 Maîtrise</span>
+                                    <span class="chiffre-statistique">${moyenneMaitrise}/5</span>
                                 </div>
-                                <div class="stat-item">
-                                    <span class="stat-label">🤝 Disponibilité</span>
-                                    <span class="stat-value">${moyenneDispo}/5</span>
+                                <div class="element-statistique">
+                                    <span class="libelle-statistique">🤝 Disponibilité</span>
+                                    <span class="chiffre-statistique">${moyenneDispo}/5</span>
                                 </div>
                             </div>
                             <div style="font-size: 0.75em; color: #999; margin-top: 10px;">
@@ -646,7 +639,7 @@
                 e.preventDefault();
                 // Annule l'action par défaut du raccourci clavier détecté
                 alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-                // Affiche un message expliquant pourquoi l'action est bloquée
+                // Affiche un message expliquant pourquoi l'action me est bloquée
                 return false;
                 // Retourne false pour s'assurer que l'événement est complètement stoppé
             }

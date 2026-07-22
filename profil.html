@@ -11,7 +11,7 @@
             background-attachment: fixed;
             color: #333;
         }
-        .profile-card {
+        .carte-profil {
             background: white;
             padding: 30px;
             border-radius: 20px;
@@ -21,7 +21,7 @@
             max-width: 450px;
             margin: 80px auto 20px auto;
         }
-        .profile-img {
+        .image-profil {
             width: 120px;
             height: 120px;
             border-radius: 50%;
@@ -30,7 +30,7 @@
             margin-bottom: 15px;
             background: #eee;
         }
-        .status-badge {
+        .badge-statut {
             display: inline-block;
             padding: 8px 15px;
             border-radius: 20px;
@@ -38,10 +38,10 @@
             font-size: 0.9em;
             margin: 10px 0;
         }
-        .paid { background: #d4edda; color: #155724; }
-        .unpaid { background: #f8d7da; color: #721c24; }
+        .paye { background: #d4edda; color: #155724; }
+        .non-paye { background: #f8d7da; color: #721c24; }
         
-        .info-row {
+        .ligne-info {
             text-align: left;
             margin-top: 20px;
             padding: 15px;
@@ -50,7 +50,7 @@
         }
         
         /* Nouveau style pour la présence */
-        .presence-box {
+        .boite-presence {
             margin-top: 20px;
             padding: 15px;
             background: #eaf6f8;
@@ -58,13 +58,13 @@
             border-radius: 12px;
             text-align: left;
         }
-        .ratio-highlight {
+        .ratio-mis-en-valeur {
             font-size: 1.4em;
             font-weight: bold;
             color: #0c5568;
             display: block;
         }
-        .today-badge {
+        .badge-aujourd-hui {
             font-size: 0.8em;
             padding: 4px 10px;
             border-radius: 5px;
@@ -74,7 +74,7 @@
             display: inline-block;
         }
         
-        .upload-btn {
+        .btn-upload {
             background: #0d3b4f;
             color: white;
             padding: 8px 15px;
@@ -88,10 +88,10 @@
 </head>
 <body>
 
-    <div class="profile-card">
-        <img id="display-pic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="profile-img">
+    <div class="carte-profil">
+        <img id="display-pic" src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="image-profil">
         <br>
-        <label class="upload-btn">
+        <label class="btn-upload">
             📷 Changer la photo
             <input type="file" id="upload-input" accept="image/*" style="display:none;">
         </label>
@@ -100,26 +100,26 @@
         <p id="prof-email" style="color: #666;"></p>
 
         <div id="badge-container" style="display:none;">
-            <div id="status-badge" class="status-badge">Vérification...</div>
+            <div id="status-badge" class="badge-statut">Vérification...</div>
         </div>
 
-        <div class="info-row">
+        <div class="ligne-info">
             <strong>Rôle :</strong> <span id="prof-role">...</span><br>
             <span id="row-classe" style="display:none;"><strong>Classe :</strong> <span id="prof-classe">...</span></span>
         </div>
 
-        <div id="presence-section" class="presence-box" style="display:none;">
+        <div id="presence-section" class="boite-presence" style="display:none;">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
                     <strong>📊 Présences</strong><br>
                     <small id="date-aujourdhui" style="color:#666;"></small>
                 </div>
                 <div style="text-align: right;">
-                    <span id="ratio-text" class="ratio-highlight">0 / 0</span>
+                    <span id="ratio-text" class="ratio-mis-en-valeur">0 / 0</span>
                     <small style="color:#666;">jours présents</small>
                 </div>
             </div>
-            <div id="badge-aujourdhui" class="today-badge" style="background: #999;">
+            <div id="badge-aujourdhui" class="badge-aujourd-hui" style="background: #999;">
                 Attente de l'appel...
             </div>
         </div>
@@ -184,13 +184,13 @@
                         // Si le statut de paiement de l'élève est en règle
                         badgePaiement.innerText = "✅ Frais Scolaires en règle";
                         // Affiche le texte confirmant que le paiement est en règle
-                        badgePaiement.className = "status-badge paid";
+                        badgePaiement.className = "badge-statut paye";
                         // Applique la classe CSS correspondante pour le style vert
                     } else {
                         // Si le paiement est en retard ou non régularisé
                         badgePaiement.innerText = "⚠️ Paiement en retard";
                         // Affiche le texte d'avertissement de retard
-                        badgePaiement.className = "status-badge unpaid";
+                        badgePaiement.className = "badge-statut non-paye";
                         // Applique la classe CSS correspondante pour le style rouge
                     }
 

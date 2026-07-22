@@ -17,13 +17,13 @@
             display: block;
         }
         /* On élargit la carte spécifiquement pour le tableau des notes */
-        .welcome-card {
+        .carte-accueil {
             max-width: 850px; 
             width: 80%;
             margin-bottom: 30px;
         }
         /* Suppression du reste du CSS local car il est déjà dans style.css */
-        .note-card {
+        .carte-note {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 15px;
@@ -32,7 +32,7 @@
             border-left: 5px solid #0c5568;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .note-matiere {
+        .matiere-note {
             font-weight: bold;
             font-size: 1.1em;
             color: #0c5568;
@@ -42,16 +42,16 @@
             padding-bottom: 5px;
             text-transform: uppercase;
         }
-        .note-stats-grid {
+        .grille-stats-note {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
-        .stat-item { display: flex; flex-direction: column; }
-        .stat-label { color: #666; font-size: 0.85em; }
-        .stat-value { font-weight: bold; color: #333; font-size: 0.95em; 
+        .element-statistique { display: flex; flex-direction: column; }
+        .libelle-stat { color: #666; font-size: 0.85em; }
+        .valeur-stat { font-weight: bold; color: #333; font-size: 0.95em; 
         }
-        .register-btn{
+        .btn-inscription{
             background: #0d3b4f;
             color: white;
             border: none;
@@ -66,16 +66,16 @@
 </head>
 <body>
 
-    <div class="header">
-        <div class="header-left">
-            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+        <div class="en-tete-gauche">
+            <div class="btn-menu" onclick="toggleMenu()">☰</div>
             <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
         </div>
     
-        <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+        <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
     </div>
     
-        <div id="sidebar" class="sidebar">
+        <div id="sidebar" class="barre-laterale">
         <h2>Menu</h2>
        <a href="accueil.html">Accueil</a>
     
@@ -96,19 +96,19 @@
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
     
-        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+        <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
     </div>
-        <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+        <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
-    <div class="main-content">
-        <div class="welcome-card">
+    <div class="contenu-principal">
+        <div class="carte-accueil">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 style="margin: 0;">📝 Registre de Présence</h2>
                 <select id="select-classe-appel" style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-family: inherit; font-size: 14px;">
                     <option value="">-- Choisir la classe --</option>
                 </select>
             </div>
-            <div class="data-card">
+            <div class="carte-donnees">
                 <table style="width: 100%; text-align: left;">
                     <thead>
                         <tr>
@@ -119,7 +119,7 @@
                     <tbody id="liste-appel">
                         </tbody>
                 </table>
-                <button onclick="enregistrerAppel()" class="register-btn" style="margin-top:20px;">Valider l'appel du jour</button>
+                <button onclick="enregistrerAppel()" class="btn-inscription" style="margin-top:20px;">Valider l'appel du jour</button>
             </div>
         </div>
     </div>

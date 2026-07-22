@@ -14,7 +14,7 @@
             display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
         }
-        .register-container {
+        .conteneur-inscription {
             background: white;
             padding: 30px;
             border-radius: 15px;
@@ -24,36 +24,36 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             margin: 20px 0;
         }
-        .form-group { margin-bottom: 15px; text-align: left; }
+        .groupe-champ { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
         input, select {
             width: 100%; padding: 10px;
             border: 2px solid #e2e8f0; border-radius: 8px;
             box-sizing: border-box;
         }
-        .register-btn {
+        .btn-inscription {
             width: 100%; padding: 12px;
             background-color: #0c5568; color: white;
             border: none; border-radius: 8px;
             font-weight: bold; cursor: pointer; margin-top: 10px;
         }
-        .register-btn:hover { background-color: #0a3d52; }
+        .btn-inscription:hover { background-color: #0a3d52; }
     </style>
 </head>
 <body>
 
-    <div class="register-container animate__animated animate__fadeInDown">
+    <div class="conteneur-inscription animate__animated animate__fadeInDown">
         <img src="images/logo_small.png" alt="Logo" style="max-width: 80px; margin-bottom: 10px;">
         <h2>Inscription à E-SCHOOL</h2>
         <p style="color: #666; font-size: 14px;">Créez votre compte sécurisé</p>
 
         <form id="register-form">
-            <div class="form-group">
+            <div class="groupe-champ">
                 <label>Nom complet</label>
                 <input type="text" id="reg-nom" placeholder="Ex: Mpiana Kasongo" required>
             </div>
 
-            <div class="form-group">
+            <div class="groupe-champ">
                 <label>Vous êtes :</label>
                 <select id="reg-role" required>
                     <option value="eleve">Élève</option>
@@ -62,33 +62,33 @@
                 </select>
             </div>
             
-            <div class="form-group" id="admin-code-group" style="display: none;">
+            <div class="groupe-champ" id="admin-code-group" style="display: none;">
             <label id="label-code" style="color: #0c5568; font-weight: bold;">Code d'Autorisation</label>
                 <input type="password" id="reg-admin-code" placeholder="Entrez le code secret">
             </div>
             
-            <div class="form-group" id="group-classe">
+            <div class="groupe-champ" id="group-classe">
                 <label id="label-classe">Classe :</label>
                 <div id="classe-checkbox-container" style="border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px; max-height: 150px; overflow-y: auto; background: #fff;">
                 </div>
             </div>
 
-            <div class="form-group" id="group-matiere" style="display:none;">
+            <div class="groupe-champ" id="group-matiere" style="display:none;">
                 <label>Matières enseignées</label>
                 <input type="text" id="reg-matiere" placeholder="Ex: Math, Physique">
             </div>
 
-            <div class="form-group">
+            <div class="groupe-champ">
                 <label>Email scolaire</label>
                 <input type="email" id="reg-email" placeholder="ex: nom@gmail.com" required>
             </div>
 
-            <div class="form-group">
+            <div class="groupe-champ">
                 <label>Mot de passe</label>
                 <input type="password" id="reg-password" placeholder="••••••••" required>
             </div>
 
-            <button type="submit" class="register-btn">S'inscrire</button>
+            <button type="submit" class="btn-inscription">S'inscrire</button>
         </form>
 
         <div style="margin-top: 20px; font-size: 13px;">
@@ -163,13 +163,13 @@
         // Parcourt chaque classe de la liste pour créer une case à cocher correspondante
         containerClasses.innerHTML += `
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                <input type="checkbox" class="classe-check" value="${cl}" id="check-${cl}" style="width: 18px; height: 18px; margin-right: 10px;">
+                <input type="checkbox" class="case-classe" value="${cl}" id="check-${cl}" style="width: 18px; height: 18px; margin-right: 10px;">
                 <label for="check-${cl}" style="margin: 0; font-weight: normal; color: #333;">${cl}</label>
             </div>`;
         // Ajoute dynamiquement au DOM une ligne avec une case à cocher et son étiquette pour cette classe
     });
 
-    const allCheckboxes = document.querySelectorAll('.classe-check');
+    const allCheckboxes = document.querySelectorAll('.case-classe');
     // Sélectionne toutes les cases à cocher générées pour les classes
 
     // Gestion du rôle
@@ -238,7 +238,7 @@
             }
         }
 
-        const checkboxes = document.querySelectorAll('.classe-check:checked');
+        const checkboxes = document.querySelectorAll('.case-classe:checked');
         // Sélectionne toutes les cases à cocher qui sont cochées
         const classesChoisies = Array.from(checkboxes).map(cb => cb.value);
         // Convertit la NodeList en tableau et extrait les valeurs (noms des classes choisies)

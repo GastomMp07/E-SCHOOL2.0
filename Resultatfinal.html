@@ -19,7 +19,7 @@
         }
 
         /* Conteneur principal adapté aux écrans */
-        .main-content {
+        .contenu-principal {
             padding: 80px 15px 40px; /* Espace pour le header */
             width: 100%;
             box-sizing: border-box;
@@ -38,7 +38,7 @@
             margin: 0 auto;
         }
 
-        .bulletin-header {
+        .en-tete-bulletin {
             display: flex;
             flex-direction: row;
             align-items: center;
@@ -49,10 +49,10 @@
             gap: 15px;
         }
 
-        .ecole-infos h3 { margin: 0; color: #0c5568; font-size: 1.4em; }
-        .ecole-infos p { margin: 5px 0; font-weight: bold; }
+        .infos-ecole h3 { margin: 0; color: #0c5568; font-size: 1.4em; }
+        .infos-ecole p { margin: 5px 0; font-weight: bold; }
 
-        .eleve-details {
+        .details-eleve {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
@@ -63,21 +63,21 @@
         }
 
         /* Tableau Responsive */
-        .table-bulletin {
+        .tableau-bulletin {
             width: 100%;
             border-collapse: collapse;
             min-width: 700px; /* Force une largeur minimale pour éviter le chevauchement des chiffres */
         }
 
-        .table-bulletin th, .table-bulletin td {
+        .tableau-bulletin th, .tableau-bulletin td {
             border: 1px solid #ccc;
             padding: 10px 5px;
             text-align: center;
             font-size: 0.9em;
         }
 
-        .table-bulletin th { background: #f2f2f2; font-weight: bold; }
-        .matiere-nom {
+        .tableau-bulletin th { background: #f2f2f2; font-weight: bold; }
+        .nom-matiere {
             position: sticky;
             left: 0;
             background: #f9f9f9; /* Obligatoire pour cacher ce qui passe dessous */
@@ -90,7 +90,7 @@
         }
 
         /* On s'assure que le header aussi reste fixé si besoin */
-        .table-bulletin thead th:first-child {
+        .tableau-bulletin thead th:first-child {
             position: sticky;
             left: 0;
             z-index: 2;
@@ -99,7 +99,7 @@
         .bold { font-weight: bold; background: #fff0f0; }
 
         /* Footer et Pourcentage */
-        .bulletin-footer {
+        .pied-bulletin {
             margin-top: 25px;
             padding-top: 15px;
             border-top: 2px solid #eee;
@@ -110,7 +110,7 @@
             gap: 15px;
         }
 
-        .footer-stats {
+        .stats-pied {
             flex: 1;
             min-width: 200px;
             text-align: left;
@@ -135,21 +135,21 @@
 
         /* Mobile Adjustments */
         @media (max-width: 600px) {
-            .bulletin-header { flex-direction: column; text-align: center; }
+            .en-tete-bulletin { flex-direction: column; text-align: center; }
             .bulletin-papier { padding: 15px; }
-            .header-logo { height: 50px; }
-            .ecole-infos h3 { font-size: 1.1em; }
-            .bulletin-footer { flex-direction: column; text-align: center; }
-            .footer-stats { text-align: center; }
+            .logo-en-tete { height: 50px; }
+            .infos-ecole h3 { font-size: 1.1em; }
+            .pied-bulletin { flex-direction: column; text-align: center; }
+            .stats-pied { text-align: center; }
         }
 
         @media screen and (max-width: 600px) {
-            .table-bulletin th, .table-bulletin td {
+            .tableau-bulletin th, .tableau-bulletin td {
                 padding: 4px 2px; /* Espacement réduit */
                 font-size: 0.75em; /* Texte plus petit */
             }
 
-            .matiere-nom {
+            .nom-matiere {
                 min-width: 80px; /* Empêche le nom de la matière d'être trop écrasé */
             }
         }
@@ -157,16 +157,16 @@
 </head>
 <body>
 
-    <div class="header">
-    <div class="header-left">
-        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+    <div class="en-tete-gauche">
+        <div class="btn-menu" onclick="toggleMenu()">☰</div>
         <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
     </div>
 
-    <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+    <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
 </div>
 
-    <div id="sidebar" class="sidebar">
+    <div id="sidebar" class="barre-laterale">
     <h2>Menu</h2>
     <a href="accueil.html">Accueil</a>
     
@@ -186,12 +186,12 @@
 
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
-    <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+    <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
 </div>
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
 
-    <div class="main-content">
+    <div class="contenu-principal">
         <div id="liste-notes">
             <p style="color: white; text-align: center;">Chargement de votre bilan annuel...</p>
         </div>
@@ -384,7 +384,7 @@
 
                     rowsHtml += `
                         <tr>
-                            <td class="matiere-nom">${matiere}</td>
+                            <td class="nom-matiere">${matiere}</td>
                             <td>${scores["1ère Période"]}</td><td>${scores["2ème Période"]}</td><td>${scores["Examen 1er Semestre"]}</td>
                             <td class="bold">${totalS1}</td>
                             <td>${scores["3ème Période"]}</td><td>${scores["4ème Période"]}</td><td>${scores["Examen 2ème Semestre"]}</td>
@@ -400,22 +400,22 @@
             // 4. Affichage final du tableau (TOUJOURS EXÉCUTÉ)
             container.innerHTML = `
                 <div class="bulletin-papier animate__animated animate__fadeIn">
-                    <div class="bulletin-header">
+                    <div class="en-tete-bulletin">
                         <img src="images/logo_small.png" style="height:60px;">
-                        <div class="ecole-infos">
+                        <div class="infos-ecole">
                             <h3>E-SCHOOL</h3>
                             <p>Année Scolaire 2025-2026</p>
                             <h4>BILAN ANNUEL ÉVOLUTIF</h4>
                         </div>
                     </div>
 
-                    <div class="eleve-details">
+                    <div class="details-eleve">
                         <div><strong>ÉLÈVE :</strong> ${profil.monNomBrut.toUpperCase()}</div>
                         <div><strong>CLASSE :</strong> ${maClasse}</div>
                     </div>
 
                     <div style="overflow-x: auto;">
-                        <table class="table-bulletin">
+                        <table class="tableau-bulletin">
                             <thead>
                                 <tr>
                                     <th rowspan="2">MATIÈRES</th>
@@ -431,8 +431,8 @@
                         </table>
                     </div>
 
-                    <div class="bulletin-footer">
-                        <div class="footer-stats">
+                    <div class="pied-bulletin">
+                        <div class="stats-pied">
                             <p style="margin: 5px 0; font-size: 1.1em; color: #1e3a8a;"><strong>PLACE : ${maPlace > 0 ? maPlace + (maPlace === 1 ? 'ère' : 'ème') : '-'} sur ${totalEleves}</strong></p>
                             <p style="margin: 5px 0;">Points cumulés : <strong>${grandTotalObtenu} / ${grandTotalMaxPossible}</strong></p>
                             <!-- En bas se trouve l'endroit où j'ai coder le pourcentage -->

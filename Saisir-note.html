@@ -13,7 +13,7 @@
             margin: 0;
             display: block;
         }
-        .welcome-card {
+        .carte-accueil {
             max-width: 600px;
             width: 90%;
             margin: 120px auto 40px;
@@ -31,22 +31,22 @@
             margin-top: 10px;
             display: block;
         }
-        .flex-row {
+        .ligne-flex {
             display: flex;
             gap: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-left">
-            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+        <div class="en-tete-gauche">
+            <div class="btn-menu" onclick="toggleMenu()">☰</div>
             <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
         </div>
-        <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+        <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
     </div>
     
-    <div id="sidebar" class="sidebar">
+    <div id="sidebar" class="barre-laterale">
         <h2>Menu</h2>
   <a href="accueil.html">Accueil</a>
     
@@ -66,13 +66,13 @@
 
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
-        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+        <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
     </div>
 
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
-    <div class="welcome-card">
-            <div class="data-card" style="background: white; padding: 25px; border-radius: 15px;">
+    <div class="carte-accueil">
+            <div class="carte-donnees" style="background: white; padding: 25px; border-radius: 15px;">
                 <h2 style="margin-top: 0; color: #0c5568;">Saisie des Notes</h2>
                 
                 <form id="form-saisie-notes" style="display: flex; flex-direction: column; gap: 15px;">
@@ -110,7 +110,7 @@
                         <input type="text" id="nom-eleve" placeholder="Ex: Mpiana Kasongo" required>
                     </div>
 
-                    <div class="flex-row">
+                    <div class="ligne-flex">
                         <div style="flex: 2;">
                             <label>Note obtenue :</label>
                             <input type="number" id="note-valeur" min="0" step="0.5" placeholder="Ex: 15" required>

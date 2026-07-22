@@ -18,7 +18,7 @@
             align-items: center;     /* Centre verticalement */
 
         }
-        .header { 
+        .en-tete { 
     display: flex; 
     align-items: center; 
     justify-content: space-between; /* Pousse les groupes aux extrémités */
@@ -35,58 +35,58 @@
 }
 
 /* Groupe de gauche (Menu + Titre) */
-.header-left {
+.en-tete-gauche {
     display: flex;
     align-items: center;
     gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
 }
 
 /* Logo à droite */
-.header-logo {
+.logo-en-tete {
     height: 56px; /* Ajuste la taille selon ton image */
     width: auto;
 }
-        .menu-btn { font-size: 30px; cursor: pointer; padding: 10px; }
+        .btn-menu { font-size: 30px; cursor: pointer; padding: 10px; }
 
-        /* SIDEBAR (CORRIGÉE) */
-        .sidebar { 
+        /* BARRE LATERALE (CORRIGÉE) */
+        .barre-laterale { 
             position: fixed; top: 0; left: -280px; /* Cachée par défaut */
             width: 260px; height: 100%; background: #0a3d52; color: white; 
             transition: all 0.4s ease; z-index: 10001; 
             display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
         }
         /* Classe qui fait apparaître le menu */
-        .sidebar.active { left: 0; }
+        .barre-laterale.active { left: 0; }
 
-        .sidebar h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .sidebar a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
-        .sidebar a:hover { background: #0d3b4f; padding-left: 35px; }
+        .barre-laterale h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .barre-laterale a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
+        .barre-laterale a:hover { background: #0d3b4f; padding-left: 35px; }
 
-        .logout-btn { 
+        .btn-deconnexion { 
             background: #ef4444; color: white; border: none; 
             padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
             cursor: pointer; font-weight: bold; 
             width: calc(100% - 40px);
         }
 
-        /* OVERLAY (Le fond noir quand le menu est ouvert) */
-        .overlay { 
+        /* VOILE (Le fond noir quand le menu est ouvert) */
+        .voile { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
             transition: 0.3s; z-index: 9999; 
         }
-        .overlay.active { visibility: visible; opacity: 1; }
+        .voile.active { visibility: visible; opacity: 1; }
     </style>
-    <div class="header">
-        <div class="header-left">
-            <div class="menu-btn" onclick="toggleMenu()">☰</div>
+    <div class="en-tete">
+        <div class="en-tete-gauche">
+            <div class="btn-menu" onclick="toggleMenu()">☰</div>
             <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
         </div>
     
-        <img src="images/image.png" alt="E-SCHOOL logo" class="header-logo">
+        <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
     </div>
     
-        <div id="sidebar" class="sidebar">
+        <div id="sidebar" class="barre-laterale">
         <h2>Menu</h2>
      <a href="accueil.html">Accueil</a>
     
@@ -106,16 +106,16 @@
 
     <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
 
-        <button onclick="logout()" class="logout-btn">Se déconnecter</button>
+        <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
     </div>
-    <div id="overlay" class="overlay" onclick="toggleMenu()"></div>
+    <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
-    <div class="main-content">
-        <div class="welcome-card animate__animated animate__fadeIn">
+    <div class="contenu-principal">
+        <div class="carte-accueil animate__animated animate__fadeIn">
             <h2>📅 HORAIRE DE COURS</h2>
             <p id="classe-display">Chargement de votre emploi du temps...</p>
             
-            <div id="horaire-container" class="data-card">
+            <div id="horaire-container" class="carte-donnees">
                 </div>
         </div>
     </div>
@@ -168,7 +168,7 @@
                     // Filtre les créneaux d'horaires dont le champ professeur correspond exactement au nom de l'utilisateur
                 } else {
                     // Sinon, si l'utilisateur est un élève
-                    // L'élève (ou autre) voit l'horaire de sa CLASSE
+                    // L'élève (or autre) voit l'horaire de sa CLASSE
                     const maClasse = Array.isArray(userData.classe) ? userData.classe[0] : userData.classe;
                     // Vérifie si sa classe est stockée sous forme de tableau ou d'une chaîne et extrait la valeur
                     displayLabel.innerText = "Emploi du temps - Classe : " + maClasse;
@@ -290,7 +290,6 @@
 
 </script>
 
-</script>
  <script type="module" src="app.js"></script>
 
 </body>
