@@ -128,6 +128,17 @@
         import { collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         // Importe les fonctions Firestore nécessaires pour requêter et manipuler des documents
 
+        function normClasse(s) {
+            // Normalise un nom de classe pour la comparaison (retire accents, espaces, tirets et met en minuscules)
+            if (!s) return "";
+            return String(s)
+                .trim()
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "");
+        }
+
         onAuthStateChanged(auth, async (user) => {
             // Écoute les changements d'état de connexion de l'utilisateur
             const container = document.getElementById("liste-communiques");
@@ -238,23 +249,28 @@
             container.innerHTML = "";
             // Vide le conteneur avant d'effectuer le nouveau rendu
             
+            const userClassesArr = Array.isArray(userClasses) ? userClasses : [userClasses];
+            const userClassesNorm = userClassesArr.map(c => normClasse(c));
+            const roleNorm = normClasse(role);
+
             // Filtrage des messages
             const messagesVisibles = docs.filter(item => {
-                // Filtre les communiqués pour ne garder que ceux qui concernent l'utilisateur connecté
+                const destRaw = item.destinataire || "";
+                const destNorm = normClasse(destRaw);
+
                 // L'admin et la direction voient TOUT (pour vérification)
-                if (role === "admin" || role === "direction") return true;
-                // Si l'utilisateur est admin ou direction, le communiqué est conservé
-                // Public
-                if (item.destinataire === "tous" || !item.destinataire || item.destinataire === "") return true;
-                // Si le communiqué est adressé à "tous" ou sans destinataire spécifique, il est public et visible
-                // Match avec une des classes de l'élève ou prof
-                return userClasses.includes(item.destinataire);
-                // Conserve le communiqué si son destinataire figure dans les classes de l'utilisateur
+                if (roleNorm === "admin" || roleNorm.includes("admin") || roleNorm.includes("direction")) return true;
+                
+                // Public (tous, vide ou null)
+                if (destNorm === "tous" || destNorm === "") return true;
+                
+                // Match avec une des classes de l'élève ou prof (comparaison insensible aux accents/espaces)
+                return userClassesNorm.includes(destNorm);
             });
 
             if (messagesVisibles.length === 0) {
                 // Si aucun communiqué n'est visible pour l'utilisateur
-                container.innerHTML = "<p style='color:#64748b;padding:16px;'>Aucun communiqué pour vous pour le moment.</p>";
+                container.innerHTML = "<p style='color:#64748b;padding:16px;'>Aucun communiqué pour vous pour me le moment.</p>";
                 // Affiche un message de boîte aux lettres vide
                 return;
                 // Arrête le traitement de la fonction d'affichage
@@ -281,7 +297,8 @@
                 // Applique les styles CSS en ligne pour la bordure colorée et la mise en page de la carte
 
                 // Badge de cible (ex: "7em A" ou "PUBLIC")
-                const estPublic = item.destinataire === "tous" || !item.destinataire || item.destinataire === "";
+                const destNorm = normClasse(item.destinataire);
+                const estPublic = destNorm === "tous" || destNorm === "";
                 // Détermine si le communiqué est public (destiné à toutes les classes)
                 const badgeColor = estPublic ? "#28a745" : "#0c5568";
                 // Choisit une couleur verte pour le badge public, et bleu-foncé pour le badge spécifique à une classe
