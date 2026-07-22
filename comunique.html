@@ -245,8 +245,8 @@
                 if (role === "admin" || role === "direction") return true;
                 // Si l'utilisateur est admin ou direction, le communiqué est conservé
                 // Public
-                if (item.destinataire === "tous") return true;
-                // Si le communiqué est adressé à "tous", il est visible
+                if (item.destinataire === "tous" || !item.destinataire || item.destinataire === "") return true;
+                // Si le communiqué est adressé à "tous" ou sans destinataire spécifique, il est public et visible
                 // Match avec une des classes de l'élève ou prof
                 return userClasses.includes(item.destinataire);
                 // Conserve le communiqué si son destinataire figure dans les classes de l'utilisateur
@@ -280,11 +280,13 @@
                 `;
                 // Applique les styles CSS en ligne pour la bordure colorée et la mise en page de la carte
 
-                // Badge de cible (ex: "7em A" ou "Public")
-                const badgeColor = item.destinataire === "tous" ? "#28a745" : "#0c5568";
-                // Choisi une couleur verte pour le badge public, et bleu-foncé pour le badge spécifique à une classe
-                const badgeText = item.destinataire === "tous" ? "PUBLIC" : `CLASSE : ${item.destinataire}`;
-                // Libelle le texte du badge selon le ciblage du message
+                // Badge de cible (ex: "7em A" ou "PUBLIC")
+                const estPublic = item.destinataire === "tous" || !item.destinataire || item.destinataire === "";
+                // Détermine si le communiqué est public (destiné à toutes les classes)
+                const badgeColor = estPublic ? "#28a745" : "#0c5568";
+                // Choisit une couleur verte pour le badge public, et bleu-foncé pour le badge spécifique à une classe
+                const badgeText = estPublic ? "PUBLIC" : `CLASSE : ${item.destinataire}`;
+                // Affiche "PUBLIC" si c'est pour toutes les classes, ou "CLASSE : [nom]" pour une classe ciblée
 
                 card.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: flex-start;">

@@ -92,7 +92,7 @@
     <div class="contenu-principal">
         <div class="carte-accueil animate__animated animate__fadeIn">
             <h2>📢 Publier un Communiqué</h2>
-            <p>Ce message sera visible par tous les élèves et enseignants de l'école.</p>
+            <p>Ce message sera visible par la cible sélectionnée ou toute l'école (Public).</p>
 
             <div class="carte-donnees">
                 <form id="form-redac" style="display: flex; flex-direction: column; gap: 15px; text-align: left;">
@@ -112,7 +112,7 @@
                     <div>
                         <label for="com-cible" style="display: block; margin-bottom: 5px; font-weight: bold;">Destinataire :</label>
                         <select id="com-cible" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px;">
-                                <option value="">--Toutes les classes--</option>
+                                <option value="tous">📢 Toutes les classes (Public)</option>
                                 <option value="7em A">7em A</option>
                                 <option value="7em B">7em B</option>
                                 <option value="8em A">8em A</option>
@@ -213,8 +213,10 @@
             // Récupère la valeur saisie dans le champ du titre de l'annonce
             const contenu = document.getElementById('message-com').value;
             // Récupère le texte saisi dans la zone de texte du message
-            const cible = document.getElementById('com-cible').value;
+            const cibleVal = document.getElementById('com-cible').value;
             // Récupère la cible choisie dans la liste déroulante des destinataires
+            const cible = cibleVal || "tous";
+            // Si aucune valeur spécifique n'est définie, affecte "tous" (Public) par défaut
 
             try {
                 // Bloc try pour intercepter les erreurs d'écriture dans la base de données
@@ -225,7 +227,7 @@
                     message: contenu,
                     // Attribue le contenu du message au document
                     destinataire: cible,
-                    // Attribue la classe destinataire (ou "tous") au document
+                    // Attribue la classe destinataire (ou "tous" pour Public) au document
                     timestamp: Date.now(),
                     // Enregistre le moment précis de publication en millisecondes pour le tri
                     date: new Date(),
