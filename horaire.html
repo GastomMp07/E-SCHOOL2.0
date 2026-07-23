@@ -258,74 +258,122 @@
                 });
             }
 
-            // Banner d'information
-            let noticeHTML = "";
-            if (!isAdmin && mesCours.length === 0) {
-                noticeHTML = `
-                    <div style="background: #fff3cd; color: #856404; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9em; border-left: 4px solid #ffeba2;">
-                        ℹ️ Votre classe (<strong>${mainClasse}</strong>) n'a aucun cours correspondant exact dans la base. Affichage de <strong>tous les cours enregistrés (${allHoraires.length})</strong> ci-dessous.
+            // 5. Affichage selon le rôle (Élève vs Admin/Enseignant)
+            if (!isAdmin && !isProf) {
+                // RÔLE ÉLÈVE : Filtrage par JOUR (l'élève ne voit que sa classe et filtre par jour)
+                const joursStandards = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+                const joursPresencesMap = new Map();
+                
+                // On garde uniquement les jours qui ont des cours pour cette classe
+                mesCours.forEach(h => {
+                    const normJ = normText(h.jour);
+                    if (normJ && !joursPresencesMap.has(normJ)) {
+                        joursPresencesMap.set(normJ, h.jour);
+                    }
+                });
+
+                const joursOptions = joursStandards.filter(j => joursPresencesMap.has(normText(j)));
+                // Si un jour hors norme existe (ex: Dimanche), on l'ajoute aussi
+                joursPresencesMap.forEach((origVal, normKey) => {
+                    if (!joursStandards.map(j => normText(j)).includes(normKey)) {
+                        joursOptions.push(origVal);
+                    }
+                });
+
+                let selectorHTML = `
+                    <div style="margin-bottom: 20px; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; text-align: center;">
+                        <label for="select-filter-jour" style="font-weight: bold; margin-right: 10px; color: #fff;">📅 Filtrer par jour :</label>
+                        <select id="select-filter-jour" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0c7489; outline: none; font-size: 0.95em; font-weight: bold; color: #0c5568;">
+                            <option value="TOUS">Tous les jours (${mesCours.length} cours)</option>
+                            ${joursOptions.map(j => `<option value="${j}">Jour : ${j}</option>`).join('')}
+                        </select>
                     </div>
+                    <div id="horaire-cards-wrapper"></div>
                 `;
-            }
+                container.innerHTML = selectorHTML;
 
-            // Construction du sélecteur de classe interactif
-            let selectorHTML = `
-                <div style="margin-bottom: 20px; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; text-align: center;">
-                    <div style="color: #e0f2f1; font-size: 0.9em; margin-bottom: 8px;">
-                        📊 Total base de données : <strong>${allHoraires.length} cours</strong> au total.
-                    </div>
-                    <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #fff;">Sélectionner la classe à afficher :</label>
-                    <select id="select-filter-classe" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0c7489; outline: none; font-size: 0.95em; font-weight: bold; color: #0c5568;">
-                        ${(!isAdmin && mesCours.length > 0) ? `<option value="MES_COURS">Mon Emploi du Temps (${userClasses[0] || 'Ma Classe'})</option>` : ''}
-                        <option value="TOUTES">Toutes les classes (${allHoraires.length} cours)</option>
-                        ${Array.from(classesEnregistreesMap.values()).map(cl => `<option value="${cl}">Classe : ${cl}</option>`).join('')}
-                    </select>
-                </div>
-                ${noticeHTML}
-                <div id="horaire-cards-wrapper"></div>
-            `;
-            container.innerHTML = selectorHTML;
+                const filterSelect = document.getElementById('select-filter-jour');
+                const wrapper = document.getElementById('horaire-cards-wrapper');
 
-            const filterSelect = document.getElementById('select-filter-classe');
-            const wrapper = document.getElementById('horaire-cards-wrapper');
+                const renderDayFilter = (selectedDay) => {
+                    wrapper.innerHTML = "";
+                    let listToRender = [];
 
-            const renderFilter = (filterValue) => {
-                wrapper.innerHTML = "";
-                let listToRender = [];
+                    if (selectedDay === "TOUS") {
+                        listToRender = mesCours;
+                    } else {
+                        const targetNorm = normText(selectedDay);
+                        listToRender = mesCours.filter(h => normText(h.jour) === targetNorm);
+                    }
 
-                if (filterValue === "MES_COURS" && mesCours.length > 0) {
-                    listToRender = mesCours;
-                } else if (filterValue === "TOUTES") {
-                    listToRender = allHoraires;
-                } else {
-                    const targetNorm = normClasse(filterValue);
-                    listToRender = allHoraires.filter(h => normClasse(h.classe) === targetNorm);
-                }
+                    if (listToRender.length === 0) {
+                        wrapper.innerHTML = `
+                            <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
+                                <p style="font-size:1.1em; font-weight:bold;">Aucun cours programmé le ${selectedDay} pour votre classe.</p>
+                            </div>
+                        `;
+                        return;
+                    }
 
-                if (listToRender.length === 0) {
-                    wrapper.innerHTML = `
-                        <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
-                            <p style="font-size:1.1em; font-weight:bold;">Aucun cours trouvé pour le filtre "${filterValue}".</p>
-                            <p style="font-size:0.9em; color:#777; margin-top:5px;">Veuillez choisir "Toutes les classes" dans le menu déroulant ci-dessus.</p>
-                        </div>
-                    `;
-                    return;
-                }
+                    renderPlanning(listToRender, wrapper, isAdmin, isProf);
+                };
 
-                renderPlanning(listToRender, wrapper, isAdmin, isProf);
-            };
+                renderDayFilter("TOUS");
+                filterSelect.addEventListener('change', (e) => {
+                    renderDayFilter(e.target.value);
+                });
 
-            // Sélection par défaut
-            if (!isAdmin && mesCours.length === 0) {
-                filterSelect.value = "TOUTES";
-                renderFilter("TOUTES");
             } else {
-                renderFilter(filterSelect.value);
-            }
+                // RÔLE ADMIN / ENSEIGNANT : Sélecteur par CLASSE (inchangé pour la direction)
+                let selectorHTML = `
+                    <div style="margin-bottom: 20px; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; text-align: center;">
+                        <div style="color: #e0f2f1; font-size: 0.9em; margin-bottom: 8px;">
+                            📊 Total base de données : <strong>${allHoraires.length} cours</strong> au total.
+                        </div>
+                        <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #fff;">Sélectionner la classe à afficher :</label>
+                        <select id="select-filter-classe" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0c7489; outline: none; font-size: 0.95em; font-weight: bold; color: #0c5568;">
+                            ${isProf ? `<option value="MES_COURS">Mon Emploi du Temps (${userNom || 'Enseignant'})</option>` : ''}
+                            <option value="TOUTES">Toutes les classes (${allHoraires.length} cours)</option>
+                            ${Array.from(classesEnregistreesMap.values()).map(cl => `<option value="${cl}">Classe : ${cl}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div id="horaire-cards-wrapper"></div>
+                `;
+                container.innerHTML = selectorHTML;
 
-            filterSelect.addEventListener('change', (e) => {
-                renderFilter(e.target.value);
-            });
+                const filterSelect = document.getElementById('select-filter-classe');
+                const wrapper = document.getElementById('horaire-cards-wrapper');
+
+                const renderClassFilter = (filterValue) => {
+                    wrapper.innerHTML = "";
+                    let listToRender = [];
+
+                    if (filterValue === "MES_COURS" && mesCours.length > 0) {
+                        listToRender = mesCours;
+                    } else if (filterValue === "TOUTES") {
+                        listToRender = allHoraires;
+                    } else {
+                        const targetNorm = normClasse(filterValue);
+                        listToRender = allHoraires.filter(h => normClasse(h.classe) === targetNorm);
+                    }
+
+                    if (listToRender.length === 0) {
+                        wrapper.innerHTML = `
+                            <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
+                                <p style="font-size:1.1em; font-weight:bold;">Aucun cours trouvé pour ce choix.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    renderPlanning(listToRender, wrapper, isAdmin, isProf);
+                };
+
+                renderClassFilter(filterSelect.value);
+                filterSelect.addEventListener('change', (e) => {
+                    renderClassFilter(e.target.value);
+                });
+            }
 
         } catch (error) {
             console.error("Erreur Firestore :", error);
