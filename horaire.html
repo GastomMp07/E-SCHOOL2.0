@@ -143,25 +143,36 @@
         const displayLabel = document.getElementById('classe-display');
         // Récupère l'élément textuel affichant les détails de la classe ou de l'enseignant
 
-        function norm(s) {
+        function normClasse(s) {
+            if (!s) return "";
+            let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
+            return str.replace(/[^a-z0-9]/g, "");
+        }
+
+        function normText(s) {
             if (!s) return "";
             return String(s).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
         }
 
+        function extractHoraireFields(h) {
+            return {
+                id: h.id,
+                classe: h.classe || h.class || h.Classe || h.maClasse || "Non définie",
+                matiere: h.matiere || h.course || h.Matiere || h.nom || "Matière",
+                professeur: h.professeur || h.prof || h.Professeur || h.enseignant || "N/A",
+                heure: h.heure || h.horaire || h.Heure || h.plage || "",
+                jour: h.jour || h.Jour || "Autre"
+            };
+        }
+
         try {
-            // Bloc de sécurité try-catch pour intercepter les échecs liés à Firestore
-            // 1. Récupérer les infos de l'utilisateur (on vérifie "users" et "utilisateurs")
+            // 1. Récupérer les infos de l'utilisateur dans "users" et "utilisateurs"
             const snapUsers = await getDoc(doc(db, "users", user.uid));
             const snapUtils = await getDoc(doc(db, "utilisateurs", user.uid));
             
             const u = snapUsers.exists() ? snapUsers.data() : {};
             const v = snapUtils.exists() ? snapUtils.data() : {};
-
-            if (!snapUsers.exists() && !snapUtils.exists()) {
-                displayLabel.innerText = "Erreur de profil";
-                container.innerHTML = "<p style='text-align:center; padding:20px;'>Profil introuvable dans la base de données.</p>";
-                return;
-            }
 
             const userData = { ...v, ...u }; // u a la priorité sur v
             const roleRaw = String(userData.role || "").toLowerCase().trim();
@@ -169,103 +180,136 @@
             const isAdmin = roleRaw === "admin" || roleRaw.includes("direction") || roleRaw.includes("administrateur");
 
             const userNom = userData.nom || "";
-            const userNomNorm = norm(userNom);
+            const userNomNorm = normText(userNom);
 
+            // Extraction multi-champs des classes de l'utilisateur
             let userClasses = [];
-            if (Array.isArray(userData.classe)) {
-                userClasses = userData.classe.map(c => String(c).trim());
-            } else if (userData.classe) {
-                userClasses = [String(userData.classe).trim()];
-            }
-            const userClassesNorm = userClasses.map(c => norm(c));
+            const classSources = [u.classe, u.class, u.maClasse, u.classes, v.classe, v.class, v.maClasse, v.classes];
+            classSources.forEach(src => {
+                if (Array.isArray(src)) {
+                    src.forEach(c => { if (c) userClasses.push(String(c).trim()); });
+                } else if (typeof src === "string" && src.trim() !== "") {
+                    userClasses.push(src.trim());
+                }
+            });
+            userClasses = Array.from(new Set(userClasses));
+            const userClassesNorm = userClasses.map(c => normClasse(c));
             const mainClasse = userClasses[0] || "Toutes";
 
-            // 2. Titre selon le rôle
-            if (isAdmin) {
-                displayLabel.innerText = "Emploi du temps Général (Direction / Administration)";
-            } else if (isProf) {
-                displayLabel.innerText = "Planning Enseignant : " + (userNom || "Enseignant");
-            } else {
-                displayLabel.innerText = "Emploi du temps - Classe : " + mainClasse;
-            }
-
-            // 3. Charger tous les créneaux d'horaires depuis Firestore
+            // 2. Charger tous les créneaux d'horaires depuis Firestore
             const querySnapshot = await getDocs(collection(db, "horaires"));
             const allHoraires = [];
             querySnapshot.forEach((docSnap) => {
-                allHoraires.push({ id: docSnap.id, ...docSnap.data() });
+                const data = docSnap.data();
+                if (data) {
+                    allHoraires.push(extractHoraireFields({ id: docSnap.id, ...data }));
+                }
             });
 
-            // 4. Filtrer selon le rôle
-            let filteredHoraires = [];
+            container.innerHTML = "";
+
+            if (allHoraires.length === 0) {
+                displayLabel.innerText = "Emploi du temps";
+                container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun horaire enregistré dans la base de données.</p>";
+                return;
+            }
+
+            // Récupérer la liste unique de toutes les classes enregistrées dans la collection "horaires"
+            const classesEnregistreesMap = new Map();
+            allHoraires.forEach(h => {
+                const key = normClasse(h.classe);
+                if (key && !classesEnregistreesMap.has(key)) {
+                    classesEnregistreesMap.set(key, h.classe);
+                }
+            });
+
+            // Titre d'en-tête
             if (isAdmin) {
-                filteredHoraires = allHoraires;
+                displayLabel.innerText = "Emploi du temps Général (Administration)";
             } else if (isProf) {
-                filteredHoraires = allHoraires.filter(h => {
-                    const profNorm = norm(h.professeur);
-                    const classeNorm = norm(h.classe);
+                displayLabel.innerText = "Planning Enseignant : " + (userNom || "Enseignant");
+            } else {
+                displayLabel.innerText = "Emploi du temps - Classe : " + (mainClasse || "Élève");
+            }
+
+            // Calcul du filtre par défaut "Mes cours"
+            let mesCours = [];
+            if (isAdmin) {
+                mesCours = allHoraires;
+            } else if (isProf) {
+                mesCours = allHoraires.filter(h => {
+                    const profNorm = normText(h.professeur);
+                    const classeNorm = normClasse(h.classe);
                     const matchProf = profNorm.includes(userNomNorm) || (userNomNorm.length > 0 && userNomNorm.includes(profNorm));
                     const matchClasse = userClassesNorm.includes(classeNorm);
                     return matchProf || matchClasse;
                 });
             } else {
-                // Élève
-                filteredHoraires = allHoraires.filter(h => {
-                    const classeNorm = norm(h.classe);
+                // Élève : match de classe normalisé
+                mesCours = allHoraires.filter(h => {
+                    const classeNorm = normClasse(h.classe);
                     return userClassesNorm.includes(classeNorm);
                 });
             }
 
-            container.innerHTML = "";
+            // Construction du sélecteur de classe interactif
+            let selectorHTML = `
+                <div style="margin-bottom: 20px; background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
+                    <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #fff;">Afficher l'horaire de :</label>
+                    <select id="select-filter-classe" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0c7489; outline: none; font-size: 0.95em;">
+                        ${!isAdmin ? `<option value="MES_COURS">Mon Emploi du Temps ${userClasses[0] ? '(' + userClasses[0] + ')' : ''}</option>` : ''}
+                        <option value="TOUTES">Toutes les classes (${allHoraires.length} cours)</option>
+                        ${Array.from(classesEnregistreesMap.values()).map(cl => `<option value="${cl}">Classe : ${cl}</option>`).join('')}
+                    </select>
+                </div>
+                <div id="horaire-cards-wrapper"></div>
+            `;
+            container.innerHTML = selectorHTML;
 
-            if (filteredHoraires.length === 0) {
-                container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun cours programmé pour le moment.</p>";
-                return;
-            }
+            const filterSelect = document.getElementById('select-filter-classe');
+            const wrapper = document.getElementById('horaire-cards-wrapper');
 
-            // Optionnel : filtre par classe pour l'admin
-            if (isAdmin) {
-                const classesSet = new Set(allHoraires.map(h => h.classe).filter(Boolean));
-                let filterHTML = `
-                    <div style="margin-bottom: 20px; text-align: center;">
-                        <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #0c5568;">Filtrer par classe :</label>
-                        <select id="select-filter-classe" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #0c7489; outline: none;">
-                            <option value="TOUTES">Toutes les classes</option>
-                            ${Array.from(classesSet).map(cl => `<option value="${cl}">${cl}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div id="horaire-cards-wrapper"></div>
-                `;
-                container.innerHTML = filterHTML;
+            const renderFilter = (filterValue) => {
+                wrapper.innerHTML = "";
+                let listToRender = [];
 
-                const renderCards = (selectedClasse) => {
-                    const wrapper = document.getElementById('horaire-cards-wrapper');
-                    wrapper.innerHTML = "";
+                if (filterValue === "MES_COURS") {
+                    listToRender = mesCours;
+                } else if (filterValue === "TOUTES") {
+                    listToRender = allHoraires;
+                } else {
+                    const targetNorm = normClasse(filterValue);
+                    listToRender = allHoraires.filter(h => normClasse(h.classe) === targetNorm);
+                }
 
-                    const listToRender = (selectedClasse === "TOUTES") 
-                        ? filteredHoraires 
-                        : filteredHoraires.filter(h => norm(h.classe) === norm(selectedClasse));
+                if (listToRender.length === 0) {
+                    wrapper.innerHTML = `
+                        <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
+                            <p style="font-size:1.1em; font-weight:bold;">Aucun cours trouvé pour ce choix.</p>
+                            <p style="font-size:0.9em; color:#777; margin-top:5px;">Utilisez le menu ci-dessus pour consulter d'autres classes.</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-                    if (listToRender.length === 0) {
-                        wrapper.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun cours pour cette classe.</p>";
-                        return;
-                    }
+                renderPlanning(listToRender, wrapper, isAdmin, isProf);
+            };
 
-                    renderPlanning(listToRender, wrapper, isAdmin, isProf);
-                };
-
-                renderCards("TOUTES");
-                document.getElementById('select-filter-classe').addEventListener('change', (e) => {
-                    renderCards(e.target.value);
-                });
+            // Sélection par défaut
+            if (!isAdmin && mesCours.length === 0) {
+                // Si la recherche automatique par classe d'élève n'a rien donné, basculer sur TOUTES par défaut
+                filterSelect.value = "TOUTES";
+                renderFilter("TOUTES");
             } else {
-                renderPlanning(filteredHoraires, container, isAdmin, isProf);
+                renderFilter(filterSelect.value);
             }
+
+            filterSelect.addEventListener('change', (e) => {
+                renderFilter(e.target.value);
+            });
 
         } catch (error) {
-            // En cas d'erreur de chargement Firestore ou réseau
             console.error("Erreur Firestore :", error);
-            // Affiche l'erreur complète dans la console de débogage
             container.innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erreur de chargement des données d'horaire.</p>";
         }
     });
@@ -288,20 +332,18 @@
             let jourHTML = `<h3 style="color: #0c5568; margin-top: 25px; border-bottom: 2px solid #0c7489; padding-bottom: 5px;">${jour}</h3>`;
             
             planning[jour].forEach(cours => {
-                let detailInfo = "";
-                if (isAdmin) {
-                    detailInfo = `🏫 Classe : <strong>${cours.classe || 'N/A'}</strong> &nbsp;|&nbsp; 👨‍🏫 Enseignant : <strong>${cours.professeur || 'N/A'}</strong>`;
+                let detailInfo = `🏫 Classe : <strong>${cours.classe}</strong> &nbsp;|&nbsp; 👨‍🏫 Enseignant : <strong>${cours.professeur}</strong>`;
+                if (!isAdmin && !isProf) {
+                    detailInfo = `👨‍🏫 Enseignant : <strong>${cours.professeur}</strong>`;
                 } else if (isProf) {
-                    detailInfo = `🏫 Classe : <strong>${cours.classe || 'N/A'}</strong>`;
-                } else {
-                    detailInfo = `👨‍🏫 Enseignant : <strong>${cours.professeur || 'N/A'}</strong>`;
+                    detailInfo = `🏫 Classe : <strong>${cours.classe}</strong>`;
                 }
 
                 jourHTML += `
                     <div class="animate__animated animate__fadeInLeft" style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #0c5568;">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <strong style="font-size: 1.1em; color: #333;">${cours.matiere || 'Matière'}</strong>
-                            <span style="color: #0c5568; font-weight: bold; background: #e0f2f1; padding: 4px 10px; border-radius: 6px;">${cours.heure || ''}</span>
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;">
+                            <strong style="font-size: 1.1em; color: #333;">${cours.matiere}</strong>
+                            <span style="color: #0c5568; font-weight: bold; background: #e0f2f1; padding: 4px 10px; border-radius: 6px;">${cours.heure}</span>
                         </div>
                         <div style="margin-top: 8px; color: #666; font-size: 0.9em;">
                             ${detailInfo}
