@@ -206,13 +206,12 @@
     // Importe les fonctions de requêtes et de manipulation de documents Firestore
 
     function normNom(s) {
-        // Déclare la fonction qui normalise un nom pour des comparaisons insensibles à la casse et aux accents
+        // Normalise un nom pour des comparaisons insensibles à la casse, aux accents et aux espaces
         return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
-        // Convertit en chaîne, supprime les espaces excessifs, met en minuscules et retire les accents
     }
 
     function normClasse(s) {
-        // Déclare la fonction de normalisation du nom de la classe
+        // Normalisation avancée du nom de la classe
         if (!s) return "";
         let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
@@ -220,7 +219,6 @@
     }
 
     async function lireProfilFusionne(uid) {
-        // Déclare une fonction asynchrone qui fusionne les informations de l'élève depuis deux collections possibles
         try {
             const snapUsers = await getDoc(doc(db, "users", uid));
             const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
@@ -230,139 +228,162 @@
             let classeRaw = u.classe || v.classe || u.maClasse || v.maClasse || "";
             if (Array.isArray(classeRaw)) classeRaw = classeRaw[0] || "";
 
-            const nomRaw = u.nom || v.nom || u.name || v.name || u.monNomBrut || "";
+            const parts = [
+                u.nom, u.postnom, u.prenom, u.name, u.displayName,
+                v.nom, v.postnom, v.prenom, v.name, v.displayName
+            ].filter(x => x && String(x).trim() !== "");
+
+            const fullNom1 = `${u.nom || ''} ${u.postnom || ''} ${u.prenom || ''}`.trim();
+            const fullNom2 = `${v.nom || ''} ${v.postnom || ''} ${v.prenom || ''}`.trim();
+            const nomBrut = fullNom1 || fullNom2 || u.nom || v.nom || u.name || v.name || "Utilisateur";
+
+            const nomsCiblesNorm = new Set();
+            [fullNom1, fullNom2, u.nom, v.nom, u.name, v.name, ...parts].forEach(p => {
+                if (p) nomsCiblesNorm.add(normNom(p));
+            });
 
             return { 
                 ok: snapUsers.exists() || snapUtils.exists(), 
                 maClasse: String(classeRaw).trim(), 
-                monNomBrut: nomRaw || "Utilisateur",
-                monNomNorm: normNom(nomRaw)
+                monNomBrut: nomBrut,
+                monNomNorm: normNom(nomBrut),
+                nomsCiblesNorm: Array.from(nomsCiblesNorm).filter(Boolean)
             };
         } catch (e) {
-            return { ok: false, maClasse: "", monNomBrut: "Utilisateur", monNomNorm: "" };
+            return { ok: false, maClasse: "", monNomBrut: "Utilisateur", monNomNorm: "", nomsCiblesNorm: [] };
         }
     }
 
+    function estNoteDeLEleve(data, targetUid, profil) {
+        if (!data) return false;
+
+        // 1. Détection par identifiant unique (UID)
+        if (targetUid && (data.eleveUid === targetUid || data.uid === targetUid || data.eleveId === targetUid || data.idEleve === targetUid)) {
+            return true;
+        }
+
+        // 2. Détection par correspondance flexible du nom de l'élève
+        const noteNomNorm = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
+        if (!noteNomNorm) return false;
+
+        if (profil.nomsCiblesNorm.includes(noteNomNorm)) return true;
+
+        for (const targetName of profil.nomsCiblesNorm) {
+            if (!targetName) continue;
+            if (targetName.includes(noteNomNorm) || noteNomNorm.includes(targetName)) {
+                return true;
+            }
+            const wordsNote = noteNomNorm.split(" ").filter(w => w.length > 2);
+            const wordsTarget = targetName.split(" ").filter(w => w.length > 2);
+            if (wordsNote.length > 0 && wordsTarget.length > 0) {
+                const matches = wordsNote.filter(w => wordsTarget.includes(w));
+                if (matches.length >= Math.min(wordsNote.length, wordsTarget.length)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
-    // Analyse les paramètres de requête présents dans l'URL de la page
     const targetUid = urlParams.get('uid');
-    // Extrait l'identifiant (UID) de l'élève ciblé depuis l'URL
     const targetClasse = urlParams.get('classe');
-    // Extrait le nom de la classe de l'élève ciblé depuis l'URL
 
     onAuthStateChanged(auth, async (user) => {
-        // Écoute les changements d'état de connexion de l'utilisateur courant
         if (!user) { window.location.href = "login.html"; return; }
-        // Si aucun utilisateur n'est connecté, redirige vers la page de connexion et s'arrête
         const container = document.getElementById('liste-notes');
-        // Récupère l'élément HTML où le bilan annuel sera affiché
 
         try {
-            // Bloc try pour attraper les erreurs Firestore ou réseau
-            // Vérification du rôle admin pour accéder à cette page
             const snapAdmin = await getDoc(doc(db, "users", user.uid));
-            // Récupère le profil de l'utilisateur connecté dans Firestore
             const roleData = snapAdmin.exists() ? snapAdmin.data().role : "";
-            // Extrait la valeur du rôle de l'utilisateur
             const role = String(roleData).toLowerCase();
-            // Convertit le rôle en minuscules pour comparaison
             const isAdmin = role === "admin" || role.includes("direction");
-            // Vérifie si l'utilisateur connecté a les droits d'administration ou de direction
 
             if (!isAdmin) {
-                // Si l'utilisateur connecté n'est pas autorisé
                 container.innerHTML = "<p style='color: white; text-align: center;'>Accès restreint à la direction.</p>";
-                // Affiche un message de restriction d'accès
                 return;
-                // Arrête l'exécution de l'affichage
             }
 
             if (!targetUid && !targetClasse) {
-                // Si les paramètres d'URL sont manquants
                 container.innerHTML = "<p style='color: white; text-align: center;'>Veuillez sélectionner un élève via le panel de gestion.</p>";
-                // Affiche un message d'instruction pour l'administrateur
                 return;
-                // Arrête l'exécution de l'affichage
             }
 
             const profil = await lireProfilFusionne(targetUid);
-            // Récupère le profil consolidé de l'élève ciblé
-            const monNomCible = profil.monNomNorm;
-            // Normalise le nom de l'élève pour fiabiliser la recherche de ses notes
             const maClasse = profil.maClasse || targetClasse || "";
-            // Assigne la classe ciblée à une variable locale
             const maClasseNorm = normClasse(maClasse);
 
-            // 1. Récupérer TOUTES les notes depuis Firestore (sans filtre restrictif pour éviter d'omettre des notes)
+            // 1. Récupérer TOUTES les notes Firestore
             const snapNotes = await getDocs(collection(db, "notes"));
             
             const toutesNotes = [];
-            // Initialise un tableau vide pour stocker les notes spécifiques de l'élève
-            const totauxTousEleves = {}; // Pour calculer le classement de la classe
+            const totauxTousEleves = {};
 
             snapNotes.forEach(snap => {
-                // Parcourt chaque document de note retourné
                 const data = snap.data();
                 if (!data) return;
 
                 const nomEnBase = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
                 const classeEnBaseNorm = normClasse(data.classe);
 
-                // Correspondance de la classe pour le calcul du rang
                 if (nomEnBase && (classeEnBaseNorm === maClasseNorm || maClasseNorm === "")) {
                     totauxTousEleves[nomEnBase] = (totauxTousEleves[nomEnBase] || 0) + (parseFloat(data.note) || 0);
                 }
 
-                // Vérifie si la note appartient à l'élève ciblé (par UID ou par nom normalisé)
-                const isStudentMatch = (targetUid && (data.eleveUid === targetUid || data.uid === targetUid || data.eleveId === targetUid)) ||
-                                       (monNomCible !== "" && nomEnBase === monNomCible);
-
-                if (isStudentMatch) {
+                if (estNoteDeLEleve(data, targetUid, profil)) {
                     toutesNotes.push(data);
                 }
             });
 
-            // Calcul du rang/place au sein de la classe
+            // Calcul du classement dans la classe
             const listeClassement = Object.entries(totauxTousEleves).sort((a, b) => b[1] - a[1]).map(e => e[0]);
-            const maPlace = monNomCible ? (listeClassement.indexOf(monNomCible) + 1) : 0;
+            const maPlace = profil.monNomNorm ? (listeClassement.indexOf(profil.monNomNorm) + 1) : 0;
             const totalEleves = listeClassement.length;
 
-            // 2. Préparer le regroupement des notes par matière
+            // 2. Regroupement des notes par matière
             const bulletinComplet = {};
 
             function fixerPeriode(p) {
-                if (!p) return "";
+                if (!p) return "1ère Période";
                 const s = String(p).trim();
                 const norm = normNom(s);
-                if (norm.includes("1") && norm.includes("per")) return "1ère Période";
-                if (norm.includes("2") && norm.includes("per")) return "2ème Période";
-                if (norm.includes("1") && (norm.includes("ex") || norm.includes("sem"))) return "Examen 1er Semestre";
-                if (norm.includes("3") && norm.includes("per")) return "3ème Période";
-                if (norm.includes("4") && norm.includes("per")) return "4ème Période";
-                if (norm.includes("2") && (norm.includes("ex") || norm.includes("sem"))) return "Examen 2ème Semestre";
-                return s;
+
+                if (norm.includes("ex") && (norm.includes("1") || norm.includes("semestre 1") || norm.includes("1er"))) return "Examen 1er Semestre";
+                if (norm.includes("semestre 1") && norm.includes("exam")) return "Examen 1er Semestre";
+
+                if (norm.includes("ex") && (norm.includes("2") || norm.includes("semestre 2") || norm.includes("2eme") || norm.includes("2ème"))) return "Examen 2ème Semestre";
+                if (norm.includes("semestre 2") && norm.includes("exam")) return "Examen 2ème Semestre";
+
+                if (norm.includes("1") || norm.includes("p1") || norm.includes("premiere")) return "1ère Période";
+                if (norm.includes("2") || norm.includes("p2") || norm.includes("deuxieme")) return "2ème Période";
+                if (norm.includes("3") || norm.includes("p3") || norm.includes("troisieme")) return "3ème Période";
+                if (norm.includes("4") || norm.includes("p4") || norm.includes("quatrieme")) return "4ème Période";
+
+                return "1ère Période";
             }
 
             toutesNotes.forEach(n => {
-                const matNom = String(n.matiere || "Sans nom").trim().toUpperCase();
+                const matRaw = String(n.matiere || "Sans nom").trim().toUpperCase();
+                const matKey = normNom(matRaw);
                 const perClean = fixerPeriode(n.periode);
 
-                if (!bulletinComplet[matNom]) {
-                    bulletinComplet[matNom] = {
+                if (!bulletinComplet[matKey]) {
+                    bulletinComplet[matKey] = {
+                        titre: matRaw,
                         "1ère Période": "-", "2ème Période": "-", "Examen 1er Semestre": "-",
                         "3ème Période": "-", "4ème Période": "-", "Examen 2ème Semestre": "-",
                         max: parseFloat(n.max || 20) 
                     };
                 }
-                if (perClean) {
-                    bulletinComplet[matNom][perClean] = parseFloat(n.note);
+                if (perClean && bulletinComplet[matKey][perClean] !== undefined) {
+                    bulletinComplet[matKey][perClean] = parseFloat(n.note);
                 }
                 if (n.max) {
-                    bulletinComplet[matNom].max = Math.max(bulletinComplet[matNom].max, parseFloat(n.max));
+                    bulletinComplet[matKey].max = Math.max(bulletinComplet[matKey].max, parseFloat(n.max));
                 }
             });
 
-            // 3. Générer les lignes (Rows)
+            // 3. Génération des lignes du bulletin
             let grandTotalObtenu = 0;
             let grandTotalMaxPossible = 0;
             let rowsHtml = "";
@@ -370,7 +391,8 @@
             if (Object.keys(bulletinComplet).length === 0) {
                 rowsHtml = `<tr><td colspan="9" style="text-align:center; padding:30px; color:gray;">Aucune note n'a encore été saisie pour cet élève.</td></tr>`;
             } else {
-                for (const [matiere, scores] of Object.entries(bulletinComplet)) {
+                for (const [matKey, scores] of Object.entries(bulletinComplet)) {
+                    const matiere = scores.titre;
                     const p1 = scores["1ère Période"] === "-" ? 0 : scores["1ère Période"];
                     const p2 = scores["2ème Période"] === "-" ? 0 : scores["2ème Période"];
                     const e1 = scores["Examen 1er Semestre"] === "-" ? 0 : scores["Examen 1er Semestre"];
@@ -383,7 +405,6 @@
                     const hasS2 = scores["3ème Période"] !== "-" || scores["4ème Période"] !== "-" || scores["Examen 2ème Semestre"] !== "-";
                     const totalS2 = hasS2 ? (p3 + p4 + e2) : "-";
                     
-                    // Calcul cumulatif du total obtenu et max
                     ["1ère Période", "2ème Période", "Examen 1er Semestre", "3ème Période", "4ème Période", "Examen 2ème Semestre"].forEach(per => {
                         if (scores[per] !== "-") {
                             grandTotalObtenu += scores[per];
