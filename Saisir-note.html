@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saisie des Notes - Espace Titulaire</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
          body {
             background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%);
@@ -14,26 +15,33 @@
             display: block;
         }
         .carte-accueil {
-            max-width: 600px;
-            width: 90%;
-            margin: 120px auto 40px;
+            max-width: 800px;
+            width: 92%;
+            margin: 100px auto 40px;
         }
         select, input {
             padding: 12px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            border-radius: 6px;
+            border: 1px solid #ccc;
             width: 100%;
             box-sizing: border-box;
+            font-size: 0.95em;
         }
         label {
             font-weight: bold;
-            color: #333;
-            margin-top: 10px;
+            color: #0c5568;
+            margin-top: 8px;
+            margin-bottom: 4px;
             display: block;
         }
         .ligne-flex {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+        }
+        .carte-eleve-item:hover {
+            border-color: #0c7489 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
     </style>
 </head>
@@ -48,51 +56,44 @@
     
     <div id="sidebar" class="barre-laterale">
         <h2>Menu</h2>
-  <a href="accueil.html">Accueil</a>
-    
-    <a href="comunique.html">Communiqués</a>
-    <a href="horaire.html">Horaire</a>
-    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
-
-    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
-
-    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
-    
-    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
-    
-    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
-
-    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
-
-    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
-
+        <a href="accueil.html">Accueil</a>
+        <a href="comunique.html">Communiqués</a>
+        <a href="horaire.html">Horaire</a>
+        <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+        <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+        <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+        <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+        <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+        <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+        <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
         <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
     </div>
 
     <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
     <div class="carte-accueil">
-            <div class="carte-donnees" style="background: white; padding: 25px; border-radius: 15px;">
-                <h2 style="margin-top: 0; color: #0c5568;">Saisie des Notes</h2>
-                
-                <form id="form-saisie-notes" style="display: flex; flex-direction: column; gap: 15px;">
-                    
+        <div class="carte-donnees" style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+            <h2 style="margin-top: 0; color: #0c5568; border-bottom: 2px solid #0c7489; padding-bottom: 10px;">📝 Encodage Rapide des Notes</h2>
+            
+            <!-- SECTION 1 : SELECTION CLASSE, COURS ET PERIODE -->
+            <div style="display: flex; flex-direction: column; gap: 15px; background: #f8fafc; padding: 18px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
                     <div>
-                        <label>Classe :</label>
+                        <label>1. Classe :</label>
                         <select id="select-classe-saisie" required>
                             <option value="">-- Sélectionner la classe --</option>
                         </select>
                     </div>
 
                     <div>
-                        <label>Matière / Cours :</label>
+                        <label>2. Matière / Cours :</label>
                         <select id="select-matiere-saisie" required>
                             <option value="">-- Sélectionner le cours --</option>
                         </select>
                     </div>
 
                     <div>
-                        <label>Période scolaire :</label>
+                        <label>3. Période scolaire :</label>
                         <select id="note-periode" required>
                             <option value="1ère Période">1ère Période</option>
                             <option value="2ème Période">2ème Période</option>
@@ -102,189 +103,317 @@
                             <option value="Examen 2ème Semestre">Examen 2ème Semestre</option>
                         </select>
                     </div>
+                </div>
+            </div>
 
-                    <hr style="border: 0; border-top: 1px solid #eee; margin: 10px 0;">
+            <!-- SECTION 2 : LISTE DES ELEVES DE LA CLASSE -->
+            <div style="margin-top: 25px;">
+                <h3 style="color: #0c5568; margin-bottom: 5px;">👥 Sélectionner l'élève à noter :</h3>
+                <p style="color: #666; font-size: 0.9em; margin-top: 0;">Cliquez sur le nom d'un élève dans la liste ci-dessous pour lui attribuer sa cote.</p>
+                
+                <div id="liste-eleves-container">
+                    <p style="text-align:center; padding:20px; color:#888; background: #f1f5f9; border-radius: 8px;">👈 Veuillez sélectionner une classe pour charger la liste des élèves.</p>
+                </div>
+            </div>
 
-                    <div>
-                        <label>Nom de l'élève :</label>
-                        <input type="text" id="nom-eleve" placeholder="Ex: Mpiana Kasongo" required>
-                    </div>
+            <!-- SECTION 3 : FORMULAIRE D'ENCODAGE DE LA NOTE DE L'ELEVE -->
+            <div id="panel-encodage" style="display: none; margin-top: 25px; background: #e0f2f1; padding: 20px; border-radius: 12px; border-left: 6px solid #0c7489;" class="animate__animated animate__fadeIn">
+                <h3 style="margin-top: 0; color: #0c5568; display: flex; align-items: center; gap: 8px;">
+                    <span>🎓 Encodage pour :</span> 
+                    <span id="nom-eleve-selectionne" style="color: #0d3b4f; font-weight: bold; text-decoration: underline;">...</span>
+                </h3>
+
+                <form id="form-saisie-notes" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <input type="hidden" id="input-nom-eleve-hidden">
 
                     <div class="ligne-flex">
                         <div style="flex: 2;">
                             <label>Note obtenue :</label>
-                            <input type="number" id="note-valeur" min="0" step="0.5" placeholder="Ex: 15" required>
+                            <input type="number" id="note-valeur" min="0" step="0.5" placeholder="Ex: 15" required style="font-size: 1.1em; font-weight: bold;">
                         </div>
                         <div style="flex: 1;">
-                            <label>Sur (Total) :</label>
-                            <input type="number" id="note-max" min="1" placeholder="Ex: 50" required>
+                            <label>Sur (Total Max) :</label>
+                            <input type="number" id="note-max" min="1" placeholder="Ex: 20" required style="font-size: 1.1em;">
                         </div>
                     </div>
-                    
-                    <button type="submit" style="background: #0d3b4f; color: white; border: none; padding: 15px; cursor: pointer; border-radius: 8px; font-weight: bold; margin-top: 10px; font-size: 16px;">
+
+                    <button type="submit" style="background: #0d3b4f; color: white; border: none; padding: 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 1.05em; margin-top: 5px; transition: background 0.3s;">
                         💾 Enregistrer la note
                     </button>
                 </form>
             </div>
+
         </div>
-    </div><script type="module">
+    </div>
+
+    <script type="module">
         import { db, auth } from "./auth.js";
-        // Importe les instances de la base de données et de l'authentification Firebase depuis auth.js
-        import { collection, addDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        // Importe les fonctions de manipulation et de lecture de documents de Firestore
+        import { collection, addDoc, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        // Importe l'écouteur de changement d'état d'authentification de Firebase
 
-        let classeDuProf = "";
-        // Déclare une variable globale vide pour stocker la classe courante de l'enseignant connecté
-
-        // Fonction technique pour harmoniser les noms (crucial pour ton exposé)
-        function normNom(s) {
-            // Déclare la fonction qui normalise un nom pour des comparaisons insensibles à la casse et aux accents
-            return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
-            // Convertit en chaîne, supprime les espaces excessifs, met en minuscules et retire les accents
+        function normClasse(s) {
+            if (!s) return "";
+            let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
+            return str.replace(/[^a-z0-9]/g, "");
         }
 
-        // --- CHARGEMENT DES DONNÉES DU PROF ---
+        function normNom(s) {
+            return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+        }
+
         onAuthStateChanged(auth, async (user) => {
-            // Écoute les changements de connexion de l'utilisateur
-            if (user) {
-                // Si l'utilisateur est connecté
-                // On cherche dans les deux collections possibles
-                let snap = await getDoc(doc(db, "users", user.uid));
-                // Récupère les données utilisateur dans la collection principale "users"
-                if (!snap.exists()) {
-                    // Si le profil n'existe pas dans la collection principale
-                    snap = await getDoc(doc(db, "utilisateurs", user.uid));
-                    // Récupère les données utilisateur dans l'ancienne collection "utilisateurs"
-                }
-
-                if (snap.exists()) {
-                    // Si le document profil existe dans l'une des deux collections
-                    const userData = snap.data();
-                    // Extrait les champs de données du document profil
-                    const classeSelect = document.getElementById('select-classe-saisie');
-                    // Récupère l'élément HTML correspondant au menu déroulant des classes
-                    const matiereSelect = document.getElementById('select-matiere-saisie');
-                    // Récupère l'élément HTML correspondant au menu déroulant des matières
-
-                    // On vide les sélections avant de remplir (évite les doublons)
-                    classeSelect.innerHTML = '<option value="">-- Sélectionner la classe --</option>';
-                    // Réinitialise le sélecteur de classe avec l'option vide par défaut
-                    matiereSelect.innerHTML = '<option value="">-- Sélectionner le cours --</option>';
-                    // Réinitialise le sélecteur de cours avec l'option vide par défaut
-
-                    if (Array.isArray(userData.classe)) {
-                        // Si le champ classe du profil est un tableau (plusieurs classes)
-                        userData.classe.forEach(cl => {
-                            // Parcourt chaque classe pour l'ajouter au menu déroulant
-                            classeSelect.innerHTML += `<option value="${cl}">${cl}</option>`;
-                            // Concatène une option HTML dans le menu de sélection des classes
-                        });
-                    }
-                    if (Array.isArray(userData.matieres)) {
-                        // Si le champ matieres du profil de l'enseignant est un tableau
-                        userData.matieres.forEach(mat => {
-                            // Parcourt chaque matière enseignée par le professeur
-                            const nomNettoye = mat.trim(); // Enlever les espaces inutiles
-                            // Supprime les espaces inutiles en début et fin de chaîne
-                            if(nomNettoye) matiereSelect.innerHTML += `<option value="${nomNettoye}">${nomNettoye}</option>`;
-                            // Si le nom nettoyé n'est pas vide, l'ajoute comme option dans le menu des matières
-                        });
-                    }
-                }
-            } else {
-                // Si l'utilisateur n'est pas connecté
+            if (!user) {
                 window.location.href = "login.html";
-                // Redirige l'utilisateur vers la page de connexion
-            }
-        });
-
-        // --- ENREGISTREMENT ---
-        const form = document.getElementById('form-saisie-notes');
-        // Récupère l'élément HTML du formulaire de saisie de notes
-        form.addEventListener('submit', async (e) => {
-            // Écoute la soumission du formulaire pour enregistrer la note (async pour await)
-            e.preventDefault();
-            // Empêche le rechargement de la page
-            const noteObtenue = parseFloat(document.getElementById('note-valeur').value);
-            // Récupère la note obtenue saisie et la convertit en nombre à virgule
-            const noteMaximale = parseFloat(document.getElementById('note-max').value);
-            // Récupère le maximum possible de la note et le convertit en nombre à virgule
-
-            if (noteObtenue > noteMaximale) {
-                // Si la note attribuée est supérieure à la note maximale autorisée
-                alert("❌ La note ne peut pas être supérieure au total.");
-                // Affiche un message d'erreur d'avertissement
                 return;
-                // Arrête l'exécution de l'enregistrement de la note
             }
 
             try {
-                // Bloc try pour intercepter les erreurs d'écriture de la note dans Firestore
-                await addDoc(collection(db, "notes"), {
-                    // Enregistre un nouveau document dans la collection "notes" de Firestore
-                    classe: document.getElementById('select-classe-saisie').value,
-                    // Enregistre la classe sélectionnée
-                    matiere: document.getElementById('select-matiere-saisie').value,
-                    // Enregistre le cours sélectionné
-                    periode: document.getElementById('note-periode').value,
-                    // Enregistre la période scolaire choisie
-                    nomEleve: document.getElementById('nom-eleve').value,
-                    // Enregistre le nom brut de l'élève saisi
-                    nomEleveNorm: normNom(document.getElementById('nom-eleve').value),
-                    // Enregistre la version normalisée du nom pour simplifier les requêtes
-                    note: noteObtenue,
-                    // Enregistre la note obtenue par l'élève
-                    max: noteMaximale,
-                    // Enregistre le barème maximum de l'évaluation
-                    dateSaisie: new Date(),
-                    // Enregistre la date et l'heure courante de saisie de la note
-                    profId: auth.currentUser.uid
-                    // Enregistre l'UID de l'enseignant qui saisit la note
+                let snap = await getDoc(doc(db, "users", user.uid));
+                if (!snap.exists()) {
+                    snap = await getDoc(doc(db, "utilisateurs", user.uid));
+                }
+
+                if (snap.exists()) {
+                    const userData = snap.data();
+                    const classeSelect = document.getElementById('select-classe-saisie');
+                    const matiereSelect = document.getElementById('select-matiere-saisie');
+
+                    classeSelect.innerHTML = '<option value="">-- Sélectionner la classe --</option>';
+                    matiereSelect.innerHTML = '<option value="">-- Sélectionner le cours --</option>';
+
+                    if (Array.isArray(userData.classe)) {
+                        userData.classe.forEach(cl => {
+                            if (cl) classeSelect.innerHTML += `<option value="${cl}">${cl}</option>`;
+                        });
+                    } else if (userData.classe) {
+                        classeSelect.innerHTML += `<option value="${userData.classe}">${userData.classe}</option>`;
+                    }
+
+                    if (Array.isArray(userData.matieres)) {
+                        userData.matieres.forEach(mat => {
+                            const nomNettoye = mat.trim();
+                            if (nomNettoye) matiereSelect.innerHTML += `<option value="${nomNettoye}">${nomNettoye}</option>`;
+                        });
+                    } else if (userData.matiere) {
+                        matiereSelect.innerHTML += `<option value="${userData.matiere}">${userData.matiere}</option>`;
+                    }
+                }
+            } catch (err) {
+                console.error("Erreur profil prof:", err);
+            }
+        });
+
+        // --- CHARGER LA LISTE DES ELEVES DE LA CLASSE ET LEURS NOTES ---
+        async function chargerElevesEtNotes() {
+            const selectedClasse = document.getElementById('select-classe-saisie').value;
+            const selectedMatiere = document.getElementById('select-matiere-saisie').value;
+            const selectedPeriode = document.getElementById('note-periode').value;
+            const containerEleves = document.getElementById('liste-eleves-container');
+            const panelEncodage = document.getElementById('panel-encodage');
+
+            if (!selectedClasse) {
+                containerEleves.innerHTML = "<p style='text-align:center; padding:20px; color:#888; background: #f1f5f9; border-radius: 8px;'>👈 Veuillez sélectionner une classe pour charger la liste des élèves.</p>";
+                panelEncodage.style.display = "none";
+                return;
+            }
+
+            containerEleves.innerHTML = "<p style='text-align:center; padding:20px; color:#0c7489;'>⏳ Chargement des élèves de la classe...</p>";
+
+            try {
+                // 1. Récupérer tous les élèves
+                const snapUsers = await getDocs(collection(db, "users"));
+                const snapUtils = await getDocs(collection(db, "utilisateurs"));
+                
+                const elevesMap = new Map();
+                const classNorm = normClasse(selectedClasse);
+
+                const addIfEleve = (docSnap) => {
+                    const data = docSnap.data();
+                    if (!data) return;
+                    const role = String(data.role || "").toLowerCase();
+                    if (role === "eleve" || role.includes("eleve") || role.includes("student")) {
+                        let userClasses = [];
+                        if (Array.isArray(data.classe)) {
+                            userClasses = data.classe.map(c => normClasse(c));
+                        } else if (data.classe) {
+                            userClasses = [normClasse(data.classe)];
+                        }
+
+                        if (userClasses.includes(classNorm)) {
+                            const nomClean = (data.nom || "").trim();
+                            if (nomClean && !elevesMap.has(normNom(nomClean))) {
+                                elevesMap.set(normNom(nomClean), { nom: nomClean, uid: docSnap.id });
+                            }
+                        }
+                    }
+                };
+
+                snapUsers.forEach(addIfEleve);
+                snapUtils.forEach(addIfEleve);
+
+                const elevesList = Array.from(elevesMap.values()).sort((a, b) => a.nom.localeCompare(b.nom));
+
+                if (elevesList.length === 0) {
+                    containerEleves.innerHTML = `<p style='text-align:center; padding:20px; color:#e11d48; background:#fff1f2; border-radius:8px;'>⚠️ Aucun élève trouvé inscrit dans la classe "${selectedClasse}".</p>`;
+                    panelEncodage.style.display = "none";
+                    return;
+                }
+
+                // 2. Récupérer les notes déjà saisies pour cette classe / matière / période
+                const notesMap = new Map();
+                if (selectedMatiere && selectedPeriode) {
+                    const snapNotes = await getDocs(collection(db, "notes"));
+                    snapNotes.forEach(docSnap => {
+                        const n = docSnap.data();
+                        if (n && normClasse(n.classe) === classNorm && normNom(n.matiere) === normNom(selectedMatiere) && n.periode === selectedPeriode) {
+                            const nameKey = n.nomEleveNorm || normNom(n.nomEleve);
+                            notesMap.set(nameKey, { note: n.note, max: n.max });
+                        }
+                    });
+                }
+
+                // 3. Rendu des cartes élèves
+                let htmlCards = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 12px;">`;
+
+                elevesList.forEach((eleve, index) => {
+                    const nameKey = normNom(eleve.nom);
+                    const existingNote = notesMap.get(nameKey);
+                    
+                    let badgeHTML = `<span id="badge-eleve-${index}" style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">📝 Cliquer</span>`;
+                    if (existingNote) {
+                        badgeHTML = `<span id="badge-eleve-${index}" style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">✅ ${existingNote.note} / ${existingNote.max}</span>`;
+                    }
+
+                    htmlCards += `
+                        <div class="carte-eleve-item" id="card-eleve-${index}" onclick="selectionnerEleve('${eleve.nom.replace(/'/g, "\\'")}', ${index})" style="background: white; border: 2px solid #cbd5e1; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                            <div style="font-weight: bold; color: #0c5568; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
+                                <span>🎓</span> <span>${eleve.nom}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <span style="font-size: 0.8em; color: #64748b;">Encoder note</span>
+                                ${badgeHTML}
+                            </div>
+                        </div>
+                    `;
                 });
 
-                alert("✅ Note enregistrée !");
-                // Affiche un message de succès
-                document.getElementById('nom-eleve').value = "";
-                // Efface le champ du nom de l'élève pour le préparer à une nouvelle saisie
+                htmlCards += `</div>`;
+                containerEleves.innerHTML = htmlCards;
+
+                window.listeElevesActuels = elevesList;
+
+            } catch (err) {
+                console.error("Erreur chargement élèves:", err);
+                containerEleves.innerHTML = "<p style='color:red; text-align:center;'>Erreur lors du chargement de la liste des élèves.</p>";
+            }
+        }
+
+        // Écouteurs de changement pour rafraîchir la liste
+        document.getElementById('select-classe-saisie').addEventListener('change', chargerElevesEtNotes);
+        document.getElementById('select-matiere-saisie').addEventListener('change', chargerElevesEtNotes);
+        document.getElementById('note-periode').addEventListener('change', chargerElevesEtNotes);
+
+        // --- SELECTION D'UN ELEVE DANS LA LISTE ---
+        window.selectionnerEleve = (nomEleve, index) => {
+            window.indexEleveActuel = index;
+            document.getElementById('nom-eleve-selectionne').innerText = nomEleve;
+            document.getElementById('input-nom-eleve-hidden').value = nomEleve;
+
+            // Mettre en surbrillance la carte sélectionnée
+            document.querySelectorAll('.carte-eleve-item').forEach(c => {
+                c.style.border = "2px solid #cbd5e1";
+                c.style.background = "white";
+            });
+            const activeCard = document.getElementById(`card-eleve-${index}`);
+            if (activeCard) {
+                activeCard.style.border = "2px solid #0c7489";
+                activeCard.style.background = "#e0f2f1";
+            }
+
+            const panel = document.getElementById('panel-encodage');
+            panel.style.display = "block";
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            const inputNote = document.getElementById('note-valeur');
+            inputNote.focus();
+        };
+
+        // --- ENREGISTREMENT DE LA NOTE ---
+        const form = document.getElementById('form-saisie-notes');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nomEleve = document.getElementById('input-nom-eleve-hidden').value;
+            const classeVal = document.getElementById('select-classe-saisie').value;
+            const matiereVal = document.getElementById('select-matiere-saisie').value;
+            const periodeVal = document.getElementById('note-periode').value;
+            const noteObtenue = parseFloat(document.getElementById('note-valeur').value);
+            const noteMaximale = parseFloat(document.getElementById('note-max').value);
+
+            if (!nomEleve) {
+                alert("❌ Veuillez d'abord cliquer sur le nom d'un élève dans la liste.");
+                return;
+            }
+            if (noteObtenue > noteMaximale) {
+                alert("❌ La note ne peut pas être supérieure au total max.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "notes"), {
+                    classe: classeVal,
+                    matiere: matiereVal,
+                    periode: periodeVal,
+                    nomEleve: nomEleve,
+                    nomEleveNorm: normNom(nomEleve),
+                    note: noteObtenue,
+                    max: noteMaximale,
+                    dateSaisie: new Date(),
+                    profId: auth.currentUser ? auth.currentUser.uid : ""
+                });
+
+                // Mettre à jour le badge sur la carte de l'élève
+                if (typeof window.indexEleveActuel === 'number') {
+                    const badge = document.getElementById(`badge-eleve-${window.indexEleveActuel}`);
+                    if (badge) {
+                        badge.style.background = "#dcfce7";
+                        badge.style.color = "#15803d";
+                        badge.innerHTML = `✅ ${noteObtenue} / ${noteMaximale}`;
+                    }
+                }
+
+                // Réinitialiser le champ de note pour l'élève suivant
                 document.getElementById('note-valeur').value = "";
-                // Efface le champ contenant la note obtenue pour la saisie suivante
-                document.getElementById('nom-eleve').focus();
-                // Redirige le focus du curseur sur le champ du nom de l'élève
+
+                // Passer automatiquement à l'élève suivant s'il existe
+                const nextIndex = window.indexEleveActuel + 1;
+                if (window.listeElevesActuels && window.listeElevesActuels[nextIndex]) {
+                    const nextEleve = window.listeElevesActuels[nextIndex];
+                    selectionnerEleve(nextEleve.nom, nextIndex);
+                } else {
+                    alert(`✅ Note enregistrée pour ${nomEleve} ! Tous les élèves de la liste ont été traités.`);
+                }
+
             } catch (error) {
-                // Si l'enregistrement Firestore échoue
-                alert("Erreur lors de l'enregistrement.");
-                // Affiche un message d'erreur générique
+                console.error("Erreur enregistrement note:", error);
+                alert("Erreur lors de l'enregistrement de la note.");
             }
         });
 
         // --- SÉCURITÉ : ANTI-INSPECTION ---
-        // Bloquer le clic droit
         document.addEventListener('contextmenu', (e) => e.preventDefault());
-        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
-
-        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
         document.addEventListener('keydown', (e) => {
-            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
             if (
                 e.key === 'F12' || 
-                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
                 (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
                 (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
                 (e.ctrlKey && e.key === 'u') ||
-                // Vérifie Ctrl+U (affiche le code source)
                 (e.ctrlKey && e.key === 's')
-                // Vérifie Ctrl+S (sauvegarde de la page)
             ) {
                 e.preventDefault();
-                // Annule l'action par défaut du raccourci clavier détecté
                 alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-                // Affiche un message expliquant pourquoi l'action est bloquée
                 return false;
-                // Retourne false pour s'assurer que l'événement est complètement stoppé
             }
         });
     </script>
