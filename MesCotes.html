@@ -356,55 +356,40 @@
 
     async function verifierEvaluations(uid, maClasse) {
         try {
-            // 1. Récupérer tous les enseignants
-            const snapUsers = await getDocs(collection(db, "users"));
-            const snapUtils = await getDocs(collection(db, "utilisateurs"));
-
-            const profsMap = new Map();
-            const addIfProf = (docSnap) => {
-                const data = docSnap.data();
-                if (!data) return;
-                const r = String(data.role || "").toLowerCase();
-                if (r === "enseignant" || r.includes("prof") || r.includes("teacher")) {
-                    const nomClean = (data.nom || "").trim();
-                    if (nomClean && !profsMap.has(normNom(nomClean))) {
-                        profsMap.set(normNom(nomClean), docSnap.id);
-                    }
-                }
-            };
-
-            snapUsers.forEach(addIfProf);
-            snapUtils.forEach(addIfProf);
-
-            const totalProfs = profsMap.size;
-            if (totalProfs === 0) return true; // Aucun enseignant -> accès libre
-
-            // 2. Récupérer les évaluations soumises par cet élève
+            // 1. Vérifier si cet élève a soumis au moins une évaluation dans evaluations_profs
             const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", uid));
             const snapEvals = await getDocs(qEvals);
 
-            const evaluedIds = new Set();
-            const evaluedNorms = new Set();
+            if (!snapEvals.empty && snapEvals.size > 0) {
+                return true; // Accès débloqué !
+            }
 
-            snapEvals.forEach(d => {
+            // 2. Vérification de secours sans filtre Firestore en cas de légère variation de type d'ID
+            const snapAllEvals = await getDocs(collection(db, "evaluations_profs"));
+            let aEvalue = false;
+            snapAllEvals.forEach(d => {
                 const data = d.data();
-                if (data.profId) evaluedIds.add(data.profId);
-                if (data.profNom) evaluedNorms.add(normNom(data.profNom));
-                if (data.profNomNorm) evaluedNorms.add(data.profNomNorm);
-            });
-
-            // 3. Vérifier la couverture des évaluations
-            let countEvalues = 0;
-            profsMap.forEach((profId, profNorm) => {
-                if (evaluedIds.has(profId) || evaluedNorms.has(profNorm)) {
-                    countEvalues++;
+                if (data && String(data.eleveId) === String(uid)) {
+                    aEvalue = true;
                 }
             });
 
-            return countEvalues >= totalProfs;
+            if (aEvalue) return true; // Accès débloqué !
+
+            // 3. Si aucun enseignant n'est inscrit dans la base de données, débloquer également
+            const snapUsers = await getDocs(collection(db, "users"));
+            let nbProfs = 0;
+            snapUsers.forEach(d => {
+                const r = String(d.data()?.role || "").toLowerCase();
+                if (r === "enseignant" || r.includes("prof")) nbProfs++;
+            });
+
+            if (nbProfs === 0) return true; // Aucun prof à évaluer -> accès libre
+
+            return false; // L'élève n'a pas encore évalué
         } catch (e) {
             console.error("Erreur verifierEvaluations:", e);
-            return true;
+            return true; // En cas d'erreur de connexion, débloquer l'accès pour éviter de coincer l'élève
         }
     }
 
