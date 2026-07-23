@@ -211,25 +211,36 @@
         // Convertit en chaîne, supprime les espaces excessifs, met en minuscules et retire les accents
     }
 
+    function normClasse(s) {
+        // Déclare la fonction de normalisation du nom de la classe
+        if (!s) return "";
+        let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
+        return str.replace(/[^a-z0-9]/g, "");
+    }
+
     async function lireProfilFusionne(uid) {
         // Déclare une fonction asynchrone qui fusionne les informations de l'élève depuis deux collections possibles
-        const snapUsers = await getDoc(doc(db, "users", uid));
-        // Tente de récupérer le document de l'utilisateur dans "users"
-        const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
-        // Tente de récupérer le document de l'utilisateur dans "utilisateurs"
-        const u = snapUsers.exists() ? snapUsers.data() : {};
-        // Extrait les données si le document principal existe, sinon initialise un objet vide
-        const v = snapUtils.exists() ? snapUtils.data() : {};
-        // Extrait les données si l'ancien document existe, sinon initialise un objet vide
-        return { 
-            // Retourne un objet profil consolidé
-            ok: snapUsers.exists() || snapUtils.exists(), 
-            // Indique si le profil a été trouvé dans l'une ou l'autre collection
-            maClasse: u.classe || v.classe || "Non définie", 
-            // Prend la classe définie dans le profil (ou "Non définie")
-            monNomBrut: u.nom || v.nom || "Utilisateur"
-            // Prend le nom brut de l'élève pour affichage
-        };
+        try {
+            const snapUsers = await getDoc(doc(db, "users", uid));
+            const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
+            const u = snapUsers.exists() ? snapUsers.data() : {};
+            const v = snapUtils.exists() ? snapUtils.data() : {};
+
+            let classeRaw = u.classe || v.classe || u.maClasse || v.maClasse || "";
+            if (Array.isArray(classeRaw)) classeRaw = classeRaw[0] || "";
+
+            const nomRaw = u.nom || v.nom || u.name || v.name || u.monNomBrut || "";
+
+            return { 
+                ok: snapUsers.exists() || snapUtils.exists(), 
+                maClasse: String(classeRaw).trim(), 
+                monNomBrut: nomRaw || "Utilisateur",
+                monNomNorm: normNom(nomRaw)
+            };
+        } catch (e) {
+            return { ok: false, maClasse: "", monNomBrut: "Utilisateur", monNomNorm: "" };
+        }
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -266,8 +277,8 @@
                 // Arrête l'exécution de l'affichage
             }
 
-            if (!targetUid || !targetClasse) {
-                // Si les paramètres d'URL (élève ciblé ou classe) sont manquants
+            if (!targetUid && !targetClasse) {
+                // Si les paramètres d'URL sont manquants
                 container.innerHTML = "<p style='color: white; text-align: center;'>Veuillez sélectionner un élève via le panel de gestion.</p>";
                 // Affiche un message d'instruction pour l'administrateur
                 return;
@@ -276,109 +287,107 @@
 
             const profil = await lireProfilFusionne(targetUid);
             // Récupère le profil consolidé de l'élève ciblé
-            const monNomCible = normNom(profil.monNomBrut);
+            const monNomCible = profil.monNomNorm;
             // Normalise le nom de l'élève pour fiabiliser la recherche de ses notes
-            const maClasse = targetClasse;
+            const maClasse = profil.maClasse || targetClasse || "";
             // Assigne la classe ciblée à une variable locale
+            const maClasseNorm = normClasse(maClasse);
 
-            // 1. Récupérer les notes
-            const q = query(collection(db, "notes"), where("classe", "==", maClasse));
-            // Prépare une requête Firestore pour récupérer toutes les notes de la classe ciblée
-            const querySnapshot = await getDocs(q);
-            // Exécute la requête et récupère les documents de notes
+            // 1. Récupérer TOUTES les notes depuis Firestore (sans filtre restrictif pour éviter d'omettre des notes)
+            const snapNotes = await getDocs(collection(db, "notes"));
             
             const toutesNotes = [];
             // Initialise un tableau vide pour stocker les notes spécifiques de l'élève
             const totauxTousEleves = {}; // Pour calculer le classement de la classe
-            // Initialise un objet pour cumuler les points de chaque élève afin d'établir le classement
 
-            querySnapshot.forEach(snap => {
-                // Parcourt chaque document de note retourné pour la classe
+            snapNotes.forEach(snap => {
+                // Parcourt chaque document de note retourné
                 const data = snap.data();
-                // Extrait les champs du document de note
+                if (!data) return;
+
                 const nomEnBase = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
-                // Normalise le nom de l'élève associé à cette note
-                
-                // On cumule les points de chaque élève de la classe pour établir le rang
-                if (nomEnBase) {
-                    // Si un nom d'élève valide est présent dans l'enregistrement
+                const classeEnBaseNorm = normClasse(data.classe);
+
+                // Correspondance de la classe pour le calcul du rang
+                if (nomEnBase && (classeEnBaseNorm === maClasseNorm || maClasseNorm === "")) {
                     totauxTousEleves[nomEnBase] = (totauxTousEleves[nomEnBase] || 0) + (parseFloat(data.note) || 0);
-                    // Additionne la note courante au total cumulé de cet élève
                 }
 
-                if (nomEnBase === monNomCible && monNomCible !== "") {
-                    // Si la note appartient bien à l'élève ciblé pour le bulletin
+                // Vérifie si la note appartient à l'élève ciblé (par UID ou par nom normalisé)
+                const isStudentMatch = (targetUid && (data.eleveUid === targetUid || data.uid === targetUid || data.eleveId === targetUid)) ||
+                                       (monNomCible !== "" && nomEnBase === monNomCible);
+
+                if (isStudentMatch) {
                     toutesNotes.push(data);
-                    // Ajoute la note de l'élève ciblé à son tableau personnel de notes
                 }
             });
 
             // Calcul du rang/place au sein de la classe
             const listeClassement = Object.entries(totauxTousEleves).sort((a, b) => b[1] - a[1]).map(e => e[0]);
-            // Trie les élèves selon le cumul de leurs points de manière décroissante et en extrait les noms normalisés
-            const maPlace = listeClassement.indexOf(monNomCible) + 1;
-            // Trouve l'index de l'élève ciblé et y ajoute 1 pour obtenir sa place (1-indexé)
+            const maPlace = monNomCible ? (listeClassement.indexOf(monNomCible) + 1) : 0;
             const totalEleves = listeClassement.length;
-            // Calcule le nombre total d'élèves de la classe ayant des notes enregistrées
 
-            // 2. Préparer le regroupement (Même si vide)
+            // 2. Préparer le regroupement des notes par matière
             const bulletinComplet = {};
-            // Initialise l'objet bulletin regroupant les notes par matière
-            
-            // On peut ajouter ici des matières par défaut si on veut que le tableau ait des lignes d'office
-            // Sinon, on remplit avec les notes trouvées
+
+            function fixerPeriode(p) {
+                if (!p) return "";
+                const s = String(p).trim();
+                const norm = normNom(s);
+                if (norm.includes("1") && norm.includes("per")) return "1ère Période";
+                if (norm.includes("2") && norm.includes("per")) return "2ème Période";
+                if (norm.includes("1") && (norm.includes("ex") || norm.includes("sem"))) return "Examen 1er Semestre";
+                if (norm.includes("3") && norm.includes("per")) return "3ème Période";
+                if (norm.includes("4") && norm.includes("per")) return "4ème Période";
+                if (norm.includes("2") && (norm.includes("ex") || norm.includes("sem"))) return "Examen 2ème Semestre";
+                return s;
+            }
+
             toutesNotes.forEach(n => {
-                // Parcourt chaque note de l'élève ciblé
-                const matNom = n.matiere || "Sans nom";
-                // Récupère la matière associée (ou "Sans nom" par défaut)
+                const matNom = String(n.matiere || "Sans nom").trim().toUpperCase();
+                const perClean = fixerPeriode(n.periode);
+
                 if (!bulletinComplet[matNom]) {
-                    // Si la matière n'est pas encore enregistrée dans le bulletin
                     bulletinComplet[matNom] = {
-                        // Initialise les notes pour chaque période à vide (-) et associe la note max
                         "1ère Période": "-", "2ème Période": "-", "Examen 1er Semestre": "-",
                         "3ème Période": "-", "4ème Période": "-", "Examen 2ème Semestre": "-",
                         max: parseFloat(n.max || 20) 
                     };
                 }
-                bulletinComplet[matNom][n.periode] = parseFloat(n.note);
-                // Affecte la note obtenue à la période scolaire correspondante
+                if (perClean) {
+                    bulletinComplet[matNom][perClean] = parseFloat(n.note);
+                }
+                if (n.max) {
+                    bulletinComplet[matNom].max = Math.max(bulletinComplet[matNom].max, parseFloat(n.max));
+                }
             });
 
             // 3. Générer les lignes (Rows)
             let grandTotalObtenu = 0;
-            // Initialise le grand total de points obtenus par l'élève
             let grandTotalMaxPossible = 0;
-            // Initialise le grand total des maximums possibles de toutes ses notes
             let rowsHtml = "";
-            // Initialise la chaîne HTML destinée à contenir les lignes du tableau
 
             if (Object.keys(bulletinComplet).length === 0) {
-                // Si aucune note n'a été saisie pour cet élève
-                rowsHtml = `<tr><td colspan="9" style="text-align:center; padding:30px; color:gray;">Aucune note n'a encore été saisie pour votre profil.</td></tr>`;
-                // Génère une ligne unique de tableau affichant un message de vacuité
+                rowsHtml = `<tr><td colspan="9" style="text-align:center; padding:30px; color:gray;">Aucune note n'a encore été saisie pour cet élève.</td></tr>`;
             } else {
-                // Sinon, si des notes ont été trouvées
                 for (const [matiere, scores] of Object.entries(bulletinComplet)) {
-                    // Parcourt chaque matière présente dans le bulletin de l'élève
                     const p1 = scores["1ère Période"] === "-" ? 0 : scores["1ère Période"];
-                    // Récupère les points de la P1 ou 0
                     const p2 = scores["2ème Période"] === "-" ? 0 : scores["2ème Période"];
-                    // Récupère les points de la P2 ou 0
                     const e1 = scores["Examen 1er Semestre"] === "-" ? 0 : scores["Examen 1er Semestre"];
-                    // Récupère les points de l'Examen 1er Semestre ou 0
+                    const hasS1 = scores["1ère Période"] !== "-" || scores["2ème Période"] !== "-" || scores["Examen 1er Semestre"] !== "-";
+                    const totalS1 = hasS1 ? (p1 + p2 + e1) : "-";
+
+                    const p3 = scores["3ème Période"] === "-" ? 0 : scores["3ème Période"];
+                    const p4 = scores["4ème Période"] === "-" ? 0 : scores["4ème Période"];
+                    const e2 = scores["Examen 2ème Semestre"] === "-" ? 0 : scores["Examen 2ème Semestre"];
+                    const hasS2 = scores["3ème Période"] !== "-" || scores["4ème Période"] !== "-" || scores["Examen 2ème Semestre"] !== "-";
+                    const totalS2 = hasS2 ? (p3 + p4 + e2) : "-";
                     
-                    const totalS1 = p1 + p2 + e1;
-                    // Calcule le total du premier semestre pour cette matière
-                    
-                    // Calcul cumulatif
+                    // Calcul cumulatif du total obtenu et max
                     ["1ère Période", "2ème Période", "Examen 1er Semestre", "3ème Période", "4ème Période", "Examen 2ème Semestre"].forEach(per => {
-                        // Parcourt toutes les périodes scolaires possibles
                         if (scores[per] !== "-") {
-                            // Si l'élève possède une note valide pour cette période
                             grandTotalObtenu += scores[per];
-                            // Additionne la note obtenue au grand total général
                             grandTotalMaxPossible += scores.max;
-                            // Additionne le maximum de la matière au grand total maximum possible
                         }
                     });
 
@@ -388,9 +397,8 @@
                             <td>${scores["1ère Période"]}</td><td>${scores["2ème Période"]}</td><td>${scores["Examen 1er Semestre"]}</td>
                             <td class="bold">${totalS1}</td>
                             <td>${scores["3ème Période"]}</td><td>${scores["4ème Période"]}</td><td>${scores["Examen 2ème Semestre"]}</td>
-                            <td class="bold">-</td>
+                            <td class="bold">${totalS2}</td>
                         </tr>`;
-                    // Concatène une ligne HTML pour le tableau avec les notes des semestres
                 }
             }
 
