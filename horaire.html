@@ -209,8 +209,14 @@
             container.innerHTML = "";
 
             if (allHoraires.length === 0) {
-                displayLabel.innerText = "Emploi du temps";
-                container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun horaire enregistré dans la base de données.</p>";
+                displayLabel.innerText = "Emploi du temps (Base vide)";
+                container.innerHTML = `
+                    <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; color: #333; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <h3 style="color: #ef4444; margin-bottom: 10px;">⚠️ Aucun cours dans la base de données</h3>
+                        <p style="color: #666; margin-bottom: 15px;">La collection <strong>"horaires"</strong> de Firestore ne contient aucun document pour le moment.</p>
+                        <p style="font-size: 0.9em; color: #888;">Pour ajouter un horaire, connectez-vous avec un compte Direction/Admin et rendez-vous dans le menu <strong>"Supervision Direction"</strong> -> section <strong>"Ajouter un créneau d'horaire"</strong>.</p>
+                    </div>
+                `;
                 return;
             }
 
@@ -252,16 +258,30 @@
                 });
             }
 
+            // Banner d'information
+            let noticeHTML = "";
+            if (!isAdmin && mesCours.length === 0) {
+                noticeHTML = `
+                    <div style="background: #fff3cd; color: #856404; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9em; border-left: 4px solid #ffeba2;">
+                        ℹ️ Votre classe (<strong>${mainClasse}</strong>) n'a aucun cours correspondant exact dans la base. Affichage de <strong>tous les cours enregistrés (${allHoraires.length})</strong> ci-dessous.
+                    </div>
+                `;
+            }
+
             // Construction du sélecteur de classe interactif
             let selectorHTML = `
-                <div style="margin-bottom: 20px; background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px; text-align: center;">
-                    <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #fff;">Afficher l'horaire de :</label>
-                    <select id="select-filter-classe" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0c7489; outline: none; font-size: 0.95em;">
-                        ${!isAdmin ? `<option value="MES_COURS">Mon Emploi du Temps ${userClasses[0] ? '(' + userClasses[0] + ')' : ''}</option>` : ''}
+                <div style="margin-bottom: 20px; background: rgba(255,255,255,0.15); padding: 15px; border-radius: 10px; text-align: center;">
+                    <div style="color: #e0f2f1; font-size: 0.9em; margin-bottom: 8px;">
+                        📊 Total base de données : <strong>${allHoraires.length} cours</strong> au total.
+                    </div>
+                    <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #fff;">Sélectionner la classe à afficher :</label>
+                    <select id="select-filter-classe" style="padding: 8px 14px; border-radius: 6px; border: 1px solid #0c7489; outline: none; font-size: 0.95em; font-weight: bold; color: #0c5568;">
+                        ${(!isAdmin && mesCours.length > 0) ? `<option value="MES_COURS">Mon Emploi du Temps (${userClasses[0] || 'Ma Classe'})</option>` : ''}
                         <option value="TOUTES">Toutes les classes (${allHoraires.length} cours)</option>
                         ${Array.from(classesEnregistreesMap.values()).map(cl => `<option value="${cl}">Classe : ${cl}</option>`).join('')}
                     </select>
                 </div>
+                ${noticeHTML}
                 <div id="horaire-cards-wrapper"></div>
             `;
             container.innerHTML = selectorHTML;
@@ -273,7 +293,7 @@
                 wrapper.innerHTML = "";
                 let listToRender = [];
 
-                if (filterValue === "MES_COURS") {
+                if (filterValue === "MES_COURS" && mesCours.length > 0) {
                     listToRender = mesCours;
                 } else if (filterValue === "TOUTES") {
                     listToRender = allHoraires;
@@ -285,8 +305,8 @@
                 if (listToRender.length === 0) {
                     wrapper.innerHTML = `
                         <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
-                            <p style="font-size:1.1em; font-weight:bold;">Aucun cours trouvé pour ce choix.</p>
-                            <p style="font-size:0.9em; color:#777; margin-top:5px;">Utilisez le menu ci-dessus pour consulter d'autres classes.</p>
+                            <p style="font-size:1.1em; font-weight:bold;">Aucun cours trouvé pour le filtre "${filterValue}".</p>
+                            <p style="font-size:0.9em; color:#777; margin-top:5px;">Veuillez choisir "Toutes les classes" dans le menu déroulant ci-dessus.</p>
                         </div>
                     `;
                     return;
@@ -297,7 +317,6 @@
 
             // Sélection par défaut
             if (!isAdmin && mesCours.length === 0) {
-                // Si la recherche automatique par classe d'élève n'a rien donné, basculer sur TOUTES par défaut
                 filterSelect.value = "TOUTES";
                 renderFilter("TOUTES");
             } else {
