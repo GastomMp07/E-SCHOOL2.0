@@ -262,21 +262,32 @@
             if (!isAdmin && !isProf) {
                 // RÔLE ÉLÈVE : Filtrage par JOUR (l'élève ne voit que sa classe et filtre par jour)
                 const joursStandards = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+                // Liste des jours de la semaine par ordre standard
                 const joursPresencesMap = new Map();
+                // Map pour recenser les jours où des cours sont effectivement programmés pour cette classe
                 
                 // On garde uniquement les jours qui ont des cours pour cette classe
                 mesCours.forEach(h => {
+                    // Parcourt la liste des cours de l'élève
                     const normJ = normText(h.jour);
+                    // Normalise le jour du cours
                     if (normJ && !joursPresencesMap.has(normJ)) {
+                        // Si le jour existe et n'est pas encore recensé
                         joursPresencesMap.set(normJ, h.jour);
+                        // Ajoute le jour dans la Map avec son écriture originale
                     }
                 });
 
                 const joursOptions = joursStandards.filter(j => joursPresencesMap.has(normText(j)));
+                // Filtre les jours standards pour ne garder que ceux qui possèdent des cours
+                
                 // Si un jour hors norme existe (ex: Dimanche), on l'ajoute aussi
                 joursPresencesMap.forEach((origVal, normKey) => {
+                    // Parcourt tous les jours enregistrés
                     if (!joursStandards.map(j => normText(j)).includes(normKey)) {
+                        // Si le jour ne fait pas partie de la liste standard
                         joursOptions.push(origVal);
+                        // L'ajoute à la liste des options du sélecteur
                     }
                 });
 
@@ -290,37 +301,56 @@
                     </div>
                     <div id="horaire-cards-wrapper"></div>
                 `;
+                // Prépare le HTML du menu déroulant de filtrage par jour réservé aux élèves
                 container.innerHTML = selectorHTML;
+                // Injecte le sélecteur par jour dans la page
 
                 const filterSelect = document.getElementById('select-filter-jour');
+                // Récupère l'élément HTML du menu déroulant des jours
                 const wrapper = document.getElementById('horaire-cards-wrapper');
+                // Récupère le conteneur d'affichage des cartes de cours
 
                 const renderDayFilter = (selectedDay) => {
+                    // Déclare la fonction de rendu des cours selon le jour sélectionné
                     wrapper.innerHTML = "";
+                    // Réinitialise l'affichage du wrapper
                     let listToRender = [];
+                    // Initialise la liste des cours à afficher
 
                     if (selectedDay === "TOUS") {
+                        // Si l'option "Tous les jours" est choisie
                         listToRender = mesCours;
+                        // Affiche la totalité des cours de l'élève
                     } else {
+                        // Si un jour spécifique est sélectionné
                         const targetNorm = normText(selectedDay);
+                        // Normalise le nom du jour cible
                         listToRender = mesCours.filter(h => normText(h.jour) === targetNorm);
+                        // Filtre les cours correspondant au jour sélectionné
                     }
 
                     if (listToRender.length === 0) {
+                        // Si aucun cours n'est trouvé pour ce jour
                         wrapper.innerHTML = `
                             <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
                                 <p style="font-size:1.1em; font-weight:bold;">Aucun cours programmé le ${selectedDay} pour votre classe.</p>
                             </div>
                         `;
+                        // Affiche un message d'information
                         return;
+                        // Arrête l'exécution de la fonction de rendu
                     }
 
                     renderPlanning(listToRender, wrapper, isAdmin, isProf);
+                    // Déclenche le rendu des cartes de cours filtrées
                 };
 
                 renderDayFilter("TOUS");
+                // Exécute le rendu initial pour tous les jours
                 filterSelect.addEventListener('change', (e) => {
+                    // Écoute le changement de sélection dans le filtre des jours
                     renderDayFilter(e.target.value);
+                    // Rafraîchit les cours affichés selon le jour choisi
                 });
 
             } else {
@@ -339,39 +369,60 @@
                     </div>
                     <div id="horaire-cards-wrapper"></div>
                 `;
+                // Prépare le HTML du sélecteur par classe pour les profs et la direction
                 container.innerHTML = selectorHTML;
+                // Injecte le sélecteur dans le conteneur principal
 
                 const filterSelect = document.getElementById('select-filter-classe');
+                // Récupère l'élément HTML du menu déroulant de classe
                 const wrapper = document.getElementById('horaire-cards-wrapper');
+                // Récupère le conteneur d'affichage des cartes d'horaires
 
                 const renderClassFilter = (filterValue) => {
+                    // Déclare la fonction de filtrage par classe
                     wrapper.innerHTML = "";
+                    // Réinitialise le conteneur d'affichage
                     let listToRender = [];
+                    // Initialise la liste des cours à rendre
 
                     if (filterValue === "MES_COURS" && mesCours.length > 0) {
+                        // Si le professeur choisit d'afficher ses propres cours
                         listToRender = mesCours;
+                        // Conserve uniquement les cours de cet enseignant
                     } else if (filterValue === "TOUTES") {
+                        // Si l'utilisateur choisit toutes les classes
                         listToRender = allHoraires;
+                        // Conserve l'intégralité des créneaux d'horaires enregistrés
                     } else {
+                        // Si une classe spécifique est sélectionnée
                         const targetNorm = normClasse(filterValue);
+                        // Normalise le nom de la classe recherchée
                         listToRender = allHoraires.filter(h => normClasse(h.classe) === targetNorm);
+                        // Filtre les cours appartenant à cette classe
                     }
 
                     if (listToRender.length === 0) {
+                        // Si aucun cours n'est trouvé pour la classe filtrée
                         wrapper.innerHTML = `
                             <div style="text-align:center; padding:30px 15px; color:#555; background:white; border-radius:10px; margin-top:15px;">
                                 <p style="font-size:1.1em; font-weight:bold;">Aucun cours trouvé pour ce choix.</p>
                             </div>
                         `;
+                        // Affiche un message d'absence de cours
                         return;
+                        // Interrompt le rendu
                     }
 
                     renderPlanning(listToRender, wrapper, isAdmin, isProf);
+                    // Déclenche le rendu visuel de l'emploi du temps
                 };
 
                 renderClassFilter(filterSelect.value);
+                // Effectue le premier rendu avec la valeur par défaut du sélecteur
                 filterSelect.addEventListener('change', (e) => {
+                    // Écoute les changements de sélection de la classe
                     renderClassFilter(e.target.value);
+                    // Met à jour les cartes de l'emploi du temps selon la classe choisie
                 });
             }
 

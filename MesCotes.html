@@ -244,43 +244,47 @@
             // Arrête l'exécution pour ne pas générer un bulletin vide
         }
 
-        // --- CALCUL DU RANG (PLACE) ---
-        // Pour les synthèses, on calcule sur le total des périodes concernées
+        // --- CALCUL DU RANG (PLACE) ET DÉDOUBLONNEMENT DES NOTES CLASSE ---
         const totauxEleves = {};
         const notesClasseToUse = window.toutesNotesClasse || [];
         
+        // Dédoublonner les notes par (élève, matière, période) pour le calcul du classement
+        const notesClasseDedupliqueesMap = new Map();
         notesClasseToUse.forEach(d => {
             const nom = normNom(d.nomEleveNorm || d.nomEleve);
-            
+            const mat = normNom(d.matiere);
+            const key = nom + "_" + mat + "_" + (d.periode || "");
+            notesClasseDedupliqueesMap.set(key, { nom: nom, note: parseFloat(d.note) || 0, periode: d.periode });
+        });
+
+        notesClasseDedupliqueesMap.forEach(item => {
             let match = false;
-            if (periodeSelectionnee === "SYNTHESE_S1") match = ["1ère Période", "2ème Période", "Examen 1er Semestre"].includes(d.periode);
-            else if (periodeSelectionnee === "SYNTHESE_S2") match = ["3ème Période", "4ème Période", "Examen 2ème Semestre"].includes(d.periode);
-            else match = (d.periode === periodeSelectionnee);
+            if (periodeSelectionnee === "SYNTHESE_S1") match = ["1ère Période", "2ème Période", "Examen 1er Semestre"].includes(item.periode);
+            else if (periodeSelectionnee === "SYNTHESE_S2") match = ["3ème Période", "4ème Période", "Examen 2ème Semestre"].includes(item.periode);
+            else match = (item.periode === periodeSelectionnee);
 
             if (match) {
-                totauxEleves[nom] = (totauxEleves[nom] || 0) + (parseFloat(d.note) || 0);
+                totauxEleves[item.nom] = (totauxEleves[item.nom] || 0) + item.note;
             }
         });
 
         const classements = Object.entries(totauxEleves).sort((a, b) => b[1] - a[1]).map(entry => entry[0]);
-        // Trie les élèves du meilleur au moins bon total et extrait leurs noms normalisés
         const maPlace = classements.indexOf(profil.monNomNorm) + 1;
-        // Trouve la position de l'élève connecté dans le classement (1-indexé)
 
-        // --- REGROUPEMENT PAR MATIÈRE (Utile pour les synthèses) ---
-        const matieresRegroupees = {};
-        // Initialise un objet pour regrouper les totaux de notes par matière
+        // --- REGROUPEMENT ET DÉDOUBLONNEMENT DES NOTES DE L'ÉLÈVE PAR MATIÈRE ---
+        const notesDedupliqueesMap = new Map();
         notesAffichees.forEach(n => {
-            // Parcourt toutes les notes à afficher pour les regrouper par matière
+            const key = normNom(n.matiere) + "_" + (n.periode || "");
+            notesDedupliqueesMap.set(key, n);
+        });
+
+        const matieresRegroupees = {};
+        notesDedupliqueesMap.forEach(n => {
             if (!matieresRegroupees[n.matiere]) {
-                // Si la matière n'a pas encore de groupe, en crée un avec des totaux à zéro
                 matieresRegroupees[n.matiere] = { obtenu: 0, max: 0 };
-                // Initialise l'objet de regroupement avec les totaux à zéro
             }
             matieresRegroupees[n.matiere].obtenu += parseFloat(n.note) || 0;
-            // Additionne la note obtenue au total de la matière
             matieresRegroupees[n.matiere].max += parseFloat(n.max || 20);
-            // Additionne le maximum possible au total max de la matière (20 par défaut si absent)
         });
 
         // --- GÉNÉRATION HTML ---
@@ -355,121 +359,183 @@
     }
 
     async function verifierEvaluations(uid, maClasse) {
+        // Déclare la fonction asynchrone qui contrôle la réalisation des évaluations enseignants
         try {
-            // 1. Vérifier si cet élève a soumis au moins une évaluation dans evaluations_profs
+            // Bloc try pour sécuriser la vérification Firestore
             const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", uid));
+            // Construit la requête Firestore pour filtrer les évaluations de cet élève
             const snapEvals = await getDocs(qEvals);
+            // Exécute la requête et récupère les documents
 
             if (!snapEvals.empty && snapEvals.size > 0) {
-                return true; // Accès débloqué !
+                // Si l'élève a soumis au moins une évaluation
+                return true;
+                // Autorise le déverrouillage de l'accès aux notes
             }
 
-            // 2. Vérification de secours sans filtre Firestore en cas de légère variation de type d'ID
             const snapAllEvals = await getDocs(collection(db, "evaluations_profs"));
+            // Récupère l'ensemble de la collection en secours
             let aEvalue = false;
+            // Initialise le drapeau d'évaluation à false
             snapAllEvals.forEach(d => {
+                // Parcourt l'intégralité des évaluations
                 const data = d.data();
+                // Extrait les données
                 if (data && String(data.eleveId) === String(uid)) {
+                    // Vérifie la présence de l'ID élève
                     aEvalue = true;
+                    // Marque comme évalué
                 }
             });
 
-            if (aEvalue) return true; // Accès débloqué !
+            if (aEvalue) return true;
+            // Retourne true si l'élève est trouvé dans les évaluations
 
-            // 3. Si aucun enseignant n'est inscrit dans la base de données, débloquer également
             const snapUsers = await getDocs(collection(db, "users"));
+            // Récupère la liste des utilisateurs pour compter les enseignants
             let nbProfs = 0;
+            // Initialise le nombre d'enseignants à 0
             snapUsers.forEach(d => {
+                // Parcourt chaque utilisateur
                 const r = String(d.data()?.role || "").toLowerCase();
+                // Normalise le rôle
                 if (r === "enseignant" || r.includes("prof")) nbProfs++;
+                // Incrémente si c'est un professeur
             });
 
-            if (nbProfs === 0) return true; // Aucun prof à évaluer -> accès libre
+            if (nbProfs === 0) return true;
+            // Si aucun professeur n'existe, autorise l'accès libre
 
-            return false; // L'élève n'a pas encore évalué
+            return false;
+            // Refuse l'accès si l'élève n'a pas encore évalué
         } catch (e) {
+            // En cas d'erreur réseau ou Firestore
             console.error("Erreur verifierEvaluations:", e);
-            return true; // En cas d'erreur de connexion, débloquer l'accès pour éviter de coincer l'élève
+            // Affiche l'erreur en console
+            return true;
+            // Autorise l'accès pour éviter de bloquer l'élève en cas de panne réseau
         }
     }
 
     function normClasse(s) {
+        // Déclare la fonction de normalisation de nom de classe
         if (!s) return "";
+        // Retourne une chaîne vide si l'argument s est absent
         let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        // Retire les majuscules, accents et espaces superflus
         str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
+        // Harmonise les abréviations de classes (7ème devient 7)
         return str.replace(/[^a-z0-9]/g, "");
+        // Conserve uniquement les lettres et chiffres pour la comparaison
     }
 
     onAuthStateChanged(auth, async (user) => {
-        // Écoute les changements d'état de connexion
+        // Écoute les changements de statut de connexion de l'utilisateur
         if (!user) { window.location.href = "login.html"; return; }
+        // Si l'utilisateur n'est pas connecté, redirige vers login.html
         
         const container = document.getElementById('liste-notes');
+        // Récupère l'élément du conteneur des notes
         const tabs = document.getElementById('tabs-section');
+        // Récupère la barre d'onglets de périodes
 
         try {
             // 1. Charger le profil fusionné de l'élève
             const profil = await lireProfilFusionne(user.uid);
+            // Charge et fusionne le profil de l'élève connecté
             if (!profil.ok) {
+                // Si le profil n'est pas trouvé
                 container.innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Profil introuvable dans la base de données.</p>";
+                // Affiche un message d'erreur rouge
                 return;
+                // Arrête la fonction
             }
 
             // 2. Vérifier les évaluations profs
             const evaluationsTerminees = await verifierEvaluations(user.uid, profil.maClasse);
+            // Contrôle si l'accès aux notes est autorisé
             if (!evaluationsTerminees) {
+                // Si l'évaluation n'a pas été faite
                 container.innerHTML = `<div class="message-verrouillage"><div class="icone-verrou">🔒</div><h3>Accès restreint</h3><p>Évaluez vos professeurs pour voir vos points.</p><a href="CoterE.html" class="btn-action">Évaluer</a></div>`;
+                // Affiche l'écran de verrouillage avec bouton vers CoterE.html
                 return;
+                // Interrompt l'affichage du bulletin
             }
 
             tabs.style.display = "flex";
+            // Rend la barre d'onglets de périodes visible
             
             // 3. Récupérer TOUTES les notes depuis Firestore (sans filtre restrictif en requête SQL/Firestore)
             const snapNotes = await getDocs(collection(db, "notes"));
+            // Lit tous les documents de la collection "notes"
 
             toutesMesNotes = [];
+            // Réinitialise le tableau des notes personnelles
             window.toutesNotesClasse = [];
+            // Réinitialise le tableau des notes de la classe
 
             snapNotes.forEach((snap) => {
+                // Parcourt chaque document de note
                 const data = snap.data();
+                // Extrait les données de la note
                 if (!data) return;
+                // Ignore les documents vides
 
                 const noteNomNorm = normNom(data.nomEleveNorm || data.nomEleve);
+                // Normalise le nom de l'élève rattaché à la note
                 const noteClasseNorm = normClasse(data.classe);
+                // Normalise la classe rattachée à la note
 
                 // Correspondance de l'élève par son nom (fiabilité 100%)
                 if (noteNomNorm === profil.monNomNorm && noteNomNorm !== "") {
+                    // Si le nom de l'élève correspond au profil connecté
                     toutesMesNotes.push(data);
+                    // Ajoute la note aux notes personnelles de l'élève
                 }
 
                 // Correspondance de la classe pour le calcul du rang
                 if (noteClasseNorm === normClasse(profil.maClasse) && profil.maClasse !== "") {
+                    // Si la note appartient à la classe de l'élève
                     window.toutesNotesClasse.push(data);
+                    // Stocke la note pour le calcul du classement
                 }
             });
 
             // 4. Si aucune note en 1ère Période mais des notes dans d'autres périodes, ajuster l'onglet par défaut
             if (toutesMesNotes.length > 0) {
+                // Si l'élève possède au moins une note enregistrée
                 const periodesPresentes = Array.from(new Set(toutesMesNotes.map(n => n.periode).filter(Boolean)));
+                // Extrait la liste des périodes ayant des notes
                 if (!periodesPresentes.includes(periodeSelectionnee) && periodesPresentes.length > 0) {
+                    // Si la période active n'a pas de notes mais que d'autres en ont
                     periodeSelectionnee = periodesPresentes[0];
-                    // Mettre en surbrillance le bon onglet
+                    // Bascule automatiquement vers la première période disponible
                     document.querySelectorAll('.btn-onglet').forEach(b => {
+                        // Parcourt les boutons d'onglets
                         if (b.innerText.trim().toLowerCase().includes(periodeSelectionnee.toLowerCase().slice(0, 4))) {
+                            // Si l'onglet correspond à la période sélectionnée
                             b.classList.add('active');
+                            // Active visuellement l'onglet
                         } else {
+                            // Sinon
                             b.classList.remove('active');
+                            // Désactive l'onglet
                         }
                     });
                 }
             }
 
             window.monProfilEleve = profil;
+            // Stocke le profil sur la variable globale window
             await afficherNotesFiltrees();
+            // Déclenche le rendu du bulletin de notes de la période
 
         } catch (error) {
+            // Attrape toute erreur d'exécution
             console.error("Erreur chargement MesCotes:", error);
+            // Log l'erreur en console
             container.innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erreur lors du chargement des notes.</p>";
+            // Affiche un message d'erreur rouge
         }
     });
 

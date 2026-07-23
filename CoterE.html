@@ -122,128 +122,206 @@
 
     <script type="module">
         import { auth, db } from "./auth.js";
+        // Importe les instances de la base de données et de l'authentification Firebase depuis auth.js
         import { collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions de requêtes et de lecture/écriture dans Firestore
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe l'écouteur de changement d'état de connexion de l'utilisateur
 
         function normNom(s) {
+            // Déclare la fonction de normalisation du nom d'un enseignant
             return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+            // Convertit en minuscules, retire les accents et élimine les espaces superflus
         }
 
         // Écouteurs pour mettre à jour l'affichage en direct des sliders
         document.getElementById('note-maitrise').addEventListener('input', (e) => {
+            // Écoute les modifications de la jauge de maîtrise du sujet
             document.getElementById('val-maitrise').innerText = e.target.value + " / 5";
+            // Met à jour la note textuelle affichée à côté du curseur
         });
         document.getElementById('note-dispo').addEventListener('input', (e) => {
+            // Écoute les modifications de la jauge de disponibilité
             document.getElementById('val-dispo').innerText = e.target.value + " / 5";
+            // Met à jour la note textuelle affichée à côté du curseur
         });
 
         let listeProfsActuels = [];
+        // Déclare le tableau global qui contiendra tous les professeurs chargés
         let indexProfActuel = -1;
+        // Stocke l'index du professeur sélectionné actuellement pour l'évaluation
 
         async function chargerEnseignantsEtEvaluations(user) {
+            // Déclare la fonction asynchrone qui charge les enseignants et leurs évaluations
             const container = document.getElementById('liste-profs-container');
+            // Récupère le conteneur HTML des cartes de professeurs
             const progTitre = document.getElementById('progression-titre');
+            // Récupère l'élément du titre de la barre de progression
             const progFill = document.getElementById('barre-progression-fill');
+            // Récupère la jauge remplie de la barre de progression
             const progBg = document.getElementById('barre-progression-bg');
+            // Récupère l'arrière-plan de la barre de progression
             const panel = document.getElementById('panel-evaluation');
+            // Récupère le panneau de saisie du formulaire d'évaluation
 
             try {
                 // 1. Charger tous les profs (collection users et utilisateurs)
                 const snapUsers = await getDocs(collection(db, "users"));
+                // Récupère les utilisateurs de la collection "users"
                 const snapUtils = await getDocs(collection(db, "utilisateurs"));
+                // Récupère les utilisateurs de la collection "utilisateurs"
 
                 const profsMap = new Map();
+                // Crée une Map pour regrouper les enseignants sans doublons
                 const addIfProf = (docSnap) => {
+                    // Filtre d'extraction des enseignants
                     const data = docSnap.data();
+                    // Extrait les données du document
                     if (!data) return;
+                    // Ignore le document s'il n'a pas de données
                     const r = String(data.role || "").toLowerCase();
+                    // Normalise le rôle de l'utilisateur
                     if (r === "enseignant" || r.includes("prof") || r.includes("teacher")) {
+                        // Vérifie si l'utilisateur est un enseignant
                         const nomClean = (data.nom || "").trim();
+                        // Nettoie le nom de l'enseignant
                         if (nomClean && !profsMap.has(normNom(nomClean))) {
+                            // Si le nom n'est pas vide et n'existe pas encore dans la Map
                             profsMap.set(normNom(nomClean), {
+                                // Stocke les informations du professeur
                                 id: docSnap.id,
+                                // Identifiant Firestore
                                 nom: nomClean,
+                                // Nom brut du professeur
                                 norm: normNom(nomClean),
+                                // Nom normalisé du professeur
                                 matieres: Array.isArray(data.matieres) ? data.matieres.join(", ") : (data.matiere || "")
+                                // Formate la liste des matières enseignées
                             });
                         }
                     }
                 };
 
                 snapUsers.forEach(addIfProf);
+                // Filtre les profs de la collection "users"
                 snapUtils.forEach(addIfProf);
+                // Filtre les profs de la collection "utilisateurs"
 
                 const profsList = Array.from(profsMap.values()).sort((a, b) => a.nom.localeCompare(b.nom));
+                // Transforme la Map en tableau et trie par ordre alphabétique
 
                 if (profsList.length === 0) {
+                    // Si aucun professeur n'a été trouvé
                     progTitre.innerHTML = "ℹ️ Aucun enseignant n'est enregistré dans l'établissement pour le moment.";
+                    // Affiche une information dans le bandeau
                     container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun professeur disponible à évaluer.</p>";
+                    // Indique qu'il n'y a pas de professeurs
                     panel.style.display = "none";
+                    // Masque le formulaire d'évaluation
                     return;
+                    // Arrête la fonction
                 }
 
                 // 2. Récupérer toutes les évaluations soumises par CET élève
                 const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", user.uid));
+                // Construit la requête Firestore des évaluations de cet élève
                 const snapEvals = await getDocs(qEvals);
+                // Exécute la requête de lecture des évaluations
 
                 const evaluedIds = new Set();
+                // Ensemble d'identifiants des profs évalués
                 const evaluedNorms = new Set();
+                // Ensemble des noms normalisés des profs évalués
 
                 snapEvals.forEach(d => {
+                    // Parcourt chaque évaluation trouvée
                     const data = d.data();
+                    // Extrait les données de l'évaluation
                     if (data.profId) evaluedIds.add(data.profId);
+                    // Ajoute l'ID du prof s'il est disponible
                     if (data.profNom) evaluedNorms.add(normNom(data.profNom));
+                    // Ajoute le nom normalisé du prof
                     if (data.profNomNorm) evaluedNorms.add(data.profNomNorm);
+                    // Ajoute le nom normalisé alternatif du prof
                 });
 
                 // 3. Calcul de la progression
                 let evaluedCount = 0;
+                // Compteur des profs évalués par l'élève
                 profsList.forEach(p => {
+                    // Parcourt la liste des professeurs
                     if (evaluedIds.has(p.id) || evaluedNorms.has(p.norm)) {
+                        // Si le prof a été évalué par l'élève
                         p.estEvalue = true;
+                        // Marque la propriété estEvalue à true
                         evaluedCount++;
+                        // Incrémente le compteur des profs évalués
                     } else {
+                        // Si le prof n'est pas encore évalué
                         p.estEvalue = false;
+                        // Marque la propriété estEvalue à false
                     }
                 });
 
                 const total = profsList.length;
+                // Nombre total d'enseignants
                 const pct = Math.round((evaluedCount / total) * 100);
+                // Calcule le pourcentage d'avancement des évaluations
 
                 progBg.style.display = "block";
+                // Affiche l'arrière-plan de la barre de progression
                 progFill.style.width = pct + "%";
+                // Ajuste la largeur de la jauge selon le pourcentage
 
                 if (evaluedCount >= total) {
+                    // Si tous les professeurs ont été évalués
                     progTitre.innerHTML = `🎉 <strong>Félicitations !</strong> Tous vos professeurs (${evaluedCount}/${total}) ont été évalués.<br><span style="font-size:0.9em; color:#0c7489;">Redirection vers vos cotes...</span>`;
+                    // Affiche le message de félicitations et d'annonce de redirection
                     
                     // Rendu statut complet
                     let htmlCards = `<div style="text-align:center; padding:20px; background:#dcfce7; color:#15803d; border-radius:10px; font-weight:bold; font-size:1.1em; margin-top:15px;">
                         ✅ Vous avez complété toutes les évaluations d'enseignants !
                     </div>`;
+                    // Génère la carte de confirmation verte de complétion
                     container.innerHTML = htmlCards;
+                    // Injecte la carte dans la page
                     panel.style.display = "none";
+                    // Masque le formulaire d'évaluation
 
                     // Redirection automatique vers MesCotes
                     setTimeout(() => {
+                        // Programme un délai avant la redirection
                         window.location.href = "MesCotes.html";
+                        // Redirige l'élève vers la page de ses notes
                     }, 1500);
+                    // Attend 1.5 seconde
                     return;
+                    // Interrompt la fonction
                 }
 
                 progTitre.innerHTML = `📊 Progression : <strong>${evaluedCount} / ${total}</strong> professeurs évalués (${pct}%)`;
+                // Met à jour le texte du titre de la barre de progression
 
                 // 4. Rendu de la liste des professeurs
                 let htmlCards = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 12px;">`;
+                // Prépare le conteneur en grille HTML pour les cartes
 
                 profsList.forEach((prof, index) => {
+                    // Parcourt chaque enseignant
                     let badgeHTML = "";
+                    // Initialise la variable du badge
                     if (prof.estEvalue) {
+                        // Si l'enseignant est évalué
                         badgeHTML = `<span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">✅ Évalué</span>`;
+                        // Génère le badge vert d'évaluation complétée
                     } else {
+                        // Si l'enseignant est à évaluer
                         badgeHTML = `<span style="background: #fef3c7; color: #b45309; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">⏳ À évaluer</span>`;
+                        // Génère le badge jaune d'attente d'évaluation
                     }
 
                     const subInfo = prof.matieres ? `<div style="font-size:0.8em; color:#64748b;">Matières: ${prof.matieres}</div>` : '';
+                    // Prépare l'affichage des matières enseignées
 
                     htmlCards += `
                         <div class="carte-prof-item" id="card-prof-${index}" onclick="selectionnerProf(${index})" style="background: white; border: 2px solid ${prof.estEvalue ? '#cbd5e1' : '#f59e0b'}; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
@@ -259,106 +337,167 @@
                             </div>
                         </div>
                     `;
+                    // Ajoute la carte de l'enseignant au HTML global
                 });
 
                 htmlCards += `</div>`;
+                // Ferme la grille des cartes
                 container.innerHTML = htmlCards;
+                // Injecte le code HTML des cartes dans le conteneur
 
                 listeProfsActuels = profsList;
+                // Met à jour la liste des profs sur la variable globale
 
                 // Auto-sélectionner le premier prof non encore évalué
                 const premierNonEvalueIndex = profsList.findIndex(p => !p.estEvalue);
+                // Trouve l'index du premier enseignant pas encore évalué
                 if (premierNonEvalueIndex !== -1) {
+                    // S'il existe un enseignant non évalué
                     selectionnerProf(premierNonEvalueIndex);
+                    // Sélectionne automatiquement cet enseignant
                 }
 
             } catch (err) {
+                // Attrape les erreurs de chargement
                 console.error("Erreur chargement profs:", err);
+                // Affiche l'erreur dans la console
                 container.innerHTML = "<p style='color:red; text-align:center;'>Erreur lors du chargement des enseignants.</p>";
+                // Affiche un message d'erreur rouge à l'utilisateur
             }
         }
 
         // --- SELECTION D'UN PROFESSEUR ---
         window.selectionnerProf = (index) => {
+            // Déclare la fonction de sélection d'un professeur par son index
             const prof = listeProfsActuels[index];
+            // Récupère l'objet professeur sélectionné
             if (!prof) return;
+            // Annule si le professeur n'existe pas
 
             indexProfActuel = index;
+            // Stocke l'index sélectionné
             document.getElementById('nom-prof-selectionne').innerText = prof.nom;
+            // Affiche le nom du professeur sur l'en-tête du formulaire
             document.getElementById('prof-id-hidden').value = prof.id;
+            // Enregistre l'ID du prof dans le champ masqué
             document.getElementById('prof-nom-hidden').value = prof.nom;
+            // Enregistre le nom du prof dans le champ masqué
 
-            // Highlight card
+            // Mettre en surbrillance la carte sélectionnée
             document.querySelectorAll('.carte-prof-item').forEach(c => {
+                // Parcourt chaque carte de professeur
                 c.style.background = "white";
+                // Réinitialise la couleur de fond de la carte
             });
             const activeCard = document.getElementById(`card-prof-${index}`);
+            // Récupère la carte activée
             if (activeCard) {
+                // Si la carte existe
                 activeCard.style.background = "#e0f2f1";
+                // Applique le fond bleu-vert clair de sélection
             }
 
             const panel = document.getElementById('panel-evaluation');
+            // Récupère le panneau du formulaire d'évaluation
             panel.style.display = "block";
+            // Rend le panneau d'évaluation visible
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Fait défiler la fenêtre jusqu'au formulaire
         };
 
         // --- SOUMISSION DE L'EVALUATION ---
         const formEval = document.getElementById('form-evaluation');
+        // Récupère le formulaire d'évaluation
         formEval.addEventListener('submit', async (e) => {
+            // Écoute l'événement de soumission du formulaire
             e.preventDefault();
+            // Annule le rechargement par défaut de la page
 
             const user = auth.currentUser;
+            // Récupère l'utilisateur connecté
             if (!user) {
+                // Si aucun utilisateur n'est connecté
                 alert("Vous devez être connecté.");
+                // Informe l'utilisateur
                 return;
+                // Annule la soumission
             }
 
             const profId = document.getElementById('prof-id-hidden').value;
+            // Récupère l'ID du professeur sélectionné
             const profNom = document.getElementById('prof-nom-hidden').value;
+            // Récupère le nom du professeur sélectionné
             const noteMaitrise = parseInt(document.getElementById('note-maitrise').value);
+            // Récupère la note de maîtrise choisie
             const noteDispo = parseInt(document.getElementById('note-dispo').value);
+            // Récupère la note de disponibilité choisie
 
             if (!profId || !profNom) {
+                // Si aucun professeur n'est sélectionné
                 alert("❌ Veuillez d'abord cliquer sur un professeur dans la liste.");
+                // Affiche une alerte d'erreur
                 return;
+                // Annule l'enregistrement
             }
 
             try {
+                // Tente d'enregistrer l'évaluation dans Firestore
                 await addDoc(collection(db, "evaluations_profs"), {
+                    // Ajoute un document dans "evaluations_profs"
                     profId: profId,
+                    // ID de l'enseignant
                     profNom: profNom,
+                    // Nom brut de l'enseignant
                     profNomNorm: normNom(profNom),
+                    // Nom normalisé de l'enseignant
                     eleveId: user.uid,
+                    // ID unique de l'élève qui évalue
                     maitrise: noteMaitrise,
+                    // Note attribuée sur la maîtrise
                     disponibilite: noteDispo,
+                    // Note attribuée sur la disponibilité
                     date: new Date()
+                    // Date et heure de l'évaluation
                 });
 
                 // Marquer comme évalué localement
                 if (listeProfsActuels[indexProfActuel]) {
+                    // Si le prof courant existe dans le tableau
                     listeProfsActuels[indexProfActuel].estEvalue = true;
+                    // Met à jour sa propriété estEvalue à true
                 }
 
                 // Recharger la liste pour vérifier si tous sont évalués
                 await chargerEnseignantsEtEvaluations(user);
+                // Rafraîchit l'affichage et vérifie si la redirection doit s'exécuter
 
             } catch (error) {
+                // Attrape les erreurs d'écriture
                 console.error("Erreur enregistrement évaluation:", error);
+                // Affiche l'erreur dans la console
                 alert("Erreur lors de l'enregistrement : " + error.message);
+                // Informe l'utilisateur de l'échec
             }
         });
 
         onAuthStateChanged(auth, (user) => {
+            // Écoute les changements d'état d'authentification
             if (user) {
+                // Si l'utilisateur est connecté
                 chargerEnseignantsEtEvaluations(user);
+                // Lance le chargement des enseignants et des évaluations
             } else {
+                // Si aucun utilisateur n'est connecté
                 window.location.href = "login.html";
+                // Redirige vers la page de connexion
             }
         });
 
         // --- SÉCURITÉ ANTI-INSPECTION ---
         document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Bloque l'ouverture du menu clic droit
         document.addEventListener('keydown', (e) => {
+            // Écoute les touches du clavier pour bloquer les devtools
             if (
                 e.key === 'F12' || 
                 (e.ctrlKey && e.shiftKey && e.key === 'I') || 
@@ -366,9 +505,13 @@
                 (e.ctrlKey && e.key === 'u') ||
                 (e.ctrlKey && e.key === 's')
             ) {
+                // Vérifie les raccourcis de développement F12, Ctrl+Shift+I, etc.
                 e.preventDefault();
+                // Bloque l'événement par défaut
                 alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche une alerte explicative
                 return false;
+                // Annule la propagation
             }
         });
     </script>

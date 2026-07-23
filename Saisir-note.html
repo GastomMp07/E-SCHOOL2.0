@@ -148,141 +148,229 @@
 
     <script type="module">
         import { db, auth } from "./auth.js";
-        import { collection, addDoc, doc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les instances de la base de données et de l'authentification Firebase depuis auth.js
+        import { collection, addDoc, doc, getDoc, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        // Importe les fonctions de manipulation et d'écriture de documents dans Firestore
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        // Importe la fonction d'écoute des changements d'état de connexion utilisateur
 
         function normClasse(s) {
+            // Déclare la fonction de normalisation du nom de la classe
             if (!s) return "";
+            // Retourne une chaîne vide si l'argument s n'est pas défini
             let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            // Convertit en minuscules, supprime les espaces et retire les accents
             str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
+            // Harmonise la numérotation des classes (ex: 7ème A devient 7 A)
             return str.replace(/[^a-z0-9]/g, "");
+            // Supprime tous les caractères non alphanumériques pour une comparaison stricte
         }
 
         function normNom(s) {
+            // Déclare la fonction de normalisation d'un nom de personne ou de cours
             return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+            // Nettoie le nom en enlevant les majuscules, les accents et les espaces superflus
         }
 
         onAuthStateChanged(auth, async (user) => {
+            // Écoute l'état de connexion de l'utilisateur Firebase
             if (!user) {
+                // Si l'utilisateur n'est pas connecté
                 window.location.href = "login.html";
+                // Redirige immédiatement vers la page de connexion
                 return;
+                // Interrompt l'exécution de la fonction
             }
 
             try {
+                // Tente de récupérer les informations de profil de l'enseignant
                 let snap = await getDoc(doc(db, "users", user.uid));
+                // Lit les données dans la collection principale "users"
                 if (!snap.exists()) {
+                    // Si le profil n'existe pas dans la collection principale
                     snap = await getDoc(doc(db, "utilisateurs", user.uid));
+                    // Cherche dans l'ancienne collection "utilisateurs"
                 }
 
                 if (snap.exists()) {
+                    // Si un document profil a été trouvé
                     const userData = snap.data();
+                    // Extrait les données du document
                     const classeSelect = document.getElementById('select-classe-saisie');
+                    // Récupère l'élément HTML du menu déroulant des classes
                     const matiereSelect = document.getElementById('select-matiere-saisie');
+                    // Récupère l'élément HTML du menu déroulant des matières
 
                     classeSelect.innerHTML = '<option value="">-- Sélectionner la classe --</option>';
+                    // Réinitialise l'option par défaut des classes
                     matiereSelect.innerHTML = '<option value="">-- Sélectionner le cours --</option>';
+                    // Réinitialise l'option par défaut des cours
 
                     if (Array.isArray(userData.classe)) {
+                        // Si le champ classe est un tableau
                         userData.classe.forEach(cl => {
+                            // Parcourt chaque classe attribuée à l'enseignant
                             if (cl) classeSelect.innerHTML += `<option value="${cl}">${cl}</option>`;
+                            // Ajoute une option dans le menu déroulant
                         });
                     } else if (userData.classe) {
+                        // Si la classe est une simple chaîne de caractères
                         classeSelect.innerHTML += `<option value="${userData.classe}">${userData.classe}</option>`;
+                        // Ajoute l'option unique dans le menu déroulant
                     }
 
                     if (Array.isArray(userData.matieres)) {
+                        // Si le champ matières de l'enseignant est un tableau
                         userData.matieres.forEach(mat => {
+                            // Parcourt chaque matière enseignée
                             const nomNettoye = mat.trim();
+                            // Nettoie les espaces en début et fin de nom
                             if (nomNettoye) matiereSelect.innerHTML += `<option value="${nomNettoye}">${nomNettoye}</option>`;
+                            // Ajoute la matière au menu déroulant
                         });
                     } else if (userData.matiere) {
+                        // Si la matière est enregistrée comme une chaîne unique
                         matiereSelect.innerHTML += `<option value="${userData.matiere}">${userData.matiere}</option>`;
+                        // Ajoute la matière unique au menu déroulant
                     }
                 }
             } catch (err) {
+                // Attrape et signale les erreurs de chargement du profil
                 console.error("Erreur profil prof:", err);
+                // Affiche l'erreur dans la console de débogage
             }
         });
 
         // --- CHARGER LA LISTE DES ELEVES DE LA CLASSE ET LEURS NOTES ---
         async function chargerElevesEtNotes() {
+            // Déclare la fonction qui charge les élèves de la classe sélectionnée
             const selectedClasse = document.getElementById('select-classe-saisie').value;
+            // Récupère la classe choisie dans le menu déroulant
             const selectedMatiere = document.getElementById('select-matiere-saisie').value;
+            // Récupère la matière choisie dans le menu déroulant
             const selectedPeriode = document.getElementById('note-periode').value;
+            // Récupère la période scolaire sélectionnée
             const containerEleves = document.getElementById('liste-eleves-container');
+            // Récupère le conteneur HTML des cartes d'élèves
             const panelEncodage = document.getElementById('panel-encodage');
+            // Récupère le panneau de saisie de la note
 
             if (!selectedClasse) {
+                // Si aucune classe n'est sélectionnée
                 containerEleves.innerHTML = "<p style='text-align:center; padding:20px; color:#888; background: #f1f5f9; border-radius: 8px;'>👈 Veuillez sélectionner une classe pour charger la liste des élèves.</p>";
+                // Affiche un message d'invitation à choisir une classe
                 panelEncodage.style.display = "none";
+                // Masque le panneau de saisie
                 return;
+                // Arrête l'exécution de la fonction
             }
 
             containerEleves.innerHTML = "<p style='text-align:center; padding:20px; color:#0c7489;'>⏳ Chargement des élèves de la classe...</p>";
+            // Indique visuellement que les élèves sont en cours de chargement
 
             try {
                 // 1. Récupérer tous les élèves
                 const snapUsers = await getDocs(collection(db, "users"));
+                // Récupère les documents de la collection "users"
                 const snapUtils = await getDocs(collection(db, "utilisateurs"));
+                // Récupère les documents de la collection "utilisateurs"
                 
                 const elevesMap = new Map();
+                // Crée une Map pour stocker les élèves uniques sans doublons
                 const classNorm = normClasse(selectedClasse);
+                // Normalise le nom de la classe choisie pour la comparaison
 
                 const addIfEleve = (docSnap) => {
+                    // Déclare le filtre pour extraire les élèves de cette classe
                     const data = docSnap.data();
+                    // Extrait les données du document utilisateur
                     if (!data) return;
+                    // Ignore le document s'il est vide
                     const role = String(data.role || "").toLowerCase();
+                    // Normalise la valeur du rôle de l'utilisateur
                     if (role === "eleve" || role.includes("eleve") || role.includes("student")) {
+                        // Vérifie si le rôle correspond à un élève
                         let userClasses = [];
+                        // Initialise le tableau des classes de cet élève
                         if (Array.isArray(data.classe)) {
+                            // Si la classe est un tableau
                             userClasses = data.classe.map(c => normClasse(c));
+                            // Normalise chaque classe du tableau
                         } else if (data.classe) {
+                            // Si la classe est une valeur unique
                             userClasses = [normClasse(data.classe)];
+                            // Place la classe normalisée dans un tableau
                         }
 
                         if (userClasses.includes(classNorm)) {
+                            // Si l'élève appartient à la classe sélectionnée
                             const nomClean = (data.nom || "").trim();
+                            // Nettoie le nom de l'élève
                             if (nomClean && !elevesMap.has(normNom(nomClean))) {
+                                // S'assure que le nom n'est pas vide et n'est pas déjà présent
                                 elevesMap.set(normNom(nomClean), { nom: nomClean, uid: docSnap.id });
+                                // Enregistre l'élève dans la Map avec son identifiant
                             }
                         }
                     }
                 };
 
                 snapUsers.forEach(addIfEleve);
+                // Applique le filtre aux utilisateurs de la collection "users"
                 snapUtils.forEach(addIfEleve);
+                // Applique le filtre aux utilisateurs de la collection "utilisateurs"
 
                 const elevesList = Array.from(elevesMap.values()).sort((a, b) => a.nom.localeCompare(b.nom));
+                // Convertit la Map en tableau et trie les élèves par ordre alphabétique
 
                 if (elevesList.length === 0) {
+                    // Si aucun élève n'a été trouvé pour cette classe
                     containerEleves.innerHTML = `<p style='text-align:center; padding:20px; color:#e11d48; background:#fff1f2; border-radius:8px;'>⚠️ Aucun élève trouvé inscrit dans la classe "${selectedClasse}".</p>`;
+                    // Affiche un avertissement dans l'interface
                     panelEncodage.style.display = "none";
+                    // Masque le formulaire d'encodage
                     return;
+                    // Interrompt la fonction
                 }
 
                 // 2. Récupérer les notes déjà saisies pour cette classe / matière / période
                 const notesMap = new Map();
+                // Crée une Map pour associer chaque élève à sa note déjà existante
                 if (selectedMatiere && selectedPeriode) {
+                    // Si le cours et la période sont définis
                     const snapNotes = await getDocs(collection(db, "notes"));
+                    // Récupère toutes les notes enregistrées dans Firestore
                     snapNotes.forEach(docSnap => {
+                        // Parcourt chaque document de note
                         const n = docSnap.data();
+                        // Extrait les données de la note
                         if (n && normClasse(n.classe) === classNorm && normNom(n.matiere) === normNom(selectedMatiere) && n.periode === selectedPeriode) {
+                            // Vérifie si la note correspond à la classe, la matière et la période sélectionnées
                             const nameKey = n.nomEleveNorm || normNom(n.nomEleve);
+                            // Détermine la clé normalisée de l'élève
                             notesMap.set(nameKey, { note: n.note, max: n.max });
+                            // Associe la note trouvée à l'élève
                         }
                     });
                 }
 
                 // 3. Rendu des cartes élèves
                 let htmlCards = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-top: 12px;">`;
+                // Initialise le conteneur en grille pour les cartes d'élèves
 
                 elevesList.forEach((eleve, index) => {
+                    // Parcourt chaque élève pour construire sa carte interactive
                     const nameKey = normNom(eleve.nom);
+                    // Normalise le nom de l'élève pour chercher sa note
                     const existingNote = notesMap.get(nameKey);
+                    // Récupère la note existante si elle a déjà été saisie
                     
                     let badgeHTML = `<span id="badge-eleve-${index}" style="background: #e2e8f0; color: #475569; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">📝 Cliquer</span>`;
+                    // Prépare le badge par défaut indiquant que la note est à saisir
                     if (existingNote) {
+                        // Si une note a déjà été saisie
                         badgeHTML = `<span id="badge-eleve-${index}" style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">✅ ${existingNote.note} / ${existingNote.max}</span>`;
+                        // Affiche la note obtenue et le barème max avec un coche vert
                     }
 
                     htmlCards += `
@@ -296,114 +384,229 @@
                             </div>
                         </div>
                     `;
+                    // Génère le code HTML de la carte cliquable de l'élève
                 });
 
                 htmlCards += `</div>`;
+                // Ferme la grille des cartes
                 containerEleves.innerHTML = htmlCards;
+                // Injecte le code HTML généré dans la page
 
                 window.listeElevesActuels = elevesList;
+                // Enregistre la liste d'élèves sur l'objet global window pour passer automatiquement au suivant
 
             } catch (err) {
+                // Attrape toute erreur de chargement
                 console.error("Erreur chargement élèves:", err);
+                // Log l'erreur dans la console
                 containerEleves.innerHTML = "<p style='color:red; text-align:center;'>Erreur lors du chargement de la liste des élèves.</p>";
+                // Affiche un message d'erreur rouge à l'utilisateur
             }
         }
 
         // Écouteurs de changement pour rafraîchir la liste
         document.getElementById('select-classe-saisie').addEventListener('change', chargerElevesEtNotes);
+        // Déclenche le rechargement des élèves lors du changement de classe
         document.getElementById('select-matiere-saisie').addEventListener('change', chargerElevesEtNotes);
+        // Déclenche le rechargement des élèves lors du changement de cours
         document.getElementById('note-periode').addEventListener('change', chargerElevesEtNotes);
+        // Déclenche le rechargement des élèves lors du changement de période
 
         // --- SELECTION D'UN ELEVE DANS LA LISTE ---
         window.selectionnerEleve = (nomEleve, index) => {
+            // Déclare la fonction appelée lors d'un clic sur la carte d'un élève
             window.indexEleveActuel = index;
+            // Stocke l'index de l'élève sélectionné actuellement
             document.getElementById('nom-eleve-selectionne').innerText = nomEleve;
+            // Affiche le nom de l'élève dans l'en-tête du formulaire d'encodage
             document.getElementById('input-nom-eleve-hidden').value = nomEleve;
+            // Enregistre le nom dans le champ masqué du formulaire
 
             // Mettre en surbrillance la carte sélectionnée
             document.querySelectorAll('.carte-eleve-item').forEach(c => {
+                // Parcourt toutes les cartes d'élèves de la page
                 c.style.border = "2px solid #cbd5e1";
+                // Réinitialise la bordure de chaque carte
                 c.style.background = "white";
+                // Réinitialise la couleur de fond de chaque carte
             });
             const activeCard = document.getElementById(`card-eleve-${index}`);
+            // Récupère l'élément HTML de la carte cliquée
             if (activeCard) {
+                // Si la carte existe
                 activeCard.style.border = "2px solid #0c7489";
+                // Applique une bordure de couleur bleu turquoise à la carte sélectionnée
                 activeCard.style.background = "#e0f2f1";
+                // Colore le fond en bleu clair pour marquer la sélection
             }
 
             const panel = document.getElementById('panel-encodage');
+            // Récupère l'élément HTML du panneau d'encodage
             panel.style.display = "block";
+            // Rend le panneau d'encodage visible
             panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Fait défiler la page en douceur vers le formulaire d'encodage
 
             const inputNote = document.getElementById('note-valeur');
+            // Récupère le champ de saisie de la note
             inputNote.focus();
+            // Place directement le curseur dans le champ de la note pour taper tout de suite
         };
 
-        // --- ENREGISTREMENT DE LA NOTE ---
+        // --- ENREGISTREMENT DE LA NOTE (AVEC ÉCRASEMENT DES DOUBLONS) ---
         const form = document.getElementById('form-saisie-notes');
+        // Récupère le formulaire d'enregistrement des notes
         form.addEventListener('submit', async (e) => {
+            // Écoute l'événement de soumission du formulaire
             e.preventDefault();
+            // Empêche le rechargement automatique de la page
 
             const nomEleve = document.getElementById('input-nom-eleve-hidden').value;
+            // Récupère le nom de l'élève depuis le champ caché
             const classeVal = document.getElementById('select-classe-saisie').value;
+            // Récupère la classe sélectionnée
             const matiereVal = document.getElementById('select-matiere-saisie').value;
+            // Récupère le cours sélectionné
             const periodeVal = document.getElementById('note-periode').value;
+            // Récupère la période sélectionnée
             const noteObtenue = parseFloat(document.getElementById('note-valeur').value);
+            // Récupère la note saisie et la convertit en nombre flottant
             const noteMaximale = parseFloat(document.getElementById('note-max').value);
+            // Récupère le total maximal et le convertit en nombre flottant
 
             if (!nomEleve) {
+                // Si aucun élève n'a été sélectionné
                 alert("❌ Veuillez d'abord cliquer sur le nom d'un élève dans la liste.");
+                // Affiche une alerte d'avertissement
                 return;
+                // Annule la sauvegarde
             }
             if (noteObtenue > noteMaximale) {
+                // Si la note attribuée dépasse le maximum possible
                 alert("❌ La note ne peut pas être supérieure au total max.");
+                // Affiche une alerte d'erreur de saisie
                 return;
+                // Annule la sauvegarde
             }
 
             try {
-                await addDoc(collection(db, "notes"), {
-                    classe: classeVal,
-                    matiere: matiereVal,
-                    periode: periodeVal,
-                    nomEleve: nomEleve,
-                    nomEleveNorm: normNom(nomEleve),
-                    note: noteObtenue,
-                    max: noteMaximale,
-                    dateSaisie: new Date(),
-                    profId: auth.currentUser ? auth.currentUser.uid : ""
+                // 1. Recherche d'une note déjà existante pour cet élève / classe / matière / période
+                const snapNotes = await getDocs(collection(db, "notes"));
+                // Récupère l'ensemble des documents de la collection "notes"
+                let docIdExistant = null;
+                // Initialise l'identifiant du document existant à null
+
+                const targetClasseNorm = normClasse(classeVal);
+                // Normalise la classe cible
+                const targetMatiereNorm = normNom(matiereVal);
+                // Normalise la matière cible
+                const targetEleveNorm = normNom(nomEleve);
+                // Normalise le nom de l'élève cible
+
+                snapNotes.forEach(docSnap => {
+                    // Parcourt les notes enregistrées dans Firestore
+                    const data = docSnap.data();
+                    // Extrait les données de chaque document
+                    if (!data) return;
+                    // Saute les documents sans données
+
+                    const cNorm = normClasse(data.classe);
+                    // Normalise la classe de la note lue
+                    const mNorm = normNom(data.matiere);
+                    // Normalise la matière de la note lue
+                    const eNorm = data.nomEleveNorm || normNom(data.nomEleve);
+                    // Normalise le nom de l'élève de la note lue
+                    const pVal = data.periode;
+                    // Extrait la période de la note lue
+
+                    if (cNorm === targetClasseNorm && mNorm === targetMatiereNorm && eNorm === targetEleveNorm && pVal === periodeVal) {
+                        // Si une note existe déjà pour cette même combinaison exacte
+                        docIdExistant = docSnap.id;
+                        // Conserve l'ID du document pour le modifier au lieu d'en créer un nouveau
+                    }
                 });
+
+                const payloadNote = {
+                    // Prépare l'objet de données de la note à enregistrer
+                    classe: classeVal,
+                    // Nom brut de la classe
+                    matiere: matiereVal,
+                    // Nom brut de la matière
+                    periode: periodeVal,
+                    // Nom de la période scolaire
+                    nomEleve: nomEleve,
+                    // Nom brut de l'élève
+                    nomEleveNorm: targetEleveNorm,
+                    // Nom normalisé de l'élève pour les requêtes futures
+                    note: noteObtenue,
+                    // Valeur de la note obtenue
+                    max: noteMaximale,
+                    // Valeur du barème maximum
+                    dateSaisie: new Date(),
+                    // Date et heure exactes de la sauvegarde
+                    profId: auth.currentUser ? auth.currentUser.uid : ""
+                    // Identifiant unique du professeur ayant saisi la note
+                };
+
+                if (docIdExistant) {
+                    // ÉCRASER / MODIFIER LA NOTE EXISTANTE (Mise à jour)
+                    await setDoc(doc(db, "notes", docIdExistant), payloadNote);
+                    // Remplace le document existant dans Firestore avec les nouvelles valeurs
+                } else {
+                    // CRÉER UNE NOUVELLE NOTE
+                    await addDoc(collection(db, "notes"), payloadNote);
+                    // Crée un nouveau document dans la collection "notes"
+                }
 
                 // Mettre à jour le badge sur la carte de l'élève
                 if (typeof window.indexEleveActuel === 'number') {
+                    // Si l'index de l'élève courant est valide
                     const badge = document.getElementById(`badge-eleve-${window.indexEleveActuel}`);
+                    // Récupère l'élément du badge de la carte
                     if (badge) {
+                        // Si le badge existe
                         badge.style.background = "#dcfce7";
+                        // Passe le fond du badge au vert clair
                         badge.style.color = "#15803d";
+                        // Passe la couleur du texte au vert foncé
                         badge.innerHTML = `✅ ${noteObtenue} / ${noteMaximale}`;
+                        // Affiche la nouvelle note sur le badge de la carte
                     }
                 }
 
                 // Réinitialiser le champ de note pour l'élève suivant
                 document.getElementById('note-valeur').value = "";
+                // Vide le champ de saisie de la note
 
                 // Passer automatiquement à l'élève suivant s'il existe
                 const nextIndex = window.indexEleveActuel + 1;
+                // Calcule l'index de l'élève suivant dans la liste
                 if (window.listeElevesActuels && window.listeElevesActuels[nextIndex]) {
+                    // Si un élève suivant existe dans le tableau
                     const nextEleve = window.listeElevesActuels[nextIndex];
+                    // Récupère l'objet de l'élève suivant
                     selectionnerEleve(nextEleve.nom, nextIndex);
+                    // Sélectionne automatiquement l'élève suivant
                 } else {
-                    alert(`✅ Note enregistrée pour ${nomEleve} ! Tous les élèves de la liste ont été traités.`);
+                    // Si tous les élèves de la liste ont été notés
+                    alert(`✅ Note enregistrée/modifiée avec succès pour ${nomEleve} ! Tous les élèves de la liste ont été traités.`);
+                    // Affiche un message de fin de saisie
                 }
 
             } catch (error) {
+                // Attrape toute erreur lors de l'écriture Firestore
                 console.error("Erreur enregistrement note:", error);
+                // Affiche l'erreur dans la console de débogage
                 alert("Erreur lors de l'enregistrement de la note.");
+                // Affiche un alerte d'échec à l'utilisateur
             }
         });
 
         // --- SÉCURITÉ : ANTI-INSPECTION ---
         document.addEventListener('contextmenu', (e) => e.preventDefault());
+        // Désactive le clic droit sur la page
         document.addEventListener('keydown', (e) => {
+            // Écoute les pressions de touches pour intercepter les raccourcis devtools
             if (
                 e.key === 'F12' || 
                 (e.ctrlKey && e.shiftKey && e.key === 'I') || 
@@ -411,9 +614,13 @@
                 (e.ctrlKey && e.key === 'u') ||
                 (e.ctrlKey && e.key === 's')
             ) {
+                // Vérifie si la touche est F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U ou Ctrl+S
                 e.preventDefault();
+                // Bloque l'action par défaut du navigateur
                 alert("L'inspection du code est désactivée pour des raisons de sécurité.");
+                // Affiche un avertissement de sécurité
                 return false;
+                // Annule la propagation de l'événement
             }
         });
     </script>
