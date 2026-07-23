@@ -277,7 +277,7 @@
         }
     }
 
-    function estNoteDeLEleve(data, targetUid, profil, maClasseNorm) {
+    function estNoteDeLEleve(data, targetUid, profil) {
         if (!data) return false;
 
         // 1. Détection par identifiant unique (UID)
@@ -286,13 +286,6 @@
         }
 
         const noteNomNorm = normNom(data.nomEleveNorm || data.nomEleve || data.nom || data.name);
-        const noteClasseNorm = normClasse(data.classe);
-
-        // Si la classe est définie et ne correspond pas, exclure la note
-        if (maClasseNorm && noteClasseNorm && noteClasseNorm !== maClasseNorm) {
-            return false;
-        }
-
         if (!noteNomNorm) return false;
 
         // 2. Vérification directe dans la liste des noms du profil
@@ -365,11 +358,16 @@
                 const nomEnBase = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
                 const classeEnBaseNorm = normClasse(data.classe);
 
-                if (nomEnBase && (classeEnBaseNorm === maClasseNorm || maClasseNorm === "")) {
+                const isSameClass = !maClasseNorm || !classeEnBaseNorm || 
+                                    classeEnBaseNorm === maClasseNorm || 
+                                    classeEnBaseNorm.includes(maClasseNorm) || 
+                                    maClasseNorm.includes(classeEnBaseNorm);
+
+                if (nomEnBase && isSameClass) {
                     totauxTousEleves[nomEnBase] = (totauxTousEleves[nomEnBase] || 0) + (parseFloat(data.note) || 0);
                 }
 
-                if (estNoteDeLEleve(data, targetUid, profil, maClasseNorm)) {
+                if (estNoteDeLEleve(data, targetUid, profil)) {
                     toutesNotes.push(data);
                 }
             });

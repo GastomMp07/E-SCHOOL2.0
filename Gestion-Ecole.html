@@ -132,7 +132,7 @@
 
     <div class="contenu-principal">
         <div class="carte-donnees">
-            <h3>🆕 Inscrire un nouvel élève</h3>
+            <h3>Inscrire un nouvel élève</h3>
             <form id="form-inscription-admin" class="admin-form">
                 <input type="text" id="new-nom" placeholder="Nom complet de l'élève" required>
                 <input type="email" id="new-email" placeholder="Email (identifiant)" required>
@@ -173,7 +173,7 @@
         </div>
 
         <div class="carte-donnees">
-    <h3>📅 Ajouter un créneau d'horaire</h3>
+    <h3>Ajouter un créneau d'horaire</h3>
     <form id="form-horaire" class="admin-form">
         <select id="h-jour" required>
             <option value="Lundi">Lundi</option>
@@ -222,12 +222,12 @@
 </div>
 
         <div class="carte-donnees">
-            <h3>👥 Liste des élèves & Accès</h3>
+            <h3>Liste des élèves & Accès</h3>
             <div id="liste-paiements-eleves"><p>Chargement...</p></div>
         </div>
 
         <div class="carte-donnees">
-            <h3>⭐ Évaluation Enseignants</h3>
+            <h3>Évaluation Enseignants</h3>
             <div id="stats-profs-list"><p>Chargement...</p></div>
         </div>
     </div>
@@ -311,7 +311,7 @@
                 await signOut(secondaryAuth);
                 // Déconnecte le nouveau compte de l'instance secondaire pour ne pas interférer avec l'admin
 
-                alert("✅ Élève inscrit avec succès ! L'admin reste connecté.");
+                alert("Élève inscrit avec succès ! L'admin reste connecté.");
                 // Informe l'admin que l'inscription a réussi et qu'il est toujours connecté
                 formIns.reset();
                 // Réinitialise le formulaire pour permettre une nouvelle inscription
@@ -594,11 +594,11 @@
                             <span class="nom-professeur">${nom}</span>
                             <div class="grille-stats-prof">
                                 <div class="element-statistique">
-                                    <span class="libelle-statistique">🎓 Maîtrise</span>
+                                    <span class="libelle-statistique"> Maîtrise</span>
                                     <span class="chiffre-statistique">${moyenneMaitrise}/5</span>
                                 </div>
                                 <div class="element-statistique">
-                                    <span class="libelle-statistique">🤝 Disponibilité</span>
+                                    <span class="libelle-statistique"> Disponibilité</span>
                                     <span class="chiffre-statistique">${moyenneDispo}/5</span>
                                 </div>
                             </div>

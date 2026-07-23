@@ -64,7 +64,7 @@
 
     <div class="contenu-principal">
         <div class="carte-accueil animate__animated animate__fadeIn">
-            <h2 style="margin-top: 0; color: #0c5568; border-bottom: 2px solid #0c7489; padding-bottom: 10px;">⭐ Évaluation des Enseignants</h2>
+            <h2 style="margin-top: 0; color: #0c5568; border-bottom: 2px solid #0c7489; padding-bottom: 10px;">Évaluation des Enseignants</h2>
             
             <!-- SECTION PROGRESSION -->
             <div id="progression-container" style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
@@ -87,7 +87,7 @@
             <!-- FORMULAIRE D'EVALUATION -->
             <div id="panel-evaluation" style="display: none; margin-top: 25px; background: #e0f2f1; padding: 20px; border-radius: 12px; border-left: 6px solid #0c7489;" class="animate__animated animate__fadeIn">
                 <h3 style="margin-top: 0; color: #0c5568; display: flex; align-items: center; gap: 8px;">
-                    <span>👨‍🏫 Évaluation pour :</span> 
+                    <span>Évaluation pour :</span> 
                     <span id="nom-prof-selectionne" style="color: #0d3b4f; font-weight: bold; text-decoration: underline;">...</span>
                 </h3>
 
@@ -112,7 +112,7 @@
                     </div>
 
                     <button type="submit" style="background: #0d3b4f; color: white; border: none; padding: 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 1.05em; margin-top: 10px; transition: background 0.3s;">
-                        💾 Envoyer cette évaluation
+                        Envoyer cette évaluation
                     </button>
                 </form>
             </div>
@@ -212,7 +212,7 @@
 
                 if (profsList.length === 0) {
                     // Si aucun professeur n'a été trouvé
-                    progTitre.innerHTML = "ℹ️ Aucun enseignant n'est enregistré dans l'établissement pour le moment.";
+                    progTitre.innerHTML = "Aucun enseignant n'est enregistré dans l'établissement pour le moment.";
                     // Affiche une information dans le bandeau
                     container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun professeur disponible à évaluer.</p>";
                     // Indique qu'il n'y a pas de professeurs
@@ -327,7 +327,7 @@
                         <div class="carte-prof-item" id="card-prof-${index}" onclick="selectionnerProf(${index})" style="background: white; border: 2px solid ${prof.estEvalue ? '#cbd5e1' : '#f59e0b'}; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
                             <div>
                                 <div style="font-weight: bold; color: #0c5568; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
-                                    <span>👨‍🏫</span> <span>${prof.nom}</span>
+                                    <span></span> <span>${prof.nom}</span>
                                 </div>
                                 ${subInfo}
                             </div>
