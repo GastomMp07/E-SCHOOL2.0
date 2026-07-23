@@ -247,32 +247,18 @@
         // --- CALCUL DU RANG (PLACE) ---
         // Pour les synthèses, on calcule sur le total des périodes concernées
         const totauxEleves = {};
-        // Initialise un objet pour stocker le total de points de chaque élève de la classe
-        const qClasse = query(collection(db, "notes"), where("classe", "==", profil.maClasse));
-        // Construit une requête pour récupérer toutes les notes de la classe de l'élève
-        const snapClasse = await getDocs(qClasse);
-        // Exécute la requête et attend toutes les notes de la classe
+        const notesClasseToUse = window.toutesNotesClasse || [];
         
-        snapClasse.forEach(doc => {
-            // Parcourt chaque note de tous les élèves de la classe
-            const d = doc.data();
-            // Extrait les données du document de note courant
+        notesClasseToUse.forEach(d => {
             const nom = normNom(d.nomEleveNorm || d.nomEleve);
-            // Normalise le nom de l'élève pour des comparaisons fiables
             
             let match = false;
-            // Initialise la variable de correspondance de période à false
             if (periodeSelectionnee === "SYNTHESE_S1") match = ["1ère Période", "2ème Période", "Examen 1er Semestre"].includes(d.periode);
-            // Pour S1, vérifie si la note appartient à l'une des trois périodes du S1
             else if (periodeSelectionnee === "SYNTHESE_S2") match = ["3ème Période", "4ème Période", "Examen 2ème Semestre"].includes(d.periode);
-            // Pour S2, vérifie si la note appartient à l'une des trois périodes du S2
             else match = (d.periode === periodeSelectionnee);
-            // Pour une période simple, vérifie la correspondance exacte
 
             if (match) {
-                // Si la note correspond à la sélection de période courante
                 totauxEleves[nom] = (totauxEleves[nom] || 0) + (parseFloat(d.note) || 0);
-                // Ajoute la note au total de cet élève (initialise à 0 si c'est la première note)
             }
         });
 
@@ -369,108 +355,123 @@
     }
 
     async function verifierEvaluations(uid, maClasse) {
-        // Vérifie si l'élève a évalué suffisamment d'enseignants pour accéder à ses notes
-        const qMatieres = query(collection(db, "notes"), where("classe", "==", maClasse));
-        // Requête pour récupérer toutes les notes de la classe de l'élève
-        const snapMat = await getDocs(qMatieres);
-        // Exécute la requête et attend les résultats
-        const matieresDistinctes = new Set();
-        // Crée un ensemble pour stocker les matières uniques sans doublons
-        snapMat.forEach(d => matieresDistinctes.add(d.data().matiere));
-        // Parcourt les notes et ajoute chaque matière à l'ensemble
-        if (matieresDistinctes.size === 0) return true;
-        // Si aucune matière n'a de notes, l'accès est autorisé (pas d'évaluation requise)
-        const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", uid));
-        // Requête pour récupérer toutes les évaluations soumises par cet élève
-        const snapEval = await getDocs(qEvals);
-        // Exécute la requête et attend les résultats
-        return snapEval.size >= matieresDistinctes.size;
-        // Retourne vrai si l'élève a soumis autant d'évaluations que de matières
+        try {
+            const snapMat = await getDocs(collection(db, "notes"));
+            const matieresDistinctes = new Set();
+            const classNorm = normClasse(maClasse);
+            snapMat.forEach(d => {
+                const data = d.data();
+                if (data && normClasse(data.classe) === classNorm && data.matiere) {
+                    matieresDistinctes.add(data.matiere.trim());
+                }
+            });
+            if (matieresDistinctes.size === 0) return true;
+            const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", uid));
+            const snapEval = await getDocs(qEvals);
+            return snapEval.size >= matieresDistinctes.size;
+        } catch (e) { return true; }
+    }
+
+    function normClasse(s) {
+        if (!s) return "";
+        let str = String(s).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        str = str.replace(/^(\d+)(er|ere|erè|è|eme|emè|em|ème)?\s*/i, "$1 ");
+        return str.replace(/[^a-z0-9]/g, "");
     }
 
     onAuthStateChanged(auth, async (user) => {
-        // Écoute les changements d'état de connexion (async pour utiliser await)
+        // Écoute les changements d'état de connexion
         if (!user) { window.location.href = "login.html"; return; }
-        // Si personne n'est connecté, redirige vers login et arrête l'exécution
+        
         const container = document.getElementById('liste-notes');
-        // Récupère l'élément HTML où les notes seront affichées
         const tabs = document.getElementById('tabs-section');
-        // Récupère l'élément HTML de la barre d'onglets de périodes
 
         try {
-            // Bloc try : tente de charger les données de l'élève
+            // 1. Charger le profil fusionné de l'élève
             const profil = await lireProfilFusionne(user.uid);
-            // Récupère et fusionne le profil de l'élève depuis les deux collections Firestore
-            if (!profil.ok || !profil.maClasse) {
-                // Vérifie que le profil est valide et qu'une classe est définie
-                container.innerHTML = "Profil incomplet.";
-                // Affiche un message d'erreur si le profil est incomplet
+            if (!profil.ok) {
+                container.innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Profil introuvable dans la base de données.</p>";
                 return;
-                // Arrête l'exécution
             }
 
+            // 2. Vérifier les évaluations profs
             const evaluationsTerminees = await verifierEvaluations(user.uid, profil.maClasse);
-            // Vérifie si l'élève a complété les évaluations requises pour accéder à ses notes
             if (!evaluationsTerminees) {
-                // Si les évaluations ne sont pas encore complétées
                 container.innerHTML = `<div class="message-verrouillage"><div class="icone-verrou">🔒</div><h3>Accès restreint</h3><p>Évaluez vos professeurs pour voir vos points.</p><a href="CoterE.html" class="btn-action">Évaluer</a></div>`;
-                // Affiche un message de verrouillage avec un lien vers la page d'évaluation
                 return;
-                // Arrête l'exécution pour ne pas afficher les notes sans évaluation
             }
 
             tabs.style.display = "flex";
-            // Rend visible la barre d'onglets de périodes
-            const q = query(collection(db, "notes"), where("classe", "==", profil.maClasse));
-            // Construit une requête pour récupérer toutes les notes de la classe de l'élève
-            const querySnapshot = await getDocs(q);
-            // Exécute la requête et attend toutes les notes
+            
+            // 3. Récupérer TOUTES les notes depuis Firestore (sans filtre restrictif en requête SQL/Firestore)
+            const snapNotes = await getDocs(collection(db, "notes"));
 
             toutesMesNotes = [];
-            // Réinitialise le tableau global des notes
-            querySnapshot.forEach((snap) => {
-                // Parcourt chaque note retournée par la requête
+            window.toutesNotesClasse = [];
+
+            snapNotes.forEach((snap) => {
                 const data = snap.data();
-                // Extrait les données du document de note courant
-                if (normNom(data.nomEleveNorm || data.nomEleve) === profil.monNomNorm) {
-                    // Vérifie si la note appartient bien à l'élève connecté (comparaison normalisée)
+                if (!data) return;
+
+                const noteNomNorm = normNom(data.nomEleveNorm || data.nomEleve);
+                const noteClasseNorm = normClasse(data.classe);
+
+                // Correspondance de l'élève par son nom (fiabilité 100%)
+                if (noteNomNorm === profil.monNomNorm && noteNomNorm !== "") {
                     toutesMesNotes.push(data);
-                    // Ajoute la note au tableau global si elle appartient à cet élève
+                }
+
+                // Correspondance de la classe pour le calcul du rang
+                if (noteClasseNorm === normClasse(profil.maClasse) && profil.maClasse !== "") {
+                    window.toutesNotesClasse.push(data);
                 }
             });
 
+            // 4. Si aucune note en 1ère Période mais des notes dans d'autres périodes, ajuster l'onglet par défaut
+            if (toutesMesNotes.length > 0) {
+                const periodesPresentes = Array.from(new Set(toutesMesNotes.map(n => n.periode).filter(Boolean)));
+                if (!periodesPresentes.includes(periodeSelectionnee) && periodesPresentes.length > 0) {
+                    periodeSelectionnee = periodesPresentes[0];
+                    // Mettre en surbrillance le bon onglet
+                    document.querySelectorAll('.btn-onglet').forEach(b => {
+                        if (b.innerText.trim().toLowerCase().includes(periodeSelectionnee.toLowerCase().slice(0, 4))) {
+                            b.classList.add('active');
+                        } else {
+                            b.classList.remove('active');
+                        }
+                    });
+                }
+            }
+
+            window.monProfilEleve = profil;
             await afficherNotesFiltrees();
-            // Appelle la fonction pour afficher les notes de la période sélectionnée par défaut
+
         } catch (error) {
-            // Si une erreur survient lors du chargement des données
-            container.innerHTML = "Erreur de chargement.";
-            // Affiche un message d'erreur à l'utilisateur
+            console.error("Erreur chargement MesCotes:", error);
+            container.innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erreur lors du chargement des notes.</p>";
         }
     });
 
     async function lireProfilFusionne(uid) {
-        // Déclare une fonction asynchrone qui lit et fusionne le profil de l'utilisateur depuis deux collections
         try {
-            // Bloc try : tente de lire les données sans faire planter l'application
             const snapUsers = await getDoc(doc(db, "users", uid));
-            // Lit le document de l'utilisateur dans la collection principale "users"
             const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
-            // Lit le document de l'utilisateur dans l'ancienne collection "utilisateurs"
+            
             const u = snapUsers.exists() ? snapUsers.data() : {};
-            // Si le document "users" existe, récupère ses données ; sinon utilise un objet vide
             const v = snapUtils.exists() ? snapUtils.data() : {};
-            // Si le document "utilisateurs" existe, récupère ses données ; sinon utilise un objet vide
+
+            let classeRaw = u.classe || v.classe || u.maClasse || v.maClasse || "";
+            if (Array.isArray(classeRaw)) classeRaw = classeRaw[0] || "";
+
+            const nomRaw = u.nom || v.nom || u.name || v.name || "";
+
             return { 
-                // Retourne un objet de profil fusionné avec les données des deux collections
-                ok: snapUsers.exists() || snapUtils.exists(), 
-                // Indique si au moins un des deux profils existe
-                maClasse: premiereValeurUtile(u.classe, v.classe), 
-                // Prend la première valeur de classe non nulle trouvée dans les deux profils
-                monNomNorm: normNom(premiereValeurUtile(u.nom, v.nom)) 
-                // Prend le premier nom non nul trouvé et le normalise pour les comparaisons
+                ok: snapUsers.exists() || snapUtils.exists(),
+                nomOriginal: nomRaw,
+                maClasse: String(classeRaw).trim(), 
+                monNomNorm: normNom(nomRaw) 
             };
         } catch (e) { return { ok: false }; }
-        // En cas d'erreur, retourne un objet indiquant que le profil est invalide
     }
     // --- SÉCURITÉ : ANTI-INSPECTION ---
     // Bloquer le clic droit
