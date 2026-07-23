@@ -3,270 +3,376 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Évaluation - E-SCHOOL</title>
+    <title>Évaluation des Enseignants - E-SCHOOL</title>
     <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
     <style>
-        /* Styles déplacés dans le head pour une meilleure conformité HTML */
         body {
             background: linear-gradient(135deg, #071e2b 0%, #0c7489 100%) no-repeat;
             background-attachment: fixed;
             min-height: 100vh;
             margin: 0;
-            display: block; /* Désactive le flex qui cassait le menu */
+            display: block;
         }
         .carte-accueil {
-            margin-top: 120px; /* Espace suffisant pour ne pas être sous le header */
-            margin-bottom: 40px;
+            max-width: 800px;
+            width: 92%;
+            margin: 100px auto 40px;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-        .en-tete { 
-    display: flex; 
-    align-items: center; 
-    justify-content: space-between; /* Pousse les groupes aux extrémités */
-    padding: 0 20px; 
-    background: #0d3b4f; 
-    color: white; 
-    height: 60px; 
-    position: fixed; 
-    width: 100%; 
-    top: 0; 
-    left: 0; 
-    z-index: 10000; 
-    box-sizing: border-box; /* Évite que le padding dépasse de l'écran */
-}
-
-/* Groupe de gauche (Menu + Titre) */
-.en-tete-gauche {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* Espace entre le ☰ et le texte E-SCHOOL */
-}
-
-/* Logo à droite */
-.logo-en-tete {
-    height: 56px; /* Ajuste la taille selon ton image */
-    width: auto;
-}
-        .btn-menu { font-size: 30px; cursor: pointer; padding: 10px; }
-
-        /* BARRE LATERALE (CORRIGÉE) */
-        .barre-laterale { 
-            position: fixed; top: 0; left: -280px; /* Cachée par défaut */
-            width: 260px; height: 100%; background: #0a3d52; color: white; 
-            transition: all 0.4s ease; z-index: 10001; 
-            display: flex; flex-direction: column; box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+        .carte-prof-item:hover {
+            border-color: #0c7489 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        /* Classe qui fait apparaître le menu */
-        .barre-laterale.active { left: 0; }
-
-        .barre-laterale h2 { text-align: center; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .barre-laterale a { padding: 15px 25px; color: white; text-decoration: none; font-size: 1.1em; transition: 0.3s; }
-        .barre-laterale a:hover { background: #0d3b4f; padding-left: 35px; }
-
-        .btn-deconnexion { 
-            background: #ef4444; color: white; border: none; 
-            padding: 15px; margin: auto 20px 20px; border-radius: 8px; 
-            cursor: pointer; font-weight: bold; 
-            width: calc(100% - 40px);
+        label {
+            font-weight: bold;
+            color: #0c5568;
+            margin-top: 10px;
+            display: block;
         }
-
-        /* VOILE (Le fond noir quand le menu est ouvert) */
-        .voile { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.5); visibility: hidden; opacity: 0; 
-            transition: 0.3s; z-index: 9999; 
-        }
-        .voile.active { visibility: visible; opacity: 1; }
     </style>
+</head>
+<body>
+
     <div class="en-tete">
         <div class="en-tete-gauche">
             <div class="btn-menu" onclick="toggleMenu()">☰</div>
             <div style="font-weight: bold; font-size: 1.2em;">E-SCHOOL</div>
         </div>
-    
         <img src="images/image.png" alt="E-SCHOOL logo" class="logo-en-tete">
     </div>
     
-        <div id="sidebar" class="barre-laterale">
+    <div id="sidebar" class="barre-laterale">
         <h2>Menu</h2>
-       <a href="accueil.html">Accueil</a>
-    
-    <a href="comunique.html">Communiqués</a>
-    <a href="horaire.html">Horaire</a>
-    <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
-
-    <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
-
-    <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
-    
-    <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
-    
-    <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
-
-    <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
-
-    <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
-
+        <a href="accueil.html">Accueil</a>
+        <a href="comunique.html">Communiqués</a>
+        <a href="horaire.html">Horaire</a>
+        <a href="profil.html" id="menu-profil" style="display:none;">Mon Profil</a>
+        <a href="MesCotes.html" id="menu-eleve-notes" style="display:none;">Mes Cotes</a>
+        <a href="CoterE.html" id="menu-eleve-coter" style="display:none;">Coter les Enseigant</a>
+        <a href="Saisir-note.html" id="menu-prof-saisie-notes" style="display:none;">Saisir les notes</a>
+        <a href="javascript:void(0)" onclick="ouvrirGestionEcole()" id="menu-Enseignant" style="display:none;">Supervision Direction</a>
+        <a href="Redac-com.html" id="menu-prof-communiquer" style="display:none;">Rédaction du communiquer</a>
+        <a href="Appel.html" id="menu-prof-appel" style="display:none;">Faire l'Appel</a>
         <button onclick="logout()" class="btn-deconnexion">Se déconnecter</button>
     </div>
     <div id="overlay" class="voile" onclick="toggleMenu()"></div>
 
     <div class="contenu-principal">
         <div class="carte-accueil animate__animated animate__fadeIn">
-            <h2>Évaluation des Enseignants</h2>
-            <p>Sélectionnez un enseignant pour lui attribuer une note de performance.</p>
+            <h2 style="margin-top: 0; color: #0c5568; border-bottom: 2px solid #0c7489; padding-bottom: 10px;">⭐ Évaluation des Enseignants</h2>
             
-            <div class="carte-donnees" style="text-align: left;">
-                <form id="form-evaluation">
-                    <label>Enseignant à évaluer :</label>
-                    <select id="prof-select" required style="width: 100%; padding: 10px; margin-bottom: 20px;">
-                        <option value="">Chargement des enseignants...</option>
-                    </select>
-            
-                    <label>Maîtrise du sujet (1 à 5) :</label>
-                    <input type="range" id="note-maitrise" min="1" max="5" value="3" style="width: 100%; margin-bottom: 20px;">
+            <!-- SECTION PROGRESSION -->
+            <div id="progression-container" style="background: #f8fafc; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                <h4 style="margin: 0; color: #0c5568;" id="progression-titre">⏳ Chargement des professeurs...</h4>
+                <div id="barre-progression-bg" style="background: #e2e8f0; height: 10px; border-radius: 5px; margin-top: 8px; overflow: hidden; display: none;">
+                    <div id="barre-progression-fill" style="background: #0c7489; height: 100%; width: 0%; transition: width 0.4s ease;"></div>
+                </div>
+            </div>
+
+            <!-- SECTION LISTE DES PROFS -->
+            <div>
+                <h3 style="color: #0c5568; margin-bottom: 5px;">👥 Professeurs de l'établissement :</h3>
+                <p style="color: #666; font-size: 0.9em; margin-top: 0;">Cliquez sur un professeur avec le statut <strong style="color:#d97706;">"⏳ À évaluer"</strong> pour soumettre votre cotation.</p>
+
+                <div id="liste-profs-container">
+                    <p style="text-align:center; padding:20px; color:#888;">⏳ Chargement de la liste des professeurs...</p>
+                </div>
+            </div>
+
+            <!-- FORMULAIRE D'EVALUATION -->
+            <div id="panel-evaluation" style="display: none; margin-top: 25px; background: #e0f2f1; padding: 20px; border-radius: 12px; border-left: 6px solid #0c7489;" class="animate__animated animate__fadeIn">
+                <h3 style="margin-top: 0; color: #0c5568; display: flex; align-items: center; gap: 8px;">
+                    <span>👨‍🏫 Évaluation pour :</span> 
+                    <span id="nom-prof-selectionne" style="color: #0d3b4f; font-weight: bold; text-decoration: underline;">...</span>
+                </h3>
+
+                <form id="form-evaluation" style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    <input type="hidden" id="prof-id-hidden">
+                    <input type="hidden" id="prof-nom-hidden">
+
+                    <div>
+                        <label>Maîtrise du sujet et de la matière :</label>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-top: 5px;">
+                            <input type="range" id="note-maitrise" min="1" max="5" value="4" style="flex: 1; cursor: pointer;">
+                            <span id="val-maitrise" style="font-weight: bold; color: #0c7489; min-width: 40px; text-align: right; font-size: 1.2em;">4 / 5</span>
+                        </div>
+                    </div>
                     
-                    <label>Disponibilité et écoute (1 à 5) :</label>
-                    <input type="range" id="note-dispo" min="1" max="5" value="3" style="width: 100%; margin-bottom: 20px;">
-            
-                    <button type="submit" class="btn-inscription" style="background: #0d3b4f; width: 100%; border: none; padding: 12px; color: white; cursor: pointer; border-radius: 6px;">
-                        Envoyer l'évaluation
+                    <div>
+                        <label>Disponibilité, écoute et pédagogie :</label>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-top: 5px;">
+                            <input type="range" id="note-dispo" min="1" max="5" value="4" style="flex: 1; cursor: pointer;">
+                            <span id="val-dispo" style="font-weight: bold; color: #0c7489; min-width: 40px; text-align: right; font-size: 1.2em;">4 / 5</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" style="background: #0d3b4f; color: white; border: none; padding: 14px; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 1.05em; margin-top: 10px; transition: background 0.3s;">
+                        💾 Envoyer cette évaluation
                     </button>
                 </form>
             </div>
+
         </div>
     </div>
 
-    <script type="module" src="app.js"></script>
     <script type="module">
         import { auth, db } from "./auth.js";
-        // Importe les instances Firebase (authentification et base de données) depuis auth.js
         import { collection, query, where, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        // Importe les fonctions Firestore pour créer des requêtes et lire/écrire des documents
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        // Importe la fonction pour écouter les changements d'état de connexion
 
-        const profSelect = document.getElementById('prof-select');
-        // Récupère l'élément <select> qui affichera la liste des enseignants à évaluer
-        const formEval = document.getElementById('form-evaluation');
-        // Récupère l'élément HTML du formulaire d'évaluation
+        function normNom(s) {
+            return String(s || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " ");
+        }
 
-        // 1. Charger dynamiquement tous les enseignants de l'école
-        async function chargerEnseignants() {
-            // Déclare une fonction asynchrone qui charge la liste des enseignants depuis Firestore
+        // Écouteurs pour mettre à jour l'affichage en direct des sliders
+        document.getElementById('note-maitrise').addEventListener('input', (e) => {
+            document.getElementById('val-maitrise').innerText = e.target.value + " / 5";
+        });
+        document.getElementById('note-dispo').addEventListener('input', (e) => {
+            document.getElementById('val-dispo').innerText = e.target.value + " / 5";
+        });
+
+        let listeProfsActuels = [];
+        let indexProfActuel = -1;
+
+        async function chargerEnseignantsEtEvaluations(user) {
+            const container = document.getElementById('liste-profs-container');
+            const progTitre = document.getElementById('progression-titre');
+            const progFill = document.getElementById('barre-progression-fill');
+            const progBg = document.getElementById('barre-progression-bg');
+            const panel = document.getElementById('panel-evaluation');
+
             try {
-                // Bloc try : tente de récupérer les données sans planter l'application
-                const q = query(collection(db, "users"), where("role", "==", "enseignant"));
-                // Construit une requête Firestore pour filtrer uniquement les utilisateurs avec le rôle "enseignant"
-                const querySnapshot = await getDocs(q);
-                // Exécute la requête et attend la réponse de Firestore
-                
-                profSelect.innerHTML = '<option value="">-- Choisissez un enseignant --</option>';
-                // Réinitialise le menu déroulant avec une option par défaut vide
-                
-                querySnapshot.forEach((doc) => {
-                    // Parcourt chaque document (enseignant) retourné par la requête
-                    const prof = doc.data();
-                    // Extrait les données (nom, rôle, etc.) du document courant
-                    profSelect.innerHTML += `<option value="${doc.id}">${prof.nom}</option>`;
-                    // Ajoute une option dans la liste déroulante avec l'ID comme valeur et le nom comme libellé
+                // 1. Charger tous les profs (collection users et utilisateurs)
+                const snapUsers = await getDocs(collection(db, "users"));
+                const snapUtils = await getDocs(collection(db, "utilisateurs"));
+
+                const profsMap = new Map();
+                const addIfProf = (docSnap) => {
+                    const data = docSnap.data();
+                    if (!data) return;
+                    const r = String(data.role || "").toLowerCase();
+                    if (r === "enseignant" || r.includes("prof") || r.includes("teacher")) {
+                        const nomClean = (data.nom || "").trim();
+                        if (nomClean && !profsMap.has(normNom(nomClean))) {
+                            profsMap.set(normNom(nomClean), {
+                                id: docSnap.id,
+                                nom: nomClean,
+                                norm: normNom(nomClean),
+                                matieres: Array.isArray(data.matieres) ? data.matieres.join(", ") : (data.matiere || "")
+                            });
+                        }
+                    }
+                };
+
+                snapUsers.forEach(addIfProf);
+                snapUtils.forEach(addIfProf);
+
+                const profsList = Array.from(profsMap.values()).sort((a, b) => a.nom.localeCompare(b.nom));
+
+                if (profsList.length === 0) {
+                    progTitre.innerHTML = "ℹ️ Aucun enseignant n'est enregistré dans l'établissement pour le moment.";
+                    container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun professeur disponible à évaluer.</p>";
+                    panel.style.display = "none";
+                    return;
+                }
+
+                // 2. Récupérer toutes les évaluations soumises par CET élève
+                const qEvals = query(collection(db, "evaluations_profs"), where("eleveId", "==", user.uid));
+                const snapEvals = await getDocs(qEvals);
+
+                const evaluedIds = new Set();
+                const evaluedNorms = new Set();
+
+                snapEvals.forEach(d => {
+                    const data = d.data();
+                    if (data.profId) evaluedIds.add(data.profId);
+                    if (data.profNom) evaluedNorms.add(normNom(data.profNom));
+                    if (data.profNomNorm) evaluedNorms.add(data.profNomNorm);
                 });
-            } catch (error) {
-                // Si une erreur survient (réseau, permissions Firestore, etc.)
-                console.error("Erreur lors du chargement des profs:", error);
-                // Affiche l'erreur dans la console pour faciliter le débogage
+
+                // 3. Calcul de la progression
+                let evaluedCount = 0;
+                profsList.forEach(p => {
+                    if (evaluedIds.has(p.id) || evaluedNorms.has(p.norm)) {
+                        p.estEvalue = true;
+                        evaluedCount++;
+                    } else {
+                        p.estEvalue = false;
+                    }
+                });
+
+                const total = profsList.length;
+                const pct = Math.round((evaluedCount / total) * 100);
+
+                progBg.style.display = "block";
+                progFill.style.width = pct + "%";
+
+                if (evaluedCount >= total) {
+                    progTitre.innerHTML = `🎉 <strong>Félicitations !</strong> Tous vos professeurs (${evaluedCount}/${total}) ont été évalués.<br><span style="font-size:0.9em; color:#0c7489;">Redirection vers vos cotes...</span>`;
+                    
+                    // Rendu statut complet
+                    let htmlCards = `<div style="text-align:center; padding:20px; background:#dcfce7; color:#15803d; border-radius:10px; font-weight:bold; font-size:1.1em; margin-top:15px;">
+                        ✅ Vous avez complété toutes les évaluations d'enseignants !
+                    </div>`;
+                    container.innerHTML = htmlCards;
+                    panel.style.display = "none";
+
+                    // Redirection automatique vers MesCotes
+                    setTimeout(() => {
+                        window.location.href = "MesCotes.html";
+                    }, 1500);
+                    return;
+                }
+
+                progTitre.innerHTML = `📊 Progression : <strong>${evaluedCount} / ${total}</strong> professeurs évalués (${pct}%)`;
+
+                // 4. Rendu de la liste des professeurs
+                let htmlCards = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; margin-top: 12px;">`;
+
+                profsList.forEach((prof, index) => {
+                    let badgeHTML = "";
+                    if (prof.estEvalue) {
+                        badgeHTML = `<span style="background: #dcfce7; color: #15803d; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">✅ Évalué</span>`;
+                    } else {
+                        badgeHTML = `<span style="background: #fef3c7; color: #b45309; padding: 4px 8px; border-radius: 6px; font-size: 0.85em; font-weight: bold;">⏳ À évaluer</span>`;
+                    }
+
+                    const subInfo = prof.matieres ? `<div style="font-size:0.8em; color:#64748b;">Matières: ${prof.matieres}</div>` : '';
+
+                    htmlCards += `
+                        <div class="carte-prof-item" id="card-prof-${index}" onclick="selectionnerProf(${index})" style="background: white; border: 2px solid ${prof.estEvalue ? '#cbd5e1' : '#f59e0b'}; border-radius: 10px; padding: 14px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                            <div>
+                                <div style="font-weight: bold; color: #0c5568; font-size: 1.05em; display: flex; align-items: center; gap: 8px;">
+                                    <span>👨‍🏫</span> <span>${prof.nom}</span>
+                                </div>
+                                ${subInfo}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                                <span style="font-size: 0.8em; color: #64748b;">${prof.estEvalue ? 'Modifié' : 'Cliquer pour coter'}</span>
+                                ${badgeHTML}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                htmlCards += `</div>`;
+                container.innerHTML = htmlCards;
+
+                listeProfsActuels = profsList;
+
+                // Auto-sélectionner le premier prof non encore évalué
+                const premierNonEvalueIndex = profsList.findIndex(p => !p.estEvalue);
+                if (premierNonEvalueIndex !== -1) {
+                    selectionnerProf(premierNonEvalueIndex);
+                }
+
+            } catch (err) {
+                console.error("Erreur chargement profs:", err);
+                container.innerHTML = "<p style='color:red; text-align:center;'>Erreur lors du chargement des enseignants.</p>";
             }
         }
 
-        // 2. Envoyer l'évaluation
-        formEval.addEventListener('submit', async (e) => {
-            // Écoute la soumission du formulaire d'évaluation (async pour utiliser await)
-            e.preventDefault();
-            // Empêche le rechargement de la page lors de la soumission du formulaire
-            const user = auth.currentUser;
-            // Récupère l'objet de l'utilisateur actuellement connecté
+        // --- SELECTION D'UN PROFESSEUR ---
+        window.selectionnerProf = (index) => {
+            const prof = listeProfsActuels[index];
+            if (!prof) return;
 
+            indexProfActuel = index;
+            document.getElementById('nom-prof-selectionne').innerText = prof.nom;
+            document.getElementById('prof-id-hidden').value = prof.id;
+            document.getElementById('prof-nom-hidden').value = prof.nom;
+
+            // Highlight card
+            document.querySelectorAll('.carte-prof-item').forEach(c => {
+                c.style.background = "white";
+            });
+            const activeCard = document.getElementById(`card-prof-${index}`);
+            if (activeCard) {
+                activeCard.style.background = "#e0f2f1";
+            }
+
+            const panel = document.getElementById('panel-evaluation');
+            panel.style.display = "block";
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+
+        // --- SOUMISSION DE L'EVALUATION ---
+        const formEval = document.getElementById('form-evaluation');
+        formEval.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const user = auth.currentUser;
             if (!user) {
-                // Vérifie qu'un utilisateur est bien connecté avant de continuer
                 alert("Vous devez être connecté.");
-                // Informe l'utilisateur qu'il doit être connecté pour évaluer
                 return;
-                // Arrête l'exécution si personne n'est connecté
+            }
+
+            const profId = document.getElementById('prof-id-hidden').value;
+            const profNom = document.getElementById('prof-nom-hidden').value;
+            const noteMaitrise = parseInt(document.getElementById('note-maitrise').value);
+            const noteDispo = parseInt(document.getElementById('note-dispo').value);
+
+            if (!profId || !profNom) {
+                alert("❌ Veuillez d'abord cliquer sur un professeur dans la liste.");
+                return;
             }
 
             try {
-                // Bloc try : tente d'enregistrer l'évaluation dans Firestore
                 await addDoc(collection(db, "evaluations_profs"), {
-                    // Crée un nouveau document dans la collection "evaluations_profs"
-                    profId: profSelect.value,
-                    // ID Firestore de l'enseignant évalué
-                    profNom: profSelect.options[profSelect.selectedIndex].text,
-                    // Nom de l'enseignant sélectionné (texte visible de l'option)
+                    profId: profId,
+                    profNom: profNom,
+                    profNomNorm: normNom(profNom),
                     eleveId: user.uid,
-                    // UID de l'élève qui soumet l'évaluation
-                    maitrise: document.getElementById('note-maitrise').value,
-                    // Note de maîtrise du sujet donnée par l'élève (de 1 à 5)
-                    disponibilite: document.getElementById('note-dispo').value,
-                    // Note de disponibilité donnée par l'élève (de 1 à 5)
+                    maitrise: noteMaitrise,
+                    disponibilite: noteDispo,
                     date: new Date()
-                    // Date et heure exacte de l'évaluation
                 });
 
-                alert("Merci ! Votre évaluation a été enregistrée.");
-                // Informe l'élève que son évaluation a bien été sauvegardée
-                formEval.reset();
-                // Réinitialise tous les champs du formulaire après soumission réussie
+                // Marquer comme évalué localement
+                if (listeProfsActuels[indexProfActuel]) {
+                    listeProfsActuels[indexProfActuel].estEvalue = true;
+                }
+
+                // Recharger la liste pour vérifier si tous sont évalués
+                await chargerEnseignantsEtEvaluations(user);
+
             } catch (error) {
-                // Si une erreur Firestore survient lors de l'enregistrement
-                alert("Erreur : " + error.message);
-                // Affiche le message d'erreur à l'utilisateur
+                console.error("Erreur enregistrement évaluation:", error);
+                alert("Erreur lors de l'enregistrement : " + error.message);
             }
         });
 
-        // Lancer le chargement au démarrage
         onAuthStateChanged(auth, (user) => {
-            // Écoute les changements d'état de connexion au chargement de la page
             if (user) {
-                // Si un utilisateur est connecté, on charge la liste des enseignants
-                chargerEnseignants();
-                // Appelle la fonction pour remplir le menu déroulant des enseignants
+                chargerEnseignantsEtEvaluations(user);
             } else {
-                // Si personne n'est connecté
                 window.location.href = "login.html";
-                // Redirige vers la page de connexion
             }
         });
-        // --- SÉCURITÉ : ANTI-INSPECTION ---
-        // Bloquer le clic droit
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
-        // Empêche l'ouverture du menu contextuel (clic droit) sur toute la page
 
-        // Bloquer les raccourcis clavier (F12, Ctrl+U, Ctrl+Shift+I, etc.)
+        // --- SÉCURITÉ ANTI-INSPECTION ---
+        document.addEventListener('contextmenu', (e) => e.preventDefault());
         document.addEventListener('keydown', (e) => {
-            // Écoute chaque touche pressée sur le clavier pour intercepter les raccourcis de développeur
             if (
                 e.key === 'F12' || 
-                // Vérifie si la touche F12 (ouvre les DevTools) est pressée
                 (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-                // Vérifie la combinaison Ctrl+Shift+I (ouvre les DevTools)
                 (e.ctrlKey && e.shiftKey && e.key === 'J') || 
-                // Vérifie la combinaison Ctrl+Shift+J (ouvre la console)
                 (e.ctrlKey && e.key === 'u') ||
-                // Vérifie Ctrl+U (affiche le code source)
                 (e.ctrlKey && e.key === 's')
-                // Vérifie Ctrl+S (sauvegarde de la page)
             ) {
                 e.preventDefault();
-                // Annule l'action par défaut du raccourci clavier détecté
                 alert("L'inspection du code est désactivée pour des raisons de sécurité.");
-                // Affiche un message expliquant pourquoi l'action est bloquée
                 return false;
-                // Retourne false pour s'assurer que l'événement est complètement stoppé
             }
         });
     </script>
 
+    <script type="module" src="app.js"></script>
 </body>
 </html>
