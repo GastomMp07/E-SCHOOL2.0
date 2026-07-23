@@ -1,5 +1,4 @@
-import { divide } from "firebase/firestore/pipelines";
-// Importe l'opérateur ou fonction de division (divide) depuis le pipeline Firestore de Firebase
+// Script utilitaire des bulletins
 
 async function loadBulletins() {
     // Déclare une fonction asynchrone pour charger et afficher les bulletins

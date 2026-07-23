@@ -318,3 +318,4 @@ window.logout = logout;
 // Expose la fonction logout sur l'objet window pour qu'elle soit appelable depuis les attributs onclick HTML
 window.toggleMenu = toggleMenu;
 // Expose la fonction toggleMenu sur l'objet window pour qu'elle soit appelable depuis les attributs onclick HTML
+window.ouvrirGestionEcole = () => { window.location.href = "Gestion-Ecole.html"; };
