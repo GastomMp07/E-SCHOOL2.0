@@ -220,41 +220,64 @@
 
     async function lireProfilFusionne(uid) {
         try {
-            const snapUsers = await getDoc(doc(db, "users", uid));
-            const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
-            const u = snapUsers.exists() ? snapUsers.data() : {};
-            const v = snapUtils.exists() ? snapUtils.data() : {};
+            let u = {}, v = {};
+            let found = false;
+
+            if (uid) {
+                const snapUsers = await getDoc(doc(db, "users", uid));
+                if (snapUsers.exists()) { u = snapUsers.data(); found = true; }
+
+                const snapUtils = await getDoc(doc(db, "utilisateurs", uid));
+                if (snapUtils.exists()) { v = snapUtils.data(); found = true; }
+
+                if (!found) {
+                    const allUsers = await getDocs(collection(db, "users"));
+                    allUsers.forEach(d => {
+                        const data = d.data();
+                        if (d.id === uid || data.uid === uid || data.id === uid) {
+                            u = data; found = true;
+                        }
+                    });
+                    const allUtils = await getDocs(collection(db, "utilisateurs"));
+                    allUtils.forEach(d => {
+                        const data = d.data();
+                        if (d.id === uid || data.uid === uid || data.id === uid) {
+                            v = data; found = true;
+                        }
+                    });
+                }
+            }
 
             let classeRaw = u.classe || v.classe || u.maClasse || v.maClasse || "";
             if (Array.isArray(classeRaw)) classeRaw = classeRaw[0] || "";
 
             const parts = [
-                u.nom, u.postnom, u.prenom, u.name, u.displayName,
-                v.nom, v.postnom, v.prenom, v.name, v.displayName
-            ].filter(x => x && String(x).trim() !== "");
+                u.nom, u.postnom, u.prenom, u.name, u.displayName, u.nomEleve,
+                v.nom, v.postnom, v.prenom, v.name, v.displayName, v.nomEleve
+            ].filter(x => x && String(x).trim() !== "" && String(x).trim().toLowerCase() !== "utilisateur");
 
             const fullNom1 = `${u.nom || ''} ${u.postnom || ''} ${u.prenom || ''}`.trim();
             const fullNom2 = `${v.nom || ''} ${v.postnom || ''} ${v.prenom || ''}`.trim();
-            const nomBrut = fullNom1 || fullNom2 || u.nom || v.nom || u.name || v.name || "Utilisateur";
+            const nomBrut = fullNom1 || fullNom2 || u.nom || v.nom || u.name || v.name || u.displayName || parts.join(" ") || "";
 
             const nomsCiblesNorm = new Set();
-            [fullNom1, fullNom2, u.nom, v.nom, u.name, v.name, ...parts].forEach(p => {
-                if (p) nomsCiblesNorm.add(normNom(p));
+            [fullNom1, fullNom2, u.nom, v.nom, u.name, v.name, u.displayName, ...parts].forEach(p => {
+                if (p && String(p).trim() !== "") nomsCiblesNorm.add(normNom(p));
             });
 
             return { 
-                ok: snapUsers.exists() || snapUtils.exists(), 
+                ok: found, 
                 maClasse: String(classeRaw).trim(), 
-                monNomBrut: nomBrut,
+                monNomBrut: nomBrut || "Élève",
                 monNomNorm: normNom(nomBrut),
                 nomsCiblesNorm: Array.from(nomsCiblesNorm).filter(Boolean)
             };
         } catch (e) {
-            return { ok: false, maClasse: "", monNomBrut: "Utilisateur", monNomNorm: "", nomsCiblesNorm: [] };
+            return { ok: false, maClasse: "", monNomBrut: "Élève", monNomNorm: "", nomsCiblesNorm: [] };
         }
     }
 
-    function estNoteDeLEleve(data, targetUid, profil) {
+    function estNoteDeLEleve(data, targetUid, profil, maClasseNorm) {
         if (!data) return false;
 
         // 1. Détection par identifiant unique (UID)
@@ -262,26 +285,42 @@
             return true;
         }
 
-        // 2. Détection par correspondance flexible du nom de l'élève
-        const noteNomNorm = normNom(data.nomEleveNorm || data.nomEleve || data.nom);
+        const noteNomNorm = normNom(data.nomEleveNorm || data.nomEleve || data.nom || data.name);
+        const noteClasseNorm = normClasse(data.classe);
+
+        // Si la classe est définie et ne correspond pas, exclure la note
+        if (maClasseNorm && noteClasseNorm && noteClasseNorm !== maClasseNorm) {
+            return false;
+        }
+
         if (!noteNomNorm) return false;
 
-        if (profil.nomsCiblesNorm.includes(noteNomNorm)) return true;
+        // 2. Vérification directe dans la liste des noms du profil
+        if (profil.nomsCiblesNorm && profil.nomsCiblesNorm.includes(noteNomNorm)) return true;
 
-        for (const targetName of profil.nomsCiblesNorm) {
-            if (!targetName) continue;
-            if (targetName.includes(noteNomNorm) || noteNomNorm.includes(targetName)) {
-                return true;
-            }
-            const wordsNote = noteNomNorm.split(" ").filter(w => w.length > 2);
-            const wordsTarget = targetName.split(" ").filter(w => w.length > 2);
-            if (wordsNote.length > 0 && wordsTarget.length > 0) {
-                const matches = wordsNote.filter(w => wordsTarget.includes(w));
-                if (matches.length >= Math.min(wordsNote.length, wordsTarget.length)) {
+        // 3. Vérification par sous-chaîne ou mots communs
+        if (profil.nomsCiblesNorm && profil.nomsCiblesNorm.length > 0) {
+            for (const targetName of profil.nomsCiblesNorm) {
+                if (!targetName) continue;
+                if (targetName === noteNomNorm) return true;
+                if (targetName.includes(noteNomNorm) || noteNomNorm.includes(targetName)) return true;
+
+                const wordsNote = noteNomNorm.split(" ").filter(w => w.length >= 2);
+                const wordsTarget = targetName.split(" ").filter(w => w.length >= 2);
+                if (wordsNote.some(w => wordsTarget.includes(w))) {
                     return true;
                 }
             }
         }
+
+        // 4. Secours : vérification avec monNomNorm
+        if (profil.monNomNorm) {
+            if (noteNomNorm.includes(profil.monNomNorm) || profil.monNomNorm.includes(noteNomNorm)) return true;
+            const wordsNote = noteNomNorm.split(" ").filter(w => w.length >= 2);
+            const wordsMonNom = profil.monNomNorm.split(" ").filter(w => w.length >= 2);
+            if (wordsNote.some(w => wordsMonNom.includes(w))) return true;
+        }
+
         return false;
     }
 
@@ -330,7 +369,7 @@
                     totauxTousEleves[nomEnBase] = (totauxTousEleves[nomEnBase] || 0) + (parseFloat(data.note) || 0);
                 }
 
-                if (estNoteDeLEleve(data, targetUid, profil)) {
+                if (estNoteDeLEleve(data, targetUid, profil, maClasseNorm)) {
                     toutesNotes.push(data);
                 }
             });
@@ -375,8 +414,17 @@
                         max: parseFloat(n.max || 20) 
                     };
                 }
+
                 if (perClean && bulletinComplet[matKey][perClean] !== undefined) {
                     bulletinComplet[matKey][perClean] = parseFloat(n.note);
+                } else {
+                    const periodesList = ["1ère Période", "2ème Période", "Examen 1er Semestre", "3ème Période", "4ème Période", "Examen 2ème Semestre"];
+                    for (const keyP of periodesList) {
+                        if (bulletinComplet[matKey][keyP] === "-") {
+                            bulletinComplet[matKey][keyP] = parseFloat(n.note);
+                            break;
+                        }
+                    }
                 }
                 if (n.max) {
                     bulletinComplet[matKey].max = Math.max(bulletinComplet[matKey].max, parseFloat(n.max));
