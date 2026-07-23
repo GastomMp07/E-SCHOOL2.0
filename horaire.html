@@ -143,122 +143,175 @@
         const displayLabel = document.getElementById('classe-display');
         // Récupère l'élément textuel affichant les détails de la classe ou de l'enseignant
 
+        function norm(s) {
+            if (!s) return "";
+            return String(s).toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+        }
+
         try {
             // Bloc de sécurité try-catch pour intercepter les échecs liés à Firestore
-            // 1. Récupérer les infos de l'utilisateur (Rôle et Classe/Nom)
-            let userSnap = await getDoc(doc(db, "users", user.uid));
-            // Lit le document de l'utilisateur connecté dans la collection principale "users"
+            // 1. Récupérer les infos de l'utilisateur (on vérifie "users" et "utilisateurs")
+            const snapUsers = await getDoc(doc(db, "users", user.uid));
+            const snapUtils = await getDoc(doc(db, "utilisateurs", user.uid));
             
-            if (userSnap.exists()) {
-                // Si l'utilisateur connecté possède un profil dans la collection
-                const userData = userSnap.data();
-                // Extrait les champs et les valeurs du document de profil
-                const role = userData.role; // "eleve", "professeur" ou "admin"
-                // Extrait le rôle de l'utilisateur pour adapter l'affichage
-                let q;
-                // Initialise la variable qui contiendra la requête Firestore
+            const u = snapUsers.exists() ? snapUsers.data() : {};
+            const v = snapUtils.exists() ? snapUtils.data() : {};
 
-                // 2. Définir la requête selon le rôle
-                if (role === "enseignant" || role === "professeur") {
-                    // Si l'utilisateur connecté est identifié comme un enseignant
-                    displayLabel.innerText = "Planning Enseignant : " + userData.nom;
-                    // Indique son nom dans le titre du planning
-                    // Le prof voit les cours où son NOM est enregistré
-                    q = query(collection(db, "horaires"), where("professeur", "==", userData.nom));
-                    // Filtre les créneaux d'horaires dont le champ professeur correspond exactement au nom de l'utilisateur
-                } else {
-                    // Sinon, si l'utilisateur est un élève
-                    // L'élève (or autre) voit l'horaire de sa CLASSE
-                    const maClasse = Array.isArray(userData.classe) ? userData.classe[0] : userData.classe;
-                    // Vérifie si sa classe est stockée sous forme de tableau ou d'une chaîne et extrait la valeur
-                    displayLabel.innerText = "Emploi du temps - Classe : " + maClasse;
-                    // Affiche le nom de sa classe dans le titre du planning
-                    q = query(collection(db, "horaires"), where("classe", "==", maClasse));
-                    // Filtre les créneaux d'horaires dont la classe correspond à celle de l'élève
-                }
-
-                const querySnapshot = await getDocs(q);
-                // Exécute la requête configurée et attend les résultats
-                container.innerHTML = ""; 
-                // Réinitialise le conteneur du planning avant le rendu
-
-                if (querySnapshot.empty) {
-                    // Si aucun cours n'a été planifié pour cette classe ou cet enseignant
-                    container.innerHTML = "<p style='text-align:center; padding:20px;'>Aucun cours programmé pour le moment.</p>";
-                    // Affiche un texte explicatif à l'utilisateur
-                    return;
-                    // Interrompt le rendu car la liste est vide
-                }
-
-                // 3. Organiser par jour
-                const joursOrder = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
-                // Définit l'ordre officiel des jours de la semaine pour l'affichage
-                const planning = {};
-                // Crée un objet vide pour stocker les cours groupés par jour de la semaine
-
-                querySnapshot.forEach((doc) => {
-                    // Parcourt chaque document de créneau horaire retourné par la base
-                    const data = doc.data();
-                    // Récupère les données du document
-                    if (!planning[data.jour]) planning[data.jour] = [];
-                    // Si la clé du jour n'existe pas encore dans notre objet, initialise un tableau vide
-                    planning[data.jour].push(data);
-                    // Ajoute les données du cours courant dans le tableau associé à son jour
-                });
-
-                // 4. Affichage dynamique
-                joursOrder.forEach(jour => {
-                    // Parcourt chaque jour de la semaine dans l'ordre chronologique défini
-                    if (planning[jour]) {
-                        // S'il existe des cours planifiés pour ce jour précis
-                        // Trier par heure (alphabétique fonctionne souvent pour 08h, 10h...)
-                        planning[jour].sort((a, b) => a.heure.localeCompare(b.heure));
-                        // Trie les cours de la journée selon leur plage horaire de début
-
-                        let jourHTML = `<h3 style="color: #0c5568; margin-top: 25px; border-bottom: 2px solid #0c7489; padding-bottom: 5px;">${jour}</h3>`;
-                        // Génère le titre HTML pour le jour courant
-                        
-                        planning[jour].forEach(cours => {
-                            // Parcourt tous les cours planifiés de ce jour
-                            // On adapte le sous-titre : l'élève voit le prof, le prof voit la classe
-                            const detailInfo = (role === "professeur") 
-                                // Si c'est un enseignant
-                                ? `🏫 Classe : ${cours.classe}` 
-                                // Affiche la classe concernée
-                                : `👨‍🏫 Enseignant : ${cours.professeur}`;
-                                // Sinon (élève), affiche le nom de l'enseignant en charge du cours
-
-                            jourHTML += `
-                                <div class="animate__animated animate__fadeInLeft" style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #0c5568;">
-                                    <div style="display: flex; justify-content: space-between;">
-                                        <strong style="font-size: 1.1em; color: #333;">${cours.matiere}</strong>
-                                        <span style="color: #0c5568; font-weight: bold;">${cours.heure}</span>
-                                    </div>
-                                    <div style="margin-top: 5px; color: #666; font-size: 0.9em;">
-                                        ${detailInfo}
-                                    </div>
-                                </div>
-                            `;
-                            // Génère et concatène la carte HTML pour le cours avec le nom, l'heure et les informations adaptées
-                        });
-                        container.innerHTML += jourHTML;
-                        // Injecte l'ensemble des cours de la journée dans le conteneur principal
-                    }
-                });
-
-            } else {
-                // Si aucun profil correspondant à l'UID n'existe dans Firestore
-                alert("Profil introuvable.");
-                // Affiche un message d'avertissement
+            if (!snapUsers.exists() && !snapUtils.exists()) {
+                displayLabel.innerText = "Erreur de profil";
+                container.innerHTML = "<p style='text-align:center; padding:20px;'>Profil introuvable dans la base de données.</p>";
+                return;
             }
+
+            const userData = { ...v, ...u }; // u a la priorité sur v
+            const roleRaw = String(userData.role || "").toLowerCase().trim();
+            const isProf = roleRaw === "enseignant" || roleRaw === "professeur" || roleRaw.includes("prof") || roleRaw.includes("teacher");
+            const isAdmin = roleRaw === "admin" || roleRaw.includes("direction") || roleRaw.includes("administrateur");
+
+            const userNom = userData.nom || "";
+            const userNomNorm = norm(userNom);
+
+            let userClasses = [];
+            if (Array.isArray(userData.classe)) {
+                userClasses = userData.classe.map(c => String(c).trim());
+            } else if (userData.classe) {
+                userClasses = [String(userData.classe).trim()];
+            }
+            const userClassesNorm = userClasses.map(c => norm(c));
+            const mainClasse = userClasses[0] || "Toutes";
+
+            // 2. Titre selon le rôle
+            if (isAdmin) {
+                displayLabel.innerText = "Emploi du temps Général (Direction / Administration)";
+            } else if (isProf) {
+                displayLabel.innerText = "Planning Enseignant : " + (userNom || "Enseignant");
+            } else {
+                displayLabel.innerText = "Emploi du temps - Classe : " + mainClasse;
+            }
+
+            // 3. Charger tous les créneaux d'horaires depuis Firestore
+            const querySnapshot = await getDocs(collection(db, "horaires"));
+            const allHoraires = [];
+            querySnapshot.forEach((docSnap) => {
+                allHoraires.push({ id: docSnap.id, ...docSnap.data() });
+            });
+
+            // 4. Filtrer selon le rôle
+            let filteredHoraires = [];
+            if (isAdmin) {
+                filteredHoraires = allHoraires;
+            } else if (isProf) {
+                filteredHoraires = allHoraires.filter(h => {
+                    const profNorm = norm(h.professeur);
+                    const classeNorm = norm(h.classe);
+                    const matchProf = profNorm.includes(userNomNorm) || (userNomNorm.length > 0 && userNomNorm.includes(profNorm));
+                    const matchClasse = userClassesNorm.includes(classeNorm);
+                    return matchProf || matchClasse;
+                });
+            } else {
+                // Élève
+                filteredHoraires = allHoraires.filter(h => {
+                    const classeNorm = norm(h.classe);
+                    return userClassesNorm.includes(classeNorm);
+                });
+            }
+
+            container.innerHTML = "";
+
+            if (filteredHoraires.length === 0) {
+                container.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun cours programmé pour le moment.</p>";
+                return;
+            }
+
+            // Optionnel : filtre par classe pour l'admin
+            if (isAdmin) {
+                const classesSet = new Set(allHoraires.map(h => h.classe).filter(Boolean));
+                let filterHTML = `
+                    <div style="margin-bottom: 20px; text-align: center;">
+                        <label for="select-filter-classe" style="font-weight: bold; margin-right: 10px; color: #0c5568;">Filtrer par classe :</label>
+                        <select id="select-filter-classe" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #0c7489; outline: none;">
+                            <option value="TOUTES">Toutes les classes</option>
+                            ${Array.from(classesSet).map(cl => `<option value="${cl}">${cl}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div id="horaire-cards-wrapper"></div>
+                `;
+                container.innerHTML = filterHTML;
+
+                const renderCards = (selectedClasse) => {
+                    const wrapper = document.getElementById('horaire-cards-wrapper');
+                    wrapper.innerHTML = "";
+
+                    const listToRender = (selectedClasse === "TOUTES") 
+                        ? filteredHoraires 
+                        : filteredHoraires.filter(h => norm(h.classe) === norm(selectedClasse));
+
+                    if (listToRender.length === 0) {
+                        wrapper.innerHTML = "<p style='text-align:center; padding:20px; color:#666;'>Aucun cours pour cette classe.</p>";
+                        return;
+                    }
+
+                    renderPlanning(listToRender, wrapper, isAdmin, isProf);
+                };
+
+                renderCards("TOUTES");
+                document.getElementById('select-filter-classe').addEventListener('change', (e) => {
+                    renderCards(e.target.value);
+                });
+            } else {
+                renderPlanning(filteredHoraires, container, isAdmin, isProf);
+            }
+
         } catch (error) {
             // En cas d'erreur de chargement Firestore ou réseau
             console.error("Erreur Firestore :", error);
             // Affiche l'erreur complète dans la console de débogage
-            container.innerHTML = "<p>Erreur de chargement des données.</p>";
-            // Affiche un message d'erreur textuel dans la section horaire
+            container.innerHTML = "<p style='text-align:center; color:red; padding:20px;'>Erreur de chargement des données d'horaire.</p>";
         }
     });
+
+    function renderPlanning(items, targetContainer, isAdmin, isProf) {
+        const joursOrder = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+        const planning = {};
+
+        items.forEach(cours => {
+            const j = cours.jour || "Autre";
+            if (!planning[j]) planning[j] = [];
+            planning[j].push(cours);
+        });
+
+        const presentDays = [...joursOrder.filter(j => planning[j]), ...Object.keys(planning).filter(j => !joursOrder.includes(j))];
+
+        presentDays.forEach(jour => {
+            planning[jour].sort((a, b) => (a.heure || "").localeCompare(b.heure || ""));
+
+            let jourHTML = `<h3 style="color: #0c5568; margin-top: 25px; border-bottom: 2px solid #0c7489; padding-bottom: 5px;">${jour}</h3>`;
+            
+            planning[jour].forEach(cours => {
+                let detailInfo = "";
+                if (isAdmin) {
+                    detailInfo = `🏫 Classe : <strong>${cours.classe || 'N/A'}</strong> &nbsp;|&nbsp; 👨‍🏫 Enseignant : <strong>${cours.professeur || 'N/A'}</strong>`;
+                } else if (isProf) {
+                    detailInfo = `🏫 Classe : <strong>${cours.classe || 'N/A'}</strong>`;
+                } else {
+                    detailInfo = `👨‍🏫 Enseignant : <strong>${cours.professeur || 'N/A'}</strong>`;
+                }
+
+                jourHTML += `
+                    <div class="animate__animated animate__fadeInLeft" style="margin-bottom: 12px; padding: 15px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #0c5568;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="font-size: 1.1em; color: #333;">${cours.matiere || 'Matière'}</strong>
+                            <span style="color: #0c5568; font-weight: bold; background: #e0f2f1; padding: 4px 10px; border-radius: 6px;">${cours.heure || ''}</span>
+                        </div>
+                        <div style="margin-top: 8px; color: #666; font-size: 0.9em;">
+                            ${detailInfo}
+                        </div>
+                    </div>
+                `;
+            });
+            targetContainer.innerHTML += jourHTML;
+        });
+    }
     // --- SÉCURITÉ : ANTI-INSPECTION ---
     // Bloquer le clic droit
     document.addEventListener('contextmenu', (e) => e.preventDefault());
